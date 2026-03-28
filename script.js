@@ -15,7 +15,6 @@ const openNowToggle = document.querySelector("#open-now-toggle");
 const searchForm = document.querySelector("#search-form");
 const submitButton = searchForm.querySelector('button[type="submit"]');
 const resetButton = document.querySelector("#reset-demo");
-const scenarioList = document.querySelector("#scenario-list");
 const queryChip = document.querySelector("#query-chip");
 const resultsHeadline = document.querySelector("#results-headline");
 const resultsSummary = document.querySelector("#results-summary");
@@ -220,26 +219,6 @@ function renderMetrics(metrics) {
         </div>
       `,
     )
-    .join("");
-}
-
-function renderSampleSearches(activeId = "") {
-  scenarioList.innerHTML = client
-    .listSampleSearches()
-    .map((sample) => {
-      const activeClass = sample.id === activeId ? " is-active" : "";
-      return `
-        <button
-          class="scenario-card${activeClass}"
-          type="button"
-          data-scenario-id="${escapeHtml(sample.id)}"
-        >
-          <span>${escapeHtml(sample.label)}</span>
-          <strong>${escapeHtml(sample.title)}</strong>
-          <p>${escapeHtml(sample.description)}</p>
-        </button>
-      `;
-    })
     .join("");
 }
 
@@ -506,7 +485,7 @@ function renderResponse(payload) {
     { label: "Search radius", value: `${payload.query.radius_miles} mi` },
   ]);
 
-  renderSampleSearches(activeSample?.id);
+
   renderRecommended(payload);
   renderPrimaryResults(payload);
   renderAdditionalResults(payload);
@@ -578,13 +557,13 @@ async function runSearch(filters = getFilters()) {
   const activeSample = findMatchingSample(filters);
 
   if (!filters.medication || !filters.location) {
-    renderSampleSearches(activeSample?.id);
+  
     renderErrorState("Enter both a medication and a location to search.", filters);
     setActionFeedback("Enter both a medication and a location to search.", "error");
     return;
   }
 
-  renderSampleSearches(activeSample?.id);
+
   renderLoadingState(filters);
   setSearchingState(true);
   setActionFeedback("Resolving the location and loading nearby pharmacies...", "loading");
@@ -676,7 +655,6 @@ function observeReveals() {
 
 populateMedicationList();
 setFilters(initialFilters);
-renderSampleSearches(client.listSampleSearches()[0].id);
 renderLoadingState(initialFilters);
 setHeaderState();
 observeSections();
@@ -686,25 +664,6 @@ runSearch(initialFilters);
 searchForm.addEventListener("submit", (event) => {
   event.preventDefault();
   runSearch();
-});
-
-scenarioList.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-scenario-id]");
-
-  if (!button) {
-    return;
-  }
-
-  const scenario = client
-    .listSampleSearches()
-    .find((item) => item.id === button.dataset.scenarioId);
-
-  if (!scenario) {
-    return;
-  }
-
-  setFilters(scenario.filters);
-  runSearch(scenario.filters);
 });
 
 resetButton.addEventListener("click", () => {
