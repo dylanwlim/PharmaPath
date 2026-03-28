@@ -22,7 +22,6 @@ const resultsSummary = document.querySelector("#results-summary");
 const scenarioContext = document.querySelector("#scenario-context");
 const summaryMetrics = document.querySelector("#summary-metrics");
 const recommendedCard = document.querySelector("#recommended-card");
-const outcomeDigest = document.querySelector("#outcome-digest");
 const resultsToolbarCopy = document.querySelector("#results-toolbar-copy");
 const resultsBody = document.querySelector("#results-body");
 const emptyState = document.querySelector("#empty-state");
@@ -425,36 +424,6 @@ function renderRecommended(payload) {
   `;
 }
 
-function renderDigest(payload) {
-  const guidance = payload.guidance || {};
-  const digestItems = [
-    guidance.real_signal ||
-      `Google Places resolved "${payload.query.location}" to ${payload.location.formatted_address}.`,
-    guidance.ranking_focus ||
-      `Results are ranked by ${getSortLabel(payload.query.sort_by)} so the first recommendation is easier to explain in the demo.`,
-    guidance.recommended_action ||
-      `Use PharmaPath to decide who to call first for ${payload.query.medication}, then confirm stock directly.`,
-    guidance.demo_boundary ||
-      `Real-time inventory for ${payload.query.medication} is not yet verified. PharmaPath is identifying the best pharmacies to contact first.`,
-  ];
-
-  if (payload.query.only_open_now) {
-    digestItems.push("This search is limited to pharmacies Google marks open now.");
-  }
-
-  if (payload.counts.hours_unknown) {
-    digestItems.push(
-      `${payload.counts.hours_unknown} result${
-        payload.counts.hours_unknown === 1 ? "" : "s"
-      } did not include live open/closed status from Google.`,
-    );
-  }
-
-  outcomeDigest.innerHTML = digestItems
-    .map((item) => `<div class="digest-item">${escapeHtml(item)}</div>`)
-    .join("");
-}
-
 function renderPrimaryResults(payload) {
   const primaryResults = payload.results.slice(0, 3);
 
@@ -539,7 +508,6 @@ function renderResponse(payload) {
 
   renderSampleSearches(activeSample?.id);
   renderRecommended(payload);
-  renderDigest(payload);
   renderPrimaryResults(payload);
   renderAdditionalResults(payload);
 }
@@ -566,10 +534,6 @@ function renderLoadingState(filters) {
       <p class="panel-eyebrow">Medication-specific guidance</p>
       <p class="guidance-summary">The location is being geocoded first, then PharmaPath will layer medication-specific call guidance on top of the real pharmacy list.</p>
     </div>
-  `;
-  outcomeDigest.innerHTML = `
-    <div class="digest-item">The location is being geocoded before nearby pharmacy results are ranked.</div>
-    <div class="digest-item">Medication-specific guidance is prepared separately from the live Google pharmacy lookup.</div>
   `;
   resultsToolbarCopy.textContent = "Loading nearby pharmacy results...";
   resultsBody.innerHTML = "";
@@ -599,10 +563,6 @@ function renderErrorState(message, filters) {
       <p class="panel-eyebrow">Medication-specific guidance</p>
       <p class="guidance-summary">No medication guidance is shown as a substitute for the real pharmacy search when the backend returns an error.</p>
     </div>
-  `;
-  outcomeDigest.innerHTML = `
-    <div class="digest-item">No pharmacy results were shown because the backend returned an error.</div>
-    <div class="digest-item">This protects the demo from implying live medication availability when the search failed.</div>
   `;
   resultsBody.innerHTML = "";
   alternativesSection.hidden = true;

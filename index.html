@@ -183,10 +183,9 @@
               <section class="demo-panel">
                 <div class="panel-heading">
                   <div>
-                    <p class="panel-eyebrow">Search controls</p>
-                    <h3>Nearby pharmacy lookup</h3>
+                    <p class="panel-eyebrow">Search</p>
+                    <h3>Find nearby pharmacies</h3>
                   </div>
-                  <span class="panel-hint">Google Places + geocoding</span>
                 </div>
 
                 <form class="search-form" id="search-form">
@@ -201,8 +200,7 @@
                     />
                     <datalist id="medication-options"></datalist>
                     <p class="field-hint">
-                      The medication stays attached to the search so the handoff
-                      is specific, even though live stock is not yet verified.
+                      Brand or generic name of the medication you need.
                     </p>
                   </div>
 
@@ -229,7 +227,7 @@
                         <option value="15">Within 15 miles</option>
                       </select>
                       <p class="field-hint">
-                        Keep the search tight for a live demo or widen it when local options are thin.
+                        How far to search from your location.
                       </p>
                     </div>
 
@@ -241,7 +239,7 @@
                         <option value="rating">Highest Google rating</option>
                       </select>
                       <p class="field-hint">
-                        Choose whether the first recommendation favors proximity, rating, or a balance.
+                        How results are ordered.
                       </p>
                     </div>
                   </div>
@@ -251,8 +249,7 @@
                       <span class="toggle-copy">
                         <span class="toggle-title">Only show pharmacies marked open now</span>
                         <span class="toggle-help">
-                          Filters the list to locations Google currently reports
-                          as open. Some results may not include hours data.
+                          Only show places currently marked open.
                         </span>
                       </span>
                       <span class="toggle-switch">
@@ -280,20 +277,11 @@
               <section class="demo-panel">
                 <div class="panel-heading">
                   <div>
-                    <p class="panel-eyebrow">Sample searches</p>
-                    <h3>Switch demo inputs fast</h3>
+                    <p class="panel-eyebrow">Samples</p>
+                    <h3>Quick presets</h3>
                   </div>
                 </div>
                 <div class="scenario-list" id="scenario-list"></div>
-              </section>
-
-              <section class="demo-panel demo-panel-muted">
-                <p class="panel-eyebrow">Pitch guide</p>
-                <ul class="demo-guidance">
-                  <li>Lead with how fast PharmaPath narrows the first few pharmacies to contact.</li>
-                  <li>Show that the location changes the live pharmacy list while the medication changes the guidance and first-call strategy.</li>
-                  <li>Call out the disclaimer directly: nearby pharmacies are live, medication inventory is not yet verified.</li>
-                </ul>
               </section>
             </aside>
 
@@ -310,18 +298,11 @@
 
               <div class="action-feedback" id="action-feedback" aria-live="polite"></div>
 
-              <div class="workspace-grid">
-                <section
-                  class="recommended-card"
-                  id="recommended-card"
-                  aria-live="polite"
-                ></section>
-
-                <aside class="workspace-note">
-                  <p class="panel-eyebrow">Medication guidance</p>
-                  <div class="digest-list" id="outcome-digest"></div>
-                </aside>
-              </div>
+              <section
+                class="recommended-card"
+                id="recommended-card"
+                aria-live="polite"
+              ></section>
 
               <section class="results-shell">
                 <div class="results-toolbar">
