@@ -108,7 +108,7 @@ function buildHeader() {
         <span class="brand-mark" aria-hidden="true"><span></span></span>
         <span class="brand-copy">
           <span class="brand-name">PharmaPath</span>
-          <span class="brand-subtitle">FDA access signals</span>
+          <span class="brand-subtitle">Search + signal routing</span>
         </span>
       </a>
 
@@ -128,7 +128,7 @@ function buildHeader() {
         <a class="${activeSection === "patient" ? "is-active" : ""}" href="/patient/">Patient</a>
         <a class="${activeSection === "prescriber" ? "is-active" : ""}" href="/prescriber/">Prescriber</a>
         <a class="${activeSection === "methodology" ? "is-active" : ""}" href="/methodology/">Methodology</a>
-        <a class="button button-nav" href="/patient/">Start search</a>
+        <a class="button button-nav" href="/patient/">Start demo</a>
       </nav>
     </div>
   `;
@@ -140,8 +140,8 @@ function buildFooter() {
       <div>
         <p class="footer-brand">PharmaPath</p>
         <p class="footer-copy">
-          Signal-based medication access guidance built on openFDA, with explicit
-          boundaries around what the data cannot tell you.
+          Pharmacy discovery is live, while medication stock is still confirmed by calling
+          the pharmacy directly. FDA signals are shown as guidance, not guarantees.
         </p>
       </div>
       <div class="footer-links">

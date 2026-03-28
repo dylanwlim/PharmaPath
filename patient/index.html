@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/styles.css" />
@@ -26,15 +26,14 @@
         <div class="page-shell hero-grid hero-grid-compact">
           <div class="hero-copy">
             <p class="eyebrow">Patient search</p>
-            <h1>Check whether FDA data suggests a medication may be hard to obtain.</h1>
+            <h1>Search a medication and location to get nearby pharmacy options plus careful access-risk guidance.</h1>
             <p class="hero-text">
-              Enter a medication name and get a quick summary of what FDA datasets do and do
-              not suggest. The output stays in plain English and avoids claiming live inventory.
+              Enter a medication and location to surface a ranked nearby pharmacy list, then review FDA-based access signals in plain language.
             </p>
           </div>
 
           <form class="search-panel surface-card" action="/patient/results/" method="get" data-search-form>
-            <label class="field-label" for="patient-query">Medication name</label>
+            <label class="field-label" for="patient-query">Medication + location</label>
             <input
               id="patient-query"
               class="search-input"
@@ -48,7 +47,7 @@
               Use the medication name the patient recognizes. Strength or formulation helps when it is relevant.
             </p>
             <button class="button button-primary button-block" type="submit">
-              See patient-friendly results
+              Find nearby options
             </button>
             <p class="search-footnote">
               This route estimates access friction from FDA signals only. It does not know whether a nearby pharmacy has stock on the shelf.
