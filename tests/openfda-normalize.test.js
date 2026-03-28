@@ -1,0 +1,140 @@
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert/strict");
+
+const {
+  buildCandidateContexts,
+  buildDrugIntelligencePayload,
+  buildSearchPhrases,
+} = require("../api/_lib/openfda-normalize");
+
+test("buildSearchPhrases keeps the raw query and a stripped fallback", () => {
+  assert.deepEqual(buildSearchPhrases("Adderall XR 20 mg"), [
+    "Adderall XR 20 mg",
+    "Adderall XR",
+  ]);
+});
+
+test("buildCandidateContexts groups listings by application number", () => {
+  const ndcPayload = {
+    results: [
+      {
+        application_number: "NDA000001",
+        brand_name: "ExampleMed",
+        generic_name: "example ingredient",
+        labeler_name: "Alpha Labs",
+        dosage_form: "TABLET",
+        route: ["ORAL"],
+        active_ingredients: [{ strength: "10 mg" }],
+        product_ndc: "11111-111",
+        listing_expiration_date: "20991231",
+        finished: true,
+        product_type: "HUMAN PRESCRIPTION DRUG",
+      },
+      {
+        application_number: "NDA000001",
+        brand_name: "ExampleMed",
+        generic_name: "example ingredient",
+        labeler_name: "Alpha Labs",
+        dosage_form: "TABLET",
+        route: ["ORAL"],
+        active_ingredients: [{ strength: "20 mg" }],
+        product_ndc: "11111-112",
+        listing_expiration_date: "20991231",
+        finished: true,
+        product_type: "HUMAN PRESCRIPTION DRUG",
+      },
+    ],
+  };
+
+  const approvalsPayload = {
+    results: [
+      {
+        application_number: "NDA000001",
+        sponsor_name: "Alpha Labs",
+        products: [
+          {
+            brand_name: "EXAMPLEMED",
+            dosage_form: "TABLET",
+            route: "ORAL",
+            active_ingredients: [{ strength: "10MG" }],
+          },
+        ],
+      },
+    ],
+  };
+
+  const matches = buildCandidateContexts("ExampleMed", ndcPayload, approvalsPayload);
+
+  assert.equal(matches.length, 1);
+  assert.equal(matches[0].applicationNumbers[0], "NDA000001");
+  assert.equal(matches[0].activeListingCount, 2);
+  assert.deepEqual(matches[0].strengths, ["10 mg", "20 mg"]);
+});
+
+test("buildDrugIntelligencePayload labels shortage-driven cases as higher friction", () => {
+  const ndcPayload = {
+    meta: { last_updated: "20260327" },
+    results: [
+      {
+        application_number: "NDA000001",
+        brand_name: "ExampleMed",
+        generic_name: "example ingredient",
+        labeler_name: "Alpha Labs",
+        dosage_form: "TABLET",
+        route: ["ORAL"],
+        active_ingredients: [{ strength: "10 mg" }],
+        product_ndc: "11111-111",
+        listing_expiration_date: "20991231",
+        finished: true,
+        product_type: "HUMAN PRESCRIPTION DRUG",
+      },
+    ],
+  };
+
+  const approvalsPayload = {
+    meta: { last_updated: "20260327" },
+    results: [
+      {
+        application_number: "NDA000001",
+        sponsor_name: "Alpha Labs",
+        products: [
+          {
+            brand_name: "EXAMPLEMED",
+            dosage_form: "TABLET",
+            route: "ORAL",
+            active_ingredients: [{ strength: "10MG" }],
+          },
+        ],
+      },
+    ],
+  };
+
+  const payload = buildDrugIntelligencePayload({
+    query: "ExampleMed 10 mg",
+    ndcPayload,
+    approvalsPayload,
+    shortageResultsById: {
+      "nda000001-examplemed": {
+        meta: { last_updated: "20260327" },
+        results: [
+          {
+            status: "Currently in Shortage",
+            presentation: "ExampleMed tablet 10 mg",
+            update_date: "03/20/2026",
+          },
+        ],
+      },
+    },
+    recallResultsById: {
+      "nda000001-examplemed": {
+        meta: { last_updated: "20260318" },
+        results: [],
+      },
+    },
+  });
+
+  assert.equal(payload.matches[0].access_signal.level, "higher-friction");
+  assert.equal(payload.featured_match_id, payload.matches[0].id);
+});

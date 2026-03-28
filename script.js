@@ -1,40 +1,11 @@
+import { featuredQueries } from "./data/sample-queries.js";
 import { createPharmaPathClient } from "./services/pharmapath-client.js";
 
 const client = createPharmaPathClient();
-const initialFilters = client.getInitialFilters();
-
-const header = document.querySelector("[data-header]");
-const navToggle = document.querySelector(".nav-toggle");
-const navLinks = Array.from(document.querySelectorAll("[data-nav-link]"));
-const medicationInput = document.querySelector("#medication-input");
-const medicationOptions = document.querySelector("#medication-options");
-const locationInput = document.querySelector("#location-input");
-const radiusSelect = document.querySelector("#radius-select");
-const sortSelect = document.querySelector("#sort-select");
-const openNowToggle = document.querySelector("#open-now-toggle");
-const searchForm = document.querySelector("#search-form");
-const submitButton = searchForm.querySelector('button[type="submit"]');
-const resetButton = document.querySelector("#reset-demo");
-const scenarioList = document.querySelector("#scenario-list");
-const queryChip = document.querySelector("#query-chip");
-const resultsHeadline = document.querySelector("#results-headline");
-const resultsSummary = document.querySelector("#results-summary");
-const scenarioContext = document.querySelector("#scenario-context");
-const summaryMetrics = document.querySelector("#summary-metrics");
-const recommendedCard = document.querySelector("#recommended-card");
-const outcomeDigest = document.querySelector("#outcome-digest");
-const resultsToolbarCopy = document.querySelector("#results-toolbar-copy");
-const resultsBody = document.querySelector("#results-body");
-const emptyState = document.querySelector("#empty-state");
-const emptyStateTitle = document.querySelector("#empty-state-title");
-const emptyStateCopy = document.querySelector("#empty-state-copy");
-const emptyStateSuggestion = document.querySelector("#empty-state-suggestion");
-const alternativesSection = document.querySelector("#alternatives-section");
-const alternativesBody = document.querySelector("#alternatives-body");
-const actionFeedback = document.querySelector("#action-feedback");
+const page = document.body.dataset.page || "home";
+const headerRoot = document.querySelector("[data-site-header]");
+const footerRoot = document.querySelector("[data-site-footer]");
 const revealNodes = Array.from(document.querySelectorAll("[data-reveal]"));
-
-let actionFeedbackTimer;
 
 function escapeHtml(value = "") {
   return String(value)
@@ -45,663 +16,186 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#39;");
 }
 
-function formatDistance(distanceMiles) {
-  if (!Number.isFinite(distanceMiles)) {
-    return "Distance unavailable";
-  }
-
-  return `${distanceMiles.toFixed(1)} mi`;
+function sanitizeText(value = "") {
+  return String(value).trim();
 }
 
-function formatRating(rating, reviewCount) {
-  if (!Number.isFinite(rating)) {
-    return "Rating unavailable";
-  }
-
-  const reviewText =
-    Number.isFinite(reviewCount) && reviewCount > 0
-      ? ` from ${reviewCount} review${reviewCount === 1 ? "" : "s"}`
-      : "";
-
-  return `${rating.toFixed(1)} / 5${reviewText}`;
+function titleCase(value = "") {
+  return sanitizeText(value)
+    .toLowerCase()
+    .replace(/\b([a-z])/g, (match) => match.toUpperCase());
 }
 
-function getSortLabel(sortBy) {
-  if (sortBy === "distance") {
-    return "closest distance";
+function formatDate(value) {
+  if (!value) {
+    return "Unavailable";
   }
 
-  if (sortBy === "rating") {
-    return "highest Google rating";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) {
+    return "Unavailable";
   }
 
-  return "best overall match";
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
-function getOpenStatus(place) {
-  if (place.open_now === true) {
-    return {
-      label: "Open now",
-      className: "status-in-stock",
-      detail: "Google currently marks this pharmacy open.",
-    };
+function joinAnd(values = []) {
+  if (values.length <= 1) {
+    return values[0] || "";
   }
 
-  if (place.open_now === false) {
-    return {
-      label: "Closed now",
-      className: "status-out-of-stock",
-      detail: "Google currently marks this pharmacy closed.",
-    };
+  if (values.length === 2) {
+    return `${values[0]} and ${values[1]}`;
   }
 
-  return {
-    label: "Hours unavailable",
-    className: "status-suggestion",
-    detail: "Open/closed status was not returned for this location.",
-  };
+  return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
 }
 
-function buildResultActions(place) {
-  const actions = [];
-
-  if (place.google_maps_url) {
-    actions.push(`
-      <a
-        class="action-pill"
-        href="${escapeHtml(place.google_maps_url)}"
-        target="_blank"
-        rel="noreferrer"
-      >
-        Open in Maps
-      </a>
-    `);
+function getPageSection() {
+  if (page.startsWith("patient") || page === "drug-detail") {
+    return "patient";
   }
 
-  actions.push(`
-    <button
-      class="action-pill"
-      type="button"
-      data-copy-address="${escapeHtml(place.address)}"
-      data-pharmacy="${escapeHtml(place.name)}"
-    >
-      Copy address
-    </button>
-  `);
+  if (page === "prescriber") {
+    return "prescriber";
+  }
 
-  return actions.join("");
+  if (page === "methodology") {
+    return "methodology";
+  }
+
+  return "home";
 }
 
-function buildResultCard(place, medication, guidance = {}, label = "") {
-  const status = getOpenStatus(place);
-  const labelMarkup = label
-    ? `<span class="inline-badge inline-badge-highlight">${escapeHtml(label)}</span>`
-    : "";
-  const ratingLabel = formatRating(place.rating, place.user_ratings_total);
-  const businessStatus = place.business_status ? ` • ${escapeHtml(place.business_status)}` : "";
-  const nextStep =
-    place.next_step ||
-    guidance.recommended_action ||
-    "Call to confirm availability before sending the prescription.";
-  const matchReason =
-    place.match_reason ||
-    guidance.summary ||
-    `Use this pharmacy as part of the ${medication} search workflow.`;
-  const inventoryNote =
-    place.inventory_note ||
-    guidance.demo_boundary ||
-    `Real-time inventory for ${medication} is not yet verified in this demo.`;
-  const workflowLabel =
-    place.workflow_label || guidance.ranking_focus_label || "Medication guidance";
-
-  return `
-    <article class="result-card${label ? " is-recommended" : ""}">
-      <div class="result-card-top">
-        <div class="result-copy">
-          <div class="result-badges">
-            ${labelMarkup}
-            <span class="inline-badge">${escapeHtml(formatDistance(place.distance_miles))}</span>
-            <span class="inline-badge">${escapeHtml(ratingLabel)}</span>
-          </div>
-          <h4 class="result-title">${escapeHtml(place.name)}</h4>
-          <p class="result-subtitle">
-            ${escapeHtml(place.address)}${businessStatus}
-          </p>
-        </div>
-        <div class="result-status">
-          <span class="status-badge ${escapeHtml(status.className)}">${escapeHtml(
-            status.label,
-          )}</span>
-          <span class="updated-label">${escapeHtml(status.detail)}</span>
-        </div>
-      </div>
-
-      <div class="result-meta">
-        <div class="result-meta-block">
-          <span>Lookup source</span>
-          <strong>Real Google Places pharmacy</strong>
-        </div>
-        <div class="result-meta-block">
-          <span>Why try this one</span>
-          <strong>${escapeHtml(matchReason)}</strong>
-        </div>
-        <div class="result-meta-block">
-          <span>Next question</span>
-          <strong>${escapeHtml(nextStep)}</strong>
-        </div>
-      </div>
-
-      <p class="result-note">
-        ${escapeHtml(inventoryNote)}
-      </p>
-
-      <div class="result-footer">
-        <div class="tag-row">
-          <span class="tag-pill">${escapeHtml(place.review_label)}</span>
-          <span class="tag-pill">${escapeHtml(status.label)}</span>
-          <span class="tag-pill">${escapeHtml(workflowLabel)}</span>
-          <span class="tag-pill">Google Places result</span>
-        </div>
-        <div class="card-actions">
-          ${buildResultActions(place)}
-        </div>
-      </div>
-    </article>
-  `;
+function getQueryParam() {
+  return sanitizeText(new URLSearchParams(window.location.search).get("query"));
 }
 
-function renderMetrics(metrics) {
-  summaryMetrics.innerHTML = metrics
-    .map(
-      (metric) => `
-        <div class="metric-pill">
-          <span>${escapeHtml(metric.label)}</span>
-          <strong>${escapeHtml(metric.value)}</strong>
-        </div>
-      `,
-    )
-    .join("");
+function getIdParam() {
+  return sanitizeText(new URLSearchParams(window.location.search).get("id"));
 }
 
-function renderSampleSearches(activeId = "") {
-  scenarioList.innerHTML = client
-    .listSampleSearches()
-    .map((sample) => {
-      const activeClass = sample.id === activeId ? " is-active" : "";
+function getFeaturedSampleLinks(mode = "patient") {
+  return featuredQueries
+    .map((item) => {
+      const href =
+        mode === "prescriber"
+          ? `/prescriber/?query=${encodeURIComponent(item.query)}`
+          : `/patient/results/?query=${encodeURIComponent(item.query)}`;
+
       return `
-        <button
-          class="scenario-card${activeClass}"
-          type="button"
-          data-scenario-id="${escapeHtml(sample.id)}"
-        >
-          <span>${escapeHtml(sample.label)}</span>
-          <strong>${escapeHtml(sample.title)}</strong>
-          <p>${escapeHtml(sample.description)}</p>
-        </button>
+        <a class="sample-card surface-card" href="${href}">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(item.query)}</strong>
+          <p>${escapeHtml(item.description)}</p>
+        </a>
       `;
     })
     .join("");
 }
 
-function populateMedicationList() {
-  medicationOptions.innerHTML = client
-    .listMedicationSuggestions()
-    .map((medication) => `<option value="${escapeHtml(medication)}"></option>`)
-    .join("");
+function buildHeader() {
+  const activeSection = getPageSection();
+
+  headerRoot.innerHTML = `
+    <div class="header-shell">
+      <a class="brand" href="/" aria-label="PharmaPath home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span class="brand-copy">
+          <span class="brand-name">PharmaPath</span>
+          <span class="brand-subtitle">FDA access signals</span>
+        </span>
+      </a>
+
+      <button
+        class="nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="site-nav"
+      >
+        <span class="sr-only">Toggle navigation</span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <nav class="top-nav" id="site-nav" aria-label="Primary">
+        <a class="${activeSection === "home" ? "is-active" : ""}" href="/">Home</a>
+        <a class="${activeSection === "patient" ? "is-active" : ""}" href="/patient/">Patient</a>
+        <a class="${activeSection === "prescriber" ? "is-active" : ""}" href="/prescriber/">Prescriber</a>
+        <a class="${activeSection === "methodology" ? "is-active" : ""}" href="/methodology/">Methodology</a>
+        <a class="button button-nav" href="/patient/">Start search</a>
+      </nav>
+    </div>
+  `;
 }
 
-function getFilters() {
-  return {
-    medication: medicationInput.value.trim(),
-    location: locationInput.value.trim(),
-    radiusMiles: Number(radiusSelect.value),
-    sortBy: sortSelect.value,
-    onlyOpenNow: openNowToggle.checked,
-  };
-}
-
-function setFilters(filters) {
-  medicationInput.value = filters.medication || "";
-  locationInput.value = filters.location || "";
-  radiusSelect.value = String(filters.radiusMiles || 5);
-  sortSelect.value = filters.sortBy || "best_match";
-  openNowToggle.checked = Boolean(filters.onlyOpenNow);
-}
-
-function findMatchingSample(filters) {
-  return client.listSampleSearches().find((sample) => {
-    const candidate = sample.filters;
-    return (
-      candidate.medication === filters.medication &&
-      candidate.location === filters.location &&
-      Number(candidate.radiusMiles) === Number(filters.radiusMiles) &&
-      candidate.sortBy === filters.sortBy &&
-      Boolean(candidate.onlyOpenNow) === Boolean(filters.onlyOpenNow)
-    );
-  });
-}
-
-function setActionFeedback(message = "", state = "") {
-  if (actionFeedbackTimer) {
-    clearTimeout(actionFeedbackTimer);
-    actionFeedbackTimer = undefined;
-  }
-
-  actionFeedback.classList.remove("is-error", "is-loading", "is-success");
-
-  if (!message) {
-    actionFeedback.textContent = "";
-    return;
-  }
-
-  actionFeedback.textContent = message;
-
-  if (state) {
-    actionFeedback.classList.add(`is-${state}`);
-  }
-
-  if (state === "success") {
-    actionFeedbackTimer = window.setTimeout(() => {
-      actionFeedback.textContent = "";
-      actionFeedback.classList.remove("is-success");
-    }, 2400);
-  }
-}
-
-function setSearchingState(isSearching) {
-  submitButton.disabled = isSearching;
-  submitButton.textContent = isSearching ? "Searching..." : "Find pharmacies";
-  resetButton.disabled = isSearching;
-}
-
-function renderRecommended(payload) {
-  const recommended = payload.recommended;
-  const guidance = payload.guidance || {};
-  const guidanceTags = Array.isArray(guidance.tags)
-    ? guidance.tags
-        .map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`)
-        .join("")
-    : "";
-  const questionMarkup =
-    Array.isArray(guidance.questions_to_ask) && guidance.questions_to_ask.length
-      ? `
-        <ul class="guidance-list">
-          ${guidance.questions_to_ask
-            .map((question) => `<li>${escapeHtml(question)}</li>`)
-            .join("")}
-        </ul>
-      `
-      : "";
-
-  if (!recommended) {
-    recommendedCard.innerHTML = `
-      <p class="panel-eyebrow">Recommended first step</p>
-      <p class="recommended-copy">
-        No nearby pharmacy results surfaced for this search. Try widening the radius or using a broader neighborhood or borough.
-      </p>
-      <div class="guidance-panel">
-        <p class="panel-eyebrow">Medication-specific guidance</p>
-        <h4 class="guidance-title">${escapeHtml(guidance.title || "Availability guidance")}</h4>
-        <p class="guidance-summary">${escapeHtml(
-          guidance.summary ||
-            "PharmaPath separates the real pharmacy lookup from the medication guidance, even when no nearby result is available.",
-        )}</p>
-        <p class="guidance-footnote">${escapeHtml(guidance.demo_boundary || payload.disclaimer)}</p>
-      </div>
-    `;
-    return;
-  }
-
-  const status = getOpenStatus(recommended);
-  const ratingLabel = formatRating(recommended.rating, recommended.user_ratings_total);
-
-  recommendedCard.innerHTML = `
-    <div class="recommended-head">
+function buildFooter() {
+  footerRoot.innerHTML = `
+    <div class="footer-shell page-shell">
       <div>
-        <p class="panel-eyebrow">Recommended first pharmacy to check</p>
-        <h3 class="recommended-title">${escapeHtml(recommended.name)}</h3>
-        <p class="recommended-subtitle">
-          ${escapeHtml(recommended.address)} • ${escapeHtml(
-            formatDistance(recommended.distance_miles),
-          )} away
+        <p class="footer-brand">PharmaPath</p>
+        <p class="footer-copy">
+          Signal-based medication access guidance built on openFDA, with explicit
+          boundaries around what the data cannot tell you.
         </p>
       </div>
-      <span class="status-badge ${escapeHtml(status.className)}">${escapeHtml(
-        status.label,
-      )}</span>
-    </div>
-
-    <p class="recommended-copy">
-      ${escapeHtml(
-        `${recommended.name} is the first pharmacy to call for ${payload.query.medication} near ${payload.location.formatted_address}.`,
-      )}
-    </p>
-
-    <div class="highlight-grid">
-      <div class="highlight-block">
-        <span>Search context</span>
-        <strong>${escapeHtml(
-          `${payload.query.medication} • ${payload.query.radius_miles} mi radius`,
-        )}</strong>
+      <div class="footer-links">
+        <a href="/patient/">Patient search</a>
+        <a href="/prescriber/">Prescriber view</a>
+        <a href="/methodology/">Methodology</a>
       </div>
-      <div class="highlight-block">
-        <span>Ranking focus</span>
-        <strong>${escapeHtml(guidance.ranking_focus_label || ratingLabel)}</strong>
-      </div>
-      <div class="highlight-block">
-        <span>Next handoff</span>
-        <strong>${escapeHtml(
-          recommended.next_step ||
-            guidance.recommended_action ||
-            "Call before sending or transferring the prescription.",
-        )}</strong>
-      </div>
-    </div>
-
-    <div class="guidance-panel">
-      <p class="panel-eyebrow">Medication-specific guidance</p>
-      <h4 class="guidance-title">${escapeHtml(guidance.title || "Availability guidance")}</h4>
-      <p class="guidance-summary">${escapeHtml(guidance.summary || payload.disclaimer)}</p>
-      <div class="tag-row">
-        ${guidanceTags}
-        <span class="tag-pill">Live pharmacy lookup</span>
-      </div>
-      ${questionMarkup}
-      <p class="guidance-footnote">${escapeHtml(
-        guidance.demo_boundary || payload.disclaimer,
-      )}</p>
-    </div>
-
-    <div class="tag-row">
-      <span class="tag-pill">${escapeHtml(status.label)}</span>
-      <span class="tag-pill">${escapeHtml(recommended.review_label)}</span>
-      <span class="tag-pill">${escapeHtml(getSortLabel(payload.query.sort_by))}</span>
-    </div>
-
-    <div class="card-actions">
-      ${buildResultActions(recommended)}
     </div>
   `;
 }
 
-function renderDigest(payload) {
-  const guidance = payload.guidance || {};
-  const digestItems = [
-    guidance.real_signal ||
-      `Google Places resolved "${payload.query.location}" to ${payload.location.formatted_address}.`,
-    guidance.ranking_focus ||
-      `Results are ranked by ${getSortLabel(payload.query.sort_by)} so the first recommendation is easier to explain in the demo.`,
-    guidance.recommended_action ||
-      `Use PharmaPath to decide who to call first for ${payload.query.medication}, then confirm stock directly.`,
-    guidance.demo_boundary ||
-      `Real-time inventory for ${payload.query.medication} is not yet verified. PharmaPath is identifying the best pharmacies to contact first.`,
-  ];
+function initGlobalChrome() {
+  buildHeader();
+  buildFooter();
 
-  if (payload.query.only_open_now) {
-    digestItems.push("This search is limited to pharmacies Google marks open now.");
+  const header = document.querySelector("[data-site-header]");
+  const navToggle = document.querySelector(".nav-toggle");
+  const nav = document.querySelector(".top-nav");
+
+  function setHeaderState() {
+    header.classList.toggle("is-scrolled", window.scrollY > 16);
   }
 
-  if (payload.counts.hours_unknown) {
-    digestItems.push(
-      `${payload.counts.hours_unknown} result${
-        payload.counts.hours_unknown === 1 ? "" : "s"
-      } did not include live open/closed status from Google.`,
-    );
+  function toggleNav(forceState) {
+    const shouldOpen =
+      typeof forceState === "boolean"
+        ? forceState
+        : !header.classList.contains("is-open");
+
+    header.classList.toggle("is-open", shouldOpen);
+    document.body.classList.toggle("is-nav-open", shouldOpen);
+    navToggle.setAttribute("aria-expanded", String(shouldOpen));
   }
 
-  outcomeDigest.innerHTML = digestItems
-    .map((item) => `<div class="digest-item">${escapeHtml(item)}</div>`)
-    .join("");
-}
+  navToggle?.addEventListener("click", () => toggleNav());
 
-function renderPrimaryResults(payload) {
-  const primaryResults = payload.results.slice(0, 3);
-
-  resultsToolbarCopy.textContent = `${payload.results.length} real Google pharmacy matches ranked by ${getSortLabel(
-    payload.query.sort_by,
-  )} within ${payload.query.radius_miles} miles of ${payload.location.formatted_address}.`;
-
-  resultsBody.innerHTML = primaryResults
-    .map((place, index) =>
-      buildResultCard(
-        place,
-        payload.query.medication,
-        payload.guidance,
-        index === 0 ? "Top recommendation" : "",
-      ),
-    )
-    .join("");
-
-  if (primaryResults.length) {
-    emptyState.hidden = true;
-    return;
-  }
-
-  emptyState.hidden = false;
-  emptyStateTitle.textContent = "No nearby pharmacy results";
-  emptyStateCopy.textContent =
-    "PharmaPath could not find pharmacies for this location and filter combination.";
-  emptyStateSuggestion.textContent =
-    "Try broadening the location text, increasing the radius, or turning off the open-now filter.";
-}
-
-function renderAdditionalResults(payload) {
-  const overflowResults = payload.results.slice(3);
-  const overflowToggle = document.querySelector("#overflow-toggle");
-  const overflowToggleText = document.querySelector("#overflow-toggle-text");
-  const overflowToggleIcon = document.querySelector("#overflow-toggle-icon");
-
-  if (!overflowResults.length) {
-    alternativesSection.hidden = true;
-    alternativesBody.innerHTML = "";
-    return;
-  }
-
-  alternativesSection.hidden = false;
-  alternativesBody.classList.remove("overflow-expanded");
-  alternativesBody.classList.add("overflow-collapsed");
-  overflowToggle.classList.remove("is-open");
-  overflowToggleText.textContent = `Show ${overflowResults.length} more nearby ${
-    overflowResults.length === 1 ? "pharmacy" : "pharmacies"
-  }`;
-  overflowToggleIcon.textContent = "+";
-
-  alternativesBody.innerHTML = overflowResults
-    .map((place) => buildResultCard(place, payload.query.medication, payload.guidance, "Backup option"))
-    .join("");
-}
-
-function renderResponse(payload) {
-  const bestRating = payload.results.reduce((current, place) => {
-    if (!Number.isFinite(place.rating)) {
-      return current;
-    }
-
-    return Math.max(current, place.rating);
-  }, 0);
-  const activeSample = findMatchingSample({
-    medication: payload.query.medication,
-    location: payload.query.location,
-    radiusMiles: payload.query.radius_miles,
-    sortBy: payload.query.sort_by,
-    onlyOpenNow: payload.query.only_open_now,
+  nav?.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => toggleNav(false));
   });
 
-  queryChip.textContent = `${payload.query.medication} • ${payload.location.formatted_address}`;
-  resultsHeadline.textContent = `${payload.results.length} nearby pharm${
-    payload.results.length === 1 ? "acy" : "acies"
-  } found for ${payload.query.medication}`;
-  resultsSummary.textContent =
-    "Pharmacy names, addresses, ratings, and open-now signals come from Google Places. Medication-specific guidance below shapes the call workflow but does not verify stock.";
-  scenarioContext.textContent = payload.guidance?.summary || payload.disclaimer;
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      toggleNav(false);
+    }
+  });
 
-  renderMetrics([
-    { label: "Nearby results", value: String(payload.counts.total) },
-    { label: "Open now", value: String(payload.counts.open_now) },
-    {
-      label: "Top rating",
-      value: bestRating ? `${bestRating.toFixed(1)} / 5` : "Unavailable",
-    },
-    { label: "Search radius", value: `${payload.query.radius_miles} mi` },
-  ]);
+  document.addEventListener("click", (event) => {
+    if (header.classList.contains("is-open") && !event.target.closest(".header-shell")) {
+      toggleNav(false);
+    }
+  });
 
-  renderSampleSearches(activeSample?.id);
-  renderRecommended(payload);
-  renderDigest(payload);
-  renderPrimaryResults(payload);
-  renderAdditionalResults(payload);
-}
-
-function renderLoadingState(filters) {
-  queryChip.textContent = `${filters.medication || "Medication"} • ${
-    filters.location || "Location"
-  }`;
-  resultsHeadline.textContent = "Searching nearby pharmacies...";
-  resultsSummary.textContent =
-    "Resolving the location and loading real Google Places results.";
-  scenarioContext.textContent =
-    "Medication-specific guidance is prepared separately from the real pharmacy lookup.";
-  renderMetrics([
-    { label: "Nearby results", value: "--" },
-    { label: "Open now", value: "--" },
-    { label: "Top rating", value: "--" },
-    { label: "Search radius", value: `${filters.radiusMiles || 5} mi` },
-  ]);
-  recommendedCard.innerHTML = `
-    <p class="panel-eyebrow">Recommended first step</p>
-    <p class="recommended-copy">Looking up nearby pharmacies and preparing the best first call.</p>
-    <div class="guidance-panel">
-      <p class="panel-eyebrow">Medication-specific guidance</p>
-      <p class="guidance-summary">The location is being geocoded first, then PharmaPath will layer medication-specific call guidance on top of the real pharmacy list.</p>
-    </div>
-  `;
-  outcomeDigest.innerHTML = `
-    <div class="digest-item">The location is being geocoded before nearby pharmacy results are ranked.</div>
-    <div class="digest-item">Medication-specific guidance is prepared separately from the live Google pharmacy lookup.</div>
-  `;
-  resultsToolbarCopy.textContent = "Loading nearby pharmacy results...";
-  resultsBody.innerHTML = "";
-  alternativesSection.hidden = true;
-  alternativesBody.innerHTML = "";
-  emptyState.hidden = true;
-}
-
-function renderErrorState(message, filters) {
-  queryChip.textContent = `${filters.medication || "Medication"} • ${
-    filters.location || "Location"
-  }`;
-  resultsHeadline.textContent = "Search unavailable";
-  resultsSummary.textContent = message;
-  scenarioContext.textContent =
-    "PharmaPath separates live pharmacy lookup from medication guidance. If the real lookup fails, the UI should fail clearly instead of faking availability.";
-  renderMetrics([
-    { label: "Nearby results", value: "--" },
-    { label: "Open now", value: "--" },
-    { label: "Top rating", value: "--" },
-    { label: "Search radius", value: `${filters.radiusMiles || 5} mi` },
-  ]);
-  recommendedCard.innerHTML = `
-    <p class="panel-eyebrow">Recommended first step</p>
-    <p class="recommended-copy">Adjust the medication or location and run the search again.</p>
-    <div class="guidance-panel">
-      <p class="panel-eyebrow">Medication-specific guidance</p>
-      <p class="guidance-summary">No medication guidance is shown as a substitute for the real pharmacy search when the backend returns an error.</p>
-    </div>
-  `;
-  outcomeDigest.innerHTML = `
-    <div class="digest-item">No pharmacy results were shown because the backend returned an error.</div>
-    <div class="digest-item">This protects the demo from implying live medication availability when the search failed.</div>
-  `;
-  resultsBody.innerHTML = "";
-  alternativesSection.hidden = true;
-  alternativesBody.innerHTML = "";
-  emptyState.hidden = false;
-  emptyStateTitle.textContent = "Unable to load pharmacy results";
-  emptyStateCopy.textContent = message;
-  emptyStateSuggestion.textContent =
-    "Check the location text, expand the radius, or verify that GOOGLE_API_KEY is configured.";
-}
-
-async function runSearch(filters = getFilters()) {
-  const activeSample = findMatchingSample(filters);
-
-  if (!filters.medication || !filters.location) {
-    renderSampleSearches(activeSample?.id);
-    renderErrorState("Enter both a medication and a location to search.", filters);
-    setActionFeedback("Enter both a medication and a location to search.", "error");
-    return;
-  }
-
-  renderSampleSearches(activeSample?.id);
-  renderLoadingState(filters);
-  setSearchingState(true);
-  setActionFeedback("Resolving the location and loading nearby pharmacies...", "loading");
-
-  try {
-    const response = await client.searchPharmacies(filters);
-    renderResponse(response);
-    setActionFeedback(
-      `Loaded ${response.results.length} nearby pharmacies for ${response.query.medication}.`,
-      "success",
-    );
-  } catch (error) {
-    renderErrorState(error.message, filters);
-    setActionFeedback(error.message, "error");
-  } finally {
-    setSearchingState(false);
-  }
-}
-
-async function copyAddress(address, pharmacy) {
-  try {
-    await navigator.clipboard.writeText(address);
-    setActionFeedback(`Copied ${pharmacy} address.`, "success");
-  } catch (error) {
-    setActionFeedback("Unable to copy the address on this device.", "error");
-  }
-}
-
-function setHeaderState() {
-  header.classList.toggle("is-scrolled", window.scrollY > 24);
-}
-
-function toggleNav(forceState) {
-  const shouldOpen =
-    typeof forceState === "boolean"
-      ? forceState
-      : !header.classList.contains("is-open");
-
-  header.classList.toggle("is-open", shouldOpen);
-  document.body.classList.toggle("is-nav-open", shouldOpen);
-  navToggle.setAttribute("aria-expanded", String(shouldOpen));
-}
-
-function observeSections() {
-  const sections = Array.from(document.querySelectorAll("[data-section]"));
-
-  const navObserver = new IntersectionObserver(
-    (entries) => {
-      const visibleEntry = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
-
-      if (!visibleEntry) {
-        return;
-      }
-
-      const activeId = visibleEntry.target.id;
-      navLinks.forEach((link) => {
-        const isActive = link.getAttribute("href") === `#${activeId}`;
-        link.classList.toggle("is-active", isActive);
-      });
-    },
-    {
-      threshold: [0.25, 0.45, 0.65],
-      rootMargin: "-20% 0px -45% 0px",
-    },
-  );
-
-  sections.forEach((section) => navObserver.observe(section));
+  window.addEventListener("scroll", setHeaderState, { passive: true });
+  setHeaderState();
 }
 
 function observeReveals() {
@@ -716,94 +210,702 @@ function observeReveals() {
         revealObserver.unobserve(entry.target);
       });
     },
-    { threshold: 0.2 },
+    { threshold: 0.18 },
   );
 
   revealNodes.forEach((node) => revealObserver.observe(node));
 }
 
-populateMedicationList();
-setFilters(initialFilters);
-renderSampleSearches(client.listSampleSearches()[0].id);
-renderLoadingState(initialFilters);
-setHeaderState();
-observeSections();
-observeReveals();
-runSearch(initialFilters);
-
-searchForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  runSearch();
-});
-
-scenarioList.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-scenario-id]");
-
-  if (!button) {
-    return;
-  }
-
-  const scenario = client
-    .listSampleSearches()
-    .find((item) => item.id === button.dataset.scenarioId);
-
-  if (!scenario) {
-    return;
-  }
-
-  setFilters(scenario.filters);
-  runSearch(scenario.filters);
-});
-
-resetButton.addEventListener("click", () => {
-  setFilters(initialFilters);
-  runSearch(initialFilters);
-});
-
-window.addEventListener("scroll", setHeaderState, { passive: true });
-
-navToggle.addEventListener("click", () => {
-  toggleNav();
-});
-
-navLinks.forEach((link) => {
-  link.addEventListener("click", () => {
-    toggleNav(false);
+function setSearchInputs() {
+  const query = getQueryParam();
+  document.querySelectorAll('input[name="query"]').forEach((input) => {
+    input.value = query;
   });
-});
+}
 
-document.addEventListener("click", (event) => {
-  const copyButton = event.target.closest("[data-copy-address]");
+function populateSampleLinks() {
+  document.querySelectorAll("[data-sample-links]").forEach((container) => {
+    container.innerHTML = getFeaturedSampleLinks(container.dataset.sampleLinks);
+  });
+}
 
-  if (copyButton) {
-    copyAddress(copyButton.dataset.copyAddress, copyButton.dataset.pharmacy);
+function renderSignalBadge(signal) {
+  const levelClass =
+    signal.level === "higher-friction"
+      ? "signal-high"
+      : signal.level === "mixed"
+        ? "signal-mixed"
+        : "signal-steady";
+
+  return `
+    <span class="signal-badge ${levelClass}">
+      <span>${escapeHtml(signal.label)}</span>
+      <small>${escapeHtml(signal.confidence_label)}</small>
+    </span>
+  `;
+}
+
+function renderMetric(label, value) {
+  return `
+    <div class="metric-card">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </div>
+  `;
+}
+
+function renderList(items = []) {
+  return `
+    <ul class="list-clean">
+      ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+    </ul>
+  `;
+}
+
+function renderTagList(items = []) {
+  if (!items.length) {
+    return `<p class="muted-copy">Unavailable</p>`;
+  }
+
+  return `
+    <div class="tag-list">
+      ${items.map((item) => `<span class="tag-pill">${escapeHtml(item)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function renderLoadingState(mode = "patient") {
+  return `
+    <div class="skeleton-stack">
+      <div class="surface-card skeleton-card skeleton-hero"></div>
+      <div class="skeleton-grid">
+        <div class="surface-card skeleton-card"></div>
+        <div class="surface-card skeleton-card"></div>
+      </div>
+      ${
+        mode === "prescriber"
+          ? `<div class="surface-card skeleton-card skeleton-tall"></div>`
+          : `<div class="surface-card skeleton-card skeleton-tall"></div>`
+      }
+    </div>
+  `;
+}
+
+function renderIdleState(mode = "patient") {
+  const heading =
+    mode === "prescriber"
+      ? "Search for a medication to load prescriber intelligence."
+      : "Search for a medication to load patient-friendly access results.";
+  const body =
+    mode === "prescriber"
+      ? "The prescriber route will focus on shortage, manufacturer, recall, and formulation context."
+      : "The patient route will answer likely access friction first, then suggest what to ask next.";
+  const sampleMode = mode === "prescriber" ? "prescriber" : "patient";
+
+  return `
+    <div class="surface-card empty-card">
+      <p class="eyebrow eyebrow-dark">Ready when you are</p>
+      <h2>${escapeHtml(heading)}</h2>
+      <p>${escapeHtml(body)}</p>
+      <div class="sample-grid">${getFeaturedSampleLinks(sampleMode)}</div>
+    </div>
+  `;
+}
+
+function renderErrorState(message, retryHref) {
+  return `
+    <div class="surface-card empty-card empty-card-error">
+      <p class="eyebrow eyebrow-dark">Unable to load the search</p>
+      <h2>${escapeHtml(message)}</h2>
+      <p>
+        PharmaPath is not substituting fake availability when the FDA fetch fails.
+        Retry the search or review the methodology page for the current data-source boundary.
+      </p>
+      <div class="action-row">
+        <a class="button button-secondary" href="${retryHref}">Try again</a>
+        <a class="button button-ghost" href="/methodology/">Review methodology</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderEmptyMatchState(query) {
+  return `
+    <div class="surface-card empty-card">
+      <p class="eyebrow eyebrow-dark">No clear FDA match</p>
+      <h2>No FDA-listed medication family surfaced for “${escapeHtml(query)}”.</h2>
+      <p>
+        Try a cleaner brand or generic name, or remove extra wording so the search can match FDA records more directly.
+      </p>
+      <div class="sample-grid">${getFeaturedSampleLinks("patient")}</div>
+    </div>
+  `;
+}
+
+function renderCandidateCard(query, match, hrefBase = "/drug/") {
+  return `
+    <a
+      class="candidate-card surface-card"
+      href="${hrefBase}?query=${encodeURIComponent(query)}&id=${encodeURIComponent(match.id)}"
+    >
+      <div class="candidate-head">
+        <div>
+          <span class="candidate-label">${escapeHtml(match.display_name)}</span>
+          <h3>${escapeHtml(match.canonical_label)}</h3>
+        </div>
+        ${renderSignalBadge(match.access_signal)}
+      </div>
+      <p class="candidate-copy">${escapeHtml(match.access_signal.patient_summary)}</p>
+      <div class="candidate-meta">
+        ${renderMetric("FDA listings", String(match.active_listing_count))}
+        ${renderMetric("Manufacturers", String(match.manufacturers.length))}
+      </div>
+    </a>
+  `;
+}
+
+function buildFreshnessLine(payload) {
+  const entries = [
+    payload.data_freshness.ndc_last_updated
+      ? `Listings: ${formatDate(payload.data_freshness.ndc_last_updated)}`
+      : "",
+    payload.data_freshness.shortages_last_updated
+      ? `Shortages: ${formatDate(payload.data_freshness.shortages_last_updated)}`
+      : "",
+    payload.data_freshness.recalls_last_updated
+      ? `Recalls: ${formatDate(payload.data_freshness.recalls_last_updated)}`
+      : "",
+  ].filter(Boolean);
+
+  if (!entries.length) {
+    return "FDA dataset freshness was unavailable for this request.";
+  }
+
+  return `FDA datasets used in this view: ${entries.join(" · ")}.`;
+}
+
+function renderPatientResults(payload) {
+  const match = payload.matches[0];
+
+  if (!match) {
+    return renderEmptyMatchState(payload.query.raw);
+  }
+
+  document.title = `${match.display_name} | Patient Results | PharmaPath`;
+
+  return `
+    <div class="results-stack">
+      <section class="surface-card summary-card">
+        <div class="summary-head">
+          <div>
+            <p class="eyebrow eyebrow-dark">Top patient match</p>
+            <h2>${escapeHtml(match.display_name)}</h2>
+            <p class="summary-subtitle">${escapeHtml(match.canonical_label)}</p>
+          </div>
+          ${renderSignalBadge(match.access_signal)}
+        </div>
+
+        <p class="lead-copy">${escapeHtml(match.patient_view.summary)}</p>
+
+        <div class="metric-grid">
+          ${renderMetric("FDA listings", String(match.active_listing_count))}
+          ${renderMetric("Manufacturers", String(match.manufacturers.length))}
+          ${renderMetric("Shortage entries", String(match.evidence.shortages.active_count))}
+          ${renderMetric("Recent recalls", String(match.evidence.recalls.recent_count))}
+        </div>
+
+        <p class="subtle-note">${escapeHtml(buildFreshnessLine(payload))}</p>
+      </section>
+
+      <div class="content-grid">
+        <section class="surface-card">
+          <p class="eyebrow eyebrow-dark">What we know</p>
+          <h3>Directly from FDA data</h3>
+          ${renderList(match.patient_view.what_we_know)}
+        </section>
+
+        <section class="surface-card">
+          <p class="eyebrow eyebrow-dark">What may make it harder</p>
+          <h3>Signal-based friction clues</h3>
+          ${renderList(match.patient_view.what_may_make_it_harder)}
+        </section>
+      </div>
+
+      <section class="surface-card">
+        <p class="eyebrow eyebrow-dark">What to ask next</p>
+        <h3>Use the next question instead of guessing.</h3>
+        ${renderList(match.patient_view.questions_to_ask)}
+        <div class="action-row">
+          <a
+            class="button button-primary"
+            href="/drug/?query=${encodeURIComponent(payload.query.raw)}&id=${encodeURIComponent(match.id)}"
+          >
+            Open drug detail
+          </a>
+          <a
+            class="button button-secondary"
+            href="/prescriber/?query=${encodeURIComponent(payload.query.raw)}&id=${encodeURIComponent(match.id)}"
+          >
+            View prescriber intelligence
+          </a>
+        </div>
+      </section>
+
+      <section class="surface-card">
+        <p class="eyebrow eyebrow-dark">Important limitation</p>
+        <h3>What PharmaPath still cannot tell you</h3>
+        ${renderList(match.patient_view.unavailable)}
+      </section>
+
+      ${
+        payload.matches.length > 1
+          ? `
+            <section class="surface-card">
+              <p class="eyebrow eyebrow-dark">Other matching families</p>
+              <h3>Keep the alternatives organized.</h3>
+              <div class="candidate-grid">
+                ${payload.matches
+                  .slice(1)
+                  .map((candidate) => renderCandidateCard(payload.query.raw, candidate))
+                  .join("")}
+              </div>
+            </section>
+          `
+          : ""
+      }
+    </div>
+  `;
+}
+
+function renderEvidenceAccordion(title, body, open = false) {
+  return `
+    <details class="accordion" ${open ? "open" : ""}>
+      <summary>${escapeHtml(title)}</summary>
+      <div class="accordion-body">${body}</div>
+    </details>
+  `;
+}
+
+function renderDrugDetail(payload, match) {
+  document.title = `${match.display_name} | Drug Detail | PharmaPath`;
+
+  const shortageBody = match.evidence.shortages.items.length
+    ? match.evidence.shortages.items
+        .map(
+          (item) => `
+            <article class="evidence-row">
+              <div>
+                <strong>${escapeHtml(item.presentation || item.status)}</strong>
+                <p>${escapeHtml(item.shortageReason || item.availability || "No additional FDA detail provided.")}</p>
+              </div>
+              <span>${escapeHtml(item.updateLabel)}</span>
+            </article>
+          `,
+        )
+        .join("")
+    : `<p class="muted-copy">No matching shortage record surfaced for this product family.</p>`;
+
+  const recallBody = match.evidence.recalls.items.length
+    ? match.evidence.recalls.items
+        .map(
+          (item) => `
+            <article class="evidence-row">
+              <div>
+                <strong>${escapeHtml(item.classification || item.status)}</strong>
+                <p>${escapeHtml(item.reason || item.productDescription || "No additional recall reason provided.")}</p>
+              </div>
+              <span>${escapeHtml(item.reportDateLabel)}</span>
+            </article>
+          `,
+        )
+        .join("")
+    : `<p class="muted-copy">No matching recall record surfaced in the recent FDA enforcement data.</p>`;
+
+  const approvalBody = `
+    <div class="detail-block">
+      <p><strong>Sponsor:</strong> ${escapeHtml(match.evidence.approvals.sponsor_name || "Unavailable")}</p>
+      <p><strong>Latest submission:</strong> ${escapeHtml(match.evidence.approvals.latest_submission_label || "Unavailable")}</p>
+    </div>
+    <div class="detail-block">
+      <p class="detail-heading">Recent manufacturing-related updates</p>
+      ${
+        match.evidence.approvals.recent_manufacturing_updates.length
+          ? renderList(
+              match.evidence.approvals.recent_manufacturing_updates.map(
+                (item) => `${item.type} · ${item.date_label} · ${item.status}`,
+              ),
+            )
+          : `<p class="muted-copy">No recent manufacturing update surfaced in the returned approval metadata.</p>`
+      }
+    </div>
+    <div class="detail-block">
+      <p class="detail-heading">Recent labeling updates</p>
+      ${
+        match.evidence.approvals.recent_labeling_updates.length
+          ? renderList(
+              match.evidence.approvals.recent_labeling_updates.map(
+                (item) => `${item.type} · ${item.date_label} · ${item.status}`,
+              ),
+            )
+          : `<p class="muted-copy">No recent labeling update surfaced in the returned approval metadata.</p>`
+      }
+    </div>
+  `;
+
+  return `
+    <div class="results-stack">
+      <a class="text-link muted-link" href="/patient/results/?query=${encodeURIComponent(payload.query.raw)}">Back to patient results</a>
+
+      <section class="surface-card summary-card">
+        <div class="summary-head">
+          <div>
+            <p class="eyebrow eyebrow-dark">Selected drug family</p>
+            <h2>${escapeHtml(match.display_name)}</h2>
+            <p class="summary-subtitle">${escapeHtml(match.canonical_label)}</p>
+          </div>
+          ${renderSignalBadge(match.access_signal)}
+        </div>
+
+        <p class="lead-copy">${escapeHtml(match.access_signal.prescriber_summary)}</p>
+
+        <div class="metric-grid">
+          ${renderMetric("FDA listings", String(match.active_listing_count))}
+          ${renderMetric("Manufacturers", String(match.manufacturers.length))}
+          ${renderMetric("Strengths", String(match.strengths.length))}
+          ${renderMetric("Recent recalls", String(match.evidence.recalls.recent_count))}
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <section class="surface-card">
+          <p class="eyebrow eyebrow-dark">Listed strengths</p>
+          <h3>Formulations and manufacturers</h3>
+          ${renderTagList(match.strengths)}
+          <div class="detail-block">
+            <p class="detail-heading">Manufacturers</p>
+            ${renderTagList(match.manufacturers)}
+          </div>
+          <div class="detail-block">
+            <p class="detail-heading">Application numbers</p>
+            ${renderTagList(match.application_numbers)}
+          </div>
+        </section>
+
+        <section class="surface-card">
+          <p class="eyebrow eyebrow-dark">Inference boundary</p>
+          <h3>Known, inferred, and unavailable</h3>
+          ${renderList(match.access_signal.reasoning)}
+          <p class="subtle-note">
+            This interpretation is signal-based. It is not confirmation of store-level availability.
+          </p>
+        </section>
+      </div>
+
+      <div class="accordion-stack">
+        ${renderEvidenceAccordion("Shortage entries", shortageBody, true)}
+        ${renderEvidenceAccordion("Recall context", recallBody)}
+        ${renderEvidenceAccordion("Approval and manufacturing context", approvalBody)}
+      </div>
+
+      <section class="surface-card">
+        <p class="eyebrow eyebrow-dark">Go deeper or translate back</p>
+        <div class="action-row">
+          <a
+            class="button button-secondary"
+            href="/prescriber/?query=${encodeURIComponent(payload.query.raw)}&id=${encodeURIComponent(match.id)}"
+          >
+            Prescriber intelligence
+          </a>
+          <a
+            class="button button-ghost"
+            href="/methodology/"
+          >
+            Review methodology
+          </a>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function renderPrescriberResults(payload, match) {
+  document.title = `${match.display_name} | Prescriber Intelligence | PharmaPath`;
+
+  return `
+    <div class="results-stack">
+      <section class="surface-card summary-card">
+        <div class="summary-head">
+          <div>
+            <p class="eyebrow eyebrow-dark">Prescriber summary</p>
+            <h2>${escapeHtml(match.display_name)}</h2>
+            <p class="summary-subtitle">${escapeHtml(match.canonical_label)}</p>
+          </div>
+          ${renderSignalBadge(match.access_signal)}
+        </div>
+
+        <p class="lead-copy">${escapeHtml(match.prescriber_view.summary)}</p>
+
+        <div class="metric-grid">
+          ${renderMetric("Active listings", String(match.active_listing_count))}
+          ${renderMetric("Manufacturers", String(match.manufacturers.length))}
+          ${renderMetric("Shortage records", String(match.evidence.shortages.active_count))}
+          ${renderMetric("Recent recalls", String(match.evidence.recalls.recent_count))}
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <section class="surface-card">
+          <p class="eyebrow eyebrow-dark">Prescriber takeaways</p>
+          <h3>Operational summary</h3>
+          ${renderList(match.prescriber_view.takeaways)}
+        </section>
+
+        <section class="surface-card">
+          <p class="eyebrow eyebrow-dark">Formulation spread</p>
+          <h3>What the FDA match set looks like</h3>
+          <div class="detail-block">
+            <p class="detail-heading">Strengths</p>
+            ${renderTagList(match.strengths)}
+          </div>
+          <div class="detail-block">
+            <p class="detail-heading">Routes and dosage forms</p>
+            ${renderTagList([...match.routes, ...match.dosage_forms])}
+          </div>
+          <div class="detail-block">
+            <p class="detail-heading">Manufacturers</p>
+            ${renderTagList(match.manufacturers)}
+          </div>
+        </section>
+      </div>
+
+      <section class="surface-card">
+        <p class="eyebrow eyebrow-dark">Alternative planning</p>
+        <h3>${match.prescriber_view.should_consider_alternatives ? "Worth considering earlier" : "No strong trigger from FDA data alone"}</h3>
+        <p>
+          ${
+            match.prescriber_view.should_consider_alternatives
+              ? "Because the returned FDA signals are not cleanly steady, it is reasonable to think about backup formulations, strengths, or therapeutic alternatives sooner."
+              : "The returned FDA data does not show a strong reason to abandon the original plan immediately, though local fill success may still vary."
+          }
+        </p>
+      </section>
+
+      ${
+        payload.matches.length > 1
+          ? `
+            <section class="surface-card">
+              <p class="eyebrow eyebrow-dark">Other matching product families</p>
+              <div class="candidate-grid">
+                ${payload.matches
+                  .filter((candidate) => candidate.id !== match.id)
+                  .map((candidate) => renderCandidateCard(payload.query.raw, candidate, "/prescriber/"))
+                  .join("")}
+              </div>
+            </section>
+          `
+          : ""
+      }
+
+      <section class="surface-card">
+        <p class="eyebrow eyebrow-dark">Evidence trail</p>
+        <div class="accordion-stack">
+          ${renderEvidenceAccordion(
+            "Shortage and discontinuation entries",
+            match.evidence.shortages.items.length
+              ? match.evidence.shortages.items
+                  .map(
+                    (item) => `
+                      <article class="evidence-row">
+                        <div>
+                          <strong>${escapeHtml(item.status)}</strong>
+                          <p>${escapeHtml(item.presentation || item.shortageReason || "No presentation detail available.")}</p>
+                        </div>
+                        <span>${escapeHtml(item.updateLabel)}</span>
+                      </article>
+                    `,
+                  )
+                  .join("")
+              : `<p class="muted-copy">No matching shortage entry surfaced for this product family.</p>`,
+            true,
+          )}
+          ${renderEvidenceAccordion(
+            "Recall notices",
+            match.evidence.recalls.items.length
+              ? match.evidence.recalls.items
+                  .map(
+                    (item) => `
+                      <article class="evidence-row">
+                        <div>
+                          <strong>${escapeHtml(item.classification || item.status)}</strong>
+                          <p>${escapeHtml(item.reason || item.productDescription || "No recall reason provided.")}</p>
+                        </div>
+                        <span>${escapeHtml(item.reportDateLabel)}</span>
+                      </article>
+                    `,
+                  )
+                  .join("")
+              : `<p class="muted-copy">No matching recall notice surfaced in the recent FDA enforcement data.</p>`,
+          )}
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+function findSelectedMatch(payload) {
+  const id = getIdParam();
+  if (!id) {
+    return payload.matches[0] || null;
+  }
+
+  return payload.matches.find((match) => match.id === id) || payload.matches[0] || null;
+}
+
+async function initPatientResultsPage() {
+  const root = document.querySelector("#patient-results-root");
+  const query = getQueryParam();
+
+  if (!root) {
     return;
   }
 
-  const overflowBtn = event.target.closest("#overflow-toggle");
-
-  if (overflowBtn) {
-    const isOpen = alternativesBody.classList.contains("overflow-expanded");
-    alternativesBody.classList.toggle("overflow-collapsed", isOpen);
-    alternativesBody.classList.toggle("overflow-expanded", !isOpen);
-    overflowBtn.classList.toggle("is-open", !isOpen);
-    const icon = overflowBtn.querySelector("#overflow-toggle-icon");
-    if (icon) icon.textContent = isOpen ? "+" : "−";
-    const text = overflowBtn.querySelector("#overflow-toggle-text");
-    if (text) text.textContent = isOpen ? text.textContent.replace("Hide", "Show") : text.textContent.replace("Show", "Hide");
+  if (!query) {
+    root.innerHTML = renderIdleState("patient");
     return;
   }
 
-  if (header.classList.contains("is-open") && !event.target.closest(".header-shell")) {
-    toggleNav(false);
-  }
-});
+  root.innerHTML = renderLoadingState("patient");
 
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    toggleNav(false);
+  try {
+    const payload = await client.getDrugIntelligence(query);
+    root.innerHTML = renderPatientResults(payload);
+  } catch (error) {
+    root.innerHTML = renderErrorState(
+      error.message,
+      `/patient/results/?query=${encodeURIComponent(query)}`,
+    );
   }
-});
+}
+
+async function initDrugDetailPage() {
+  const root = document.querySelector("#drug-detail-root");
+  const query = getQueryParam();
+
+  if (!root) {
+    return;
+  }
+
+  if (!query) {
+    root.innerHTML = renderIdleState("patient");
+    return;
+  }
+
+  root.innerHTML = renderLoadingState("detail");
+
+  try {
+    const payload = await client.getDrugIntelligence(query);
+    const match = findSelectedMatch(payload);
+
+    if (!match) {
+      root.innerHTML = renderEmptyMatchState(query);
+      return;
+    }
+
+    root.innerHTML = renderDrugDetail(payload, match);
+  } catch (error) {
+    root.innerHTML = renderErrorState(
+      error.message,
+      `/drug/?query=${encodeURIComponent(query)}&id=${encodeURIComponent(getIdParam())}`,
+    );
+  }
+}
+
+async function initPrescriberPage() {
+  const root = document.querySelector("#prescriber-root");
+  const query = getQueryParam();
+
+  if (!root) {
+    return;
+  }
+
+  if (!query) {
+    root.innerHTML = renderIdleState("prescriber");
+    return;
+  }
+
+  root.innerHTML = renderLoadingState("prescriber");
+
+  try {
+    const payload = await client.getDrugIntelligence(query);
+    const match = findSelectedMatch(payload);
+
+    if (!match) {
+      root.innerHTML = renderEmptyMatchState(query);
+      return;
+    }
+
+    root.innerHTML = renderPrescriberResults(payload, match);
+  } catch (error) {
+    root.innerHTML = renderErrorState(
+      error.message,
+      `/prescriber/?query=${encodeURIComponent(query)}&id=${encodeURIComponent(getIdParam())}`,
+    );
+  }
+}
+
+async function initMethodologyPage() {
+  const root = document.querySelector("#health-status-root");
+
+  if (!root) {
+    return;
+  }
+
+  try {
+    const payload = await client.getHealth();
+    root.innerHTML = `
+      <p class="eyebrow eyebrow-dark">Live status</p>
+      <h2>Data source: ${escapeHtml(payload.data_source || "openFDA")}</h2>
+      <p>
+        Health route is responding. Optional API key configured:
+        <strong>${payload.openfda_api_key_configured ? "yes" : "no"}</strong>.
+      </p>
+    `;
+  } catch (error) {
+    root.innerHTML = `
+      <p class="eyebrow eyebrow-dark">Live status</p>
+      <h2>Unable to load the health route</h2>
+      <p>${escapeHtml(error.message)}</p>
+    `;
+  }
+}
+
+function initPage() {
+  populateSampleLinks();
+  setSearchInputs();
+
+  if (page === "patient-results") {
+    initPatientResultsPage();
+    return;
+  }
+
+  if (page === "drug-detail") {
+    initDrugDetailPage();
+    return;
+  }
+
+  if (page === "prescriber") {
+    initPrescriberPage();
+    return;
+  }
+
+  if (page === "methodology") {
+    initMethodologyPage();
+  }
+}
+
+initGlobalChrome();
+observeReveals();
+initPage();
 
 window.addEventListener("DOMContentLoaded", () => {
   document.body.classList.add("is-ready");

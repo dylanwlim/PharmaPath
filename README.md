@@ -1,32 +1,51 @@
 # PharmaPath
 
-PharmaPath is a RamHack 2026 demo for faster pharmacy search. A user enters a
-medication and a location, PharmaPath finds nearby pharmacies with Google
-Places, and the UI helps decide which pharmacy to contact first.
+PharmaPath is a RamHack 2026 demo that turns openFDA records into a cleaner
+medication access experience for two audiences:
 
-The app does **not** claim live medication inventory. It uses the medication as
-search context and clearly tells the user to confirm availability directly with
-the pharmacy.
+- Patients who need to know whether a medication may be harder than average to obtain
+- Prescribers who need shortage, manufacturer, discontinuation, formulation, and recall context
+
+The product is intentionally explicit about its limits:
+
+- It **does not** claim live pharmacy shelf inventory
+- It **does not** know whether a nearby store can fill a prescription right now
+- It **does** translate FDA listing, shortage, approval, and recall datasets into a
+  signal-based access summary
+
+## Route structure
+
+- `/` landing page
+- `/patient/` patient search page
+- `/patient/results/?query=...` patient results page
+- `/drug/?query=...&id=...` drug detail page
+- `/prescriber/?query=...&id=...` prescriber intelligence page
+- `/methodology/` methodology and limitations page
 
 ## Stack
 
-- Static frontend: `index.html`, `styles.css`, `script.js`
-- Serverless API routes for Vercel: `api/health.js`,
-  `api/pharmacies/search.js`
-- Google APIs used server-side only:
-  - Geocoding API
-  - Places Nearby Search
+- Static multi-page frontend: `index.html`, `patient/`, `drug/`, `prescriber/`, `methodology/`
+- Shared client modules: `script.js`, `styles.css`, `services/pharmapath-client.js`
+- Serverless API routes for Vercel:
+  - `api/drug-intelligence.js`
+  - `api/health.js`
+- openFDA datasets used server-side:
+  - Drug NDC
+  - Drug shortages
+  - Drugs@FDA
+  - Drug enforcement / recalls
 
-## Required environment variable
+## Optional environment variable
 
-- `GOOGLE_API_KEY`
+- `OPENFDA_API_KEY`
+
+The app works without an API key, but openFDA rate limits are better with one.
 
 ## Run locally
 
-Use Vercel dev so both the static frontend and API routes run together:
+Use Vercel dev so the static pages and API routes run together:
 
 ```bash
-npx vercel env pull .env.local --environment=production --yes
 npx vercel dev --listen 3000
 ```
 
@@ -41,43 +60,38 @@ Returns:
 ```json
 {
   "status": "ok",
-  "google_api_configured": true
+  "data_source": "openFDA",
+  "openfda_api_key_configured": false
 }
 ```
 
-If `GOOGLE_API_KEY` is missing, `google_api_configured` is `false`.
+### `GET /api/drug-intelligence?query=Adderall%20XR%2020%20mg`
 
-### `POST /api/pharmacies/search`
+Returns normalized medication intelligence including:
 
-Example request:
+- `matches`
+- `featured_match_id`
+- `data_freshness`
+- `limitations`
+- `methodology_summary`
 
-```json
-{
-  "medication": "Adderall XR",
-  "location": "Brooklyn, NY",
-  "radiusMiles": 5,
-  "sortBy": "best_match",
-  "onlyOpenNow": false
-}
-```
+Each match contains:
 
-Example response fields:
+- patient-facing summary copy
+- prescriber-facing takeaways
+- access signal label and reasoning
+- shortage evidence
+- recall evidence
+- manufacturer, formulation, and application context
 
-- `name`
-- `address`
-- `rating`
-- `user_ratings_total`
-- `open_now`
-- `place_id`
-- `google_maps_url`
-- `coordinates`
+## Product framing guardrails
 
-## Product messaging guardrail
+PharmaPath is credible when it keeps these distinctions clear:
 
-PharmaPath currently helps users:
+- `Known`: FDA listing, shortage, discontinuation, approval, and recall records
+- `Inferred`: signal-based access friction summary
+- `Unavailable`: local shelf stock, insurance outcomes, wholesaler allocations
 
-- find nearby pharmacies faster
-- preserve medication context during the search
-- choose who to contact first
-
-PharmaPath does **not** currently provide verified live medication inventory.
+If the UI says a medication is easier or harder to obtain, that statement should
+always be framed as an estimate derived from FDA signals, not as verified retail
+availability.

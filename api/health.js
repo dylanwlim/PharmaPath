@@ -1,6 +1,6 @@
 "use strict";
 
-const { sendJson } = require("./_lib/pharmacy-search");
+const { getOpenFdaApiKey, sendJson } = require("./_lib/openfda");
 
 module.exports = function handler(req, res) {
   if (req.method !== "GET") {
@@ -10,6 +10,7 @@ module.exports = function handler(req, res) {
 
   return sendJson(res, 200, {
     status: "ok",
-    google_api_configured: Boolean(process.env.GOOGLE_API_KEY),
+    data_source: "openFDA",
+    openfda_api_key_configured: Boolean(getOpenFdaApiKey()),
   });
 };

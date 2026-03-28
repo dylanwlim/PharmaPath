@@ -5,509 +5,186 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="PharmaPath helps patients and care teams find nearby pharmacies for a medication search, compare likely next calls, and reduce pharmacy search friction without overstating live inventory."
+      content="PharmaPath helps patients and clinicians understand FDA shortage, manufacturer, recall, and supply signals without pretending openFDA is live pharmacy inventory."
     />
-    <title>PharmaPath | Find Nearby Pharmacies Faster</title>
-    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <title>PharmaPath | FDA Medication Access Signals</title>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
-    <header class="site-header" data-header>
-      <div class="header-shell">
-        <a class="brand" href="#top" aria-label="PharmaPath home">
-          <span class="brand-mark" aria-hidden="true">
-            <span></span>
-          </span>
-          <span class="brand-copy">
-            <span class="brand-name">PharmaPath</span>
-            <span class="brand-subtitle">Pharmacy search routing</span>
-          </span>
-        </a>
+  <body data-page="home">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header" data-site-header></header>
 
-        <button
-          class="nav-toggle"
-          type="button"
-          aria-expanded="false"
-          aria-controls="site-nav"
-        >
-          <span class="sr-only">Toggle navigation</span>
-          <span></span>
-          <span></span>
-        </button>
-
-        <nav class="top-nav" id="site-nav" aria-label="Primary">
-          <a href="#demo" data-nav-link>Demo</a>
-          <a href="#how-it-works" data-nav-link>Workflow</a>
-          <a href="#why-it-matters" data-nav-link>Value</a>
-          <a class="button button-nav" href="#close" data-nav-link>Pitch close</a>
-        </nav>
-      </div>
-    </header>
-
-    <main id="top">
-      <section class="hero">
-        <div class="content-shell hero-shell">
+    <main id="main-content" class="page page-home">
+      <section class="hero hero-home" data-reveal>
+        <div class="page-shell hero-grid">
           <div class="hero-copy">
-            <p class="eyebrow" data-reveal style="--delay: 0.05s">
-              Medication search, routed faster
+            <p class="eyebrow">openFDA-powered access intelligence</p>
+            <h1>Make medication access risk easier to understand, faster.</h1>
+            <p class="hero-text">
+              PharmaPath translates FDA listing, shortage, discontinuation, manufacturer,
+              and recall data into a clear access signal for patients and a cleaner
+              prescribing view for clinicians.
             </p>
-            <h1 data-reveal style="--delay: 0.12s">
-              Find nearby pharmacies for a medication search without pretending inventory is verified.
-            </h1>
-            <p class="hero-description" data-reveal style="--delay: 0.18s">
-              PharmaPath turns a medication and a location into a ranked list of
-              nearby pharmacies, so patients and care teams can decide who to
-              call first instead of starting from a blank map or a phone tree.
-            </p>
-            <div class="hero-actions" data-reveal style="--delay: 0.24s">
-              <a class="button button-primary" href="#demo">Run live search demo</a>
-              <a class="button button-secondary" href="#how-it-works"
-                >See the workflow</a
-              >
+            <div class="hero-actions">
+              <a class="button button-primary" href="/patient/">Start patient search</a>
+              <a class="button button-secondary" href="/prescriber/">Open prescriber view</a>
+            </div>
+            <div class="hero-note">
+              <strong>Important boundary:</strong> openFDA is not live retail inventory.
+              Every access callout in PharmaPath is labeled as inferred, estimated, or
+              signal-based.
+            </div>
+          </div>
+
+          <div class="hero-panel surface-card" data-reveal>
+            <div class="panel-topline">
+              <span class="pill pill-subtle">What the app answers</span>
+              <span class="panel-tag">Demo-ready</span>
             </div>
 
-            <div class="hero-proof-grid" data-reveal style="--delay: 0.32s">
-              <article class="proof-card">
-                <span>Nearby pharmacy results</span>
-                <p>Google Places resolves the location and returns real pharmacies in range.</p>
+            <div class="question-stack">
+              <article class="question-row">
+                <span>Patient</span>
+                <p>Can I likely get this medication, or are there signs it may be hard to find?</p>
               </article>
-              <article class="proof-card">
-                <span>Medication context preserved</span>
-                <p>The medication changes the call guidance so the handoff stays specific even when stock is not live-verified.</p>
+              <article class="question-row">
+                <span>Clinician</span>
+                <p>Are there shortage, discontinuation, recall, or manufacturer constraints that should change the plan?</p>
               </article>
-              <article class="proof-card">
-                <span>Honest inventory messaging</span>
-                <p>PharmaPath helps decide who to contact first. Real-time stock still needs confirmation.</p>
+              <article class="question-row">
+                <span>Methodology</span>
+                <p>What is directly known from FDA data, what is inferred, and what is not available at all?</p>
               </article>
             </div>
-          </div>
 
-          <div class="hero-stage" data-reveal style="--delay: 0.16s">
-            <img
-              class="hero-network"
-              src="assets/pharmapath-network.svg"
-              alt=""
-              aria-hidden="true"
-            />
-            <div class="stage-panel">
-              <div class="stage-topline">
-                <span class="stage-label">Google Places demo</span>
-                <span class="stage-status">Server-side pharmacy search</span>
-              </div>
-
-              <div class="stage-query">
-                <span>Adderall XR</span>
-                <span>Brooklyn, NY</span>
-                <span>5 mi radius</span>
-              </div>
-
-              <div class="stage-summary">
-                <div>
-                  <strong>Nearby pharmacies</strong>
-                  <span>ranked by distance and rating</span>
-                </div>
-                <div>
-                  <strong>Clear next step</strong>
-                  <span>call ahead to confirm availability</span>
-                </div>
-              </div>
-
-              <div class="stage-results">
-                <article class="stage-result stage-result-primary">
-                  <div>
-                    <p>Top nearby option</p>
-                    <span>Maps link ready • address surfaced • open status if available</span>
-                  </div>
-                  <span class="status-badge status-in-stock">Open now</span>
-                </article>
-                <article class="stage-result">
-                  <div>
-                    <p>Rated backup option</p>
-                    <span>Use this when the first call cannot confirm the fill</span>
-                  </div>
-                  <span class="status-badge status-suggestion">Backup route</span>
-                </article>
-                <article class="stage-result">
-                  <div>
-                    <p>Inventory honesty</p>
-                    <span>Real-time medication stock is not yet verified by this demo</span>
-                  </div>
-                  <span class="status-badge status-out-of-stock">Call to verify</span>
-                </article>
-              </div>
-
-              <div class="stage-footer">
-                <p>PharmaPath reduces pharmacy-search friction without overstating certainty.</p>
-                <div class="stage-actions" aria-hidden="true">
-                  <span>Search</span>
-                  <span>Compare</span>
-                  <span>Confirm</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="content-shell">
-          <div class="credibility-strip" data-reveal style="--delay: 0.38s">
-            <p>Built for the handoff between patients, clinics, and pharmacies.</p>
-            <ul>
-              <li>Patients get a faster shortlist of who to contact nearby.</li>
-              <li>Care teams keep the medication search context visible during the handoff.</li>
-              <li>The demo stays credible by separating pharmacy discovery from inventory verification.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="demo-section section-anchor" id="demo" data-section>
-        <div class="content-shell">
-          <div class="section-heading">
-            <p class="section-label">Live demo</p>
-            <h2>Search a medication and a location, then decide which pharmacy to call first.</h2>
-            <p>
-              This demo uses Google Places on the backend to find nearby
-              pharmacies. It does not claim real-time medication inventory.
-              Instead, it helps the user move faster toward the best next call.
-            </p>
-          </div>
-
-          <div class="demo-shell">
-            <aside class="demo-sidebar">
-              <section class="demo-panel">
-                <div class="panel-heading">
-                  <div>
-                    <p class="panel-eyebrow">Search controls</p>
-                    <h3>Nearby pharmacy lookup</h3>
-                  </div>
-                  <span class="panel-hint">Google Places + geocoding</span>
-                </div>
-
-                <form class="search-form" id="search-form">
-                  <div class="field field-wide">
-                    <label for="medication-input">Medication</label>
-                    <input
-                      id="medication-input"
-                      name="medication"
-                      list="medication-options"
-                      placeholder="Example: Adderall XR"
-                      autocomplete="off"
-                    />
-                    <datalist id="medication-options"></datalist>
-                    <p class="field-hint">
-                      The medication stays attached to the search so the handoff
-                      is specific, even though live stock is not yet verified.
-                    </p>
-                  </div>
-
-                  <div class="field field-wide">
-                    <label for="location-input">Location</label>
-                    <input
-                      id="location-input"
-                      name="location"
-                      placeholder="Example: Brooklyn, NY"
-                      autocomplete="off"
-                    />
-                    <p class="field-hint">
-                      Use a neighborhood, borough, ZIP code, or city-state pair.
-                    </p>
-                  </div>
-
-                  <div class="field-grid">
-                    <div class="field">
-                      <label for="radius-select">Search radius</label>
-                      <select id="radius-select" name="radius">
-                        <option value="3">Within 3 miles</option>
-                        <option value="5" selected>Within 5 miles</option>
-                        <option value="10">Within 10 miles</option>
-                        <option value="15">Within 15 miles</option>
-                      </select>
-                      <p class="field-hint">
-                        Keep the search tight for a live demo or widen it when local options are thin.
-                      </p>
-                    </div>
-
-                    <div class="field">
-                      <label for="sort-select">Rank results</label>
-                      <select id="sort-select" name="sort">
-                        <option value="best_match" selected>Best overall match</option>
-                        <option value="distance">Closest distance</option>
-                        <option value="rating">Highest Google rating</option>
-                      </select>
-                      <p class="field-hint">
-                        Choose whether the first recommendation favors proximity, rating, or a balance.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div class="field-grid field-grid-bottom">
-                    <label class="toggle-field" for="open-now-toggle">
-                      <span class="toggle-copy">
-                        <span class="toggle-title">Only show pharmacies marked open now</span>
-                        <span class="toggle-help">
-                          Filters the list to locations Google currently reports
-                          as open. Some results may not include hours data.
-                        </span>
-                      </span>
-                      <span class="toggle-switch">
-                        <input
-                          id="open-now-toggle"
-                          name="openNow"
-                          type="checkbox"
-                        />
-                        <span class="toggle-slider" aria-hidden="true"></span>
-                      </span>
-                    </label>
-                  </div>
-
-                  <div class="toolbar-actions">
-                    <button class="button button-primary" type="submit">
-                      Find pharmacies
-                    </button>
-                    <button class="button button-ghost" type="button" id="reset-demo">
-                      Reset demo
-                    </button>
-                  </div>
-                </form>
-              </section>
-
-              <section class="demo-panel">
-                <div class="panel-heading">
-                  <div>
-                    <p class="panel-eyebrow">Sample searches</p>
-                    <h3>Switch demo inputs fast</h3>
-                  </div>
-                </div>
-                <div class="scenario-list" id="scenario-list"></div>
-              </section>
-
-              <section class="demo-panel demo-panel-muted">
-                <p class="panel-eyebrow">Pitch guide</p>
-                <ul class="demo-guidance">
-                  <li>Lead with how fast PharmaPath narrows the first few pharmacies to contact.</li>
-                  <li>Show that the location changes the live pharmacy list while the medication changes the guidance and first-call strategy.</li>
-                  <li>Call out the disclaimer directly: nearby pharmacies are live, medication inventory is not yet verified.</li>
-                </ul>
-              </section>
-            </aside>
-
-            <div class="demo-workspace">
-              <section class="summary-bar">
-                <div class="summary-copy">
-                  <p class="query-chip" id="query-chip">Medication • Location</p>
-                  <h3 id="results-headline">Searching nearby pharmacies...</h3>
-                  <p id="results-summary"></p>
-                  <p class="scenario-context" id="scenario-context"></p>
-                </div>
-                <div class="summary-metrics" id="summary-metrics"></div>
-              </section>
-
-              <div class="action-feedback" id="action-feedback" aria-live="polite"></div>
-
-              <div class="workspace-grid">
-                <section
-                  class="recommended-card"
-                  id="recommended-card"
-                  aria-live="polite"
-                ></section>
-
-                <aside class="workspace-note">
-                  <p class="panel-eyebrow">Medication guidance</p>
-                  <div class="digest-list" id="outcome-digest"></div>
-                </aside>
-              </div>
-
-              <section class="results-shell">
-                <div class="results-toolbar">
-                  <div>
-                    <p class="results-toolbar-title">Real nearby pharmacies</p>
-                    <p class="results-toolbar-copy" id="results-toolbar-copy"></p>
-                  </div>
-                </div>
-
-                <div class="results-list" id="results-body" aria-live="polite"></div>
-
-                <div class="empty-state" id="empty-state" hidden>
-                  <p class="empty-state-title" id="empty-state-title"></p>
-                  <p class="empty-state-copy" id="empty-state-copy"></p>
-                  <p class="empty-state-suggestion" id="empty-state-suggestion"></p>
-                </div>
-              </section>
-
-              <section class="alternatives-section" id="alternatives-section" hidden>
-                <button class="overflow-toggle" type="button" id="overflow-toggle">
-                  <span class="overflow-toggle-text" id="overflow-toggle-text">Show more pharmacies</span>
-                  <span class="overflow-toggle-icon" id="overflow-toggle-icon">+</span>
-                </button>
-                <div class="alternative-list overflow-collapsed" id="alternatives-body"></div>
-              </section>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="workflow-section section-anchor" id="how-it-works" data-section>
-        <div class="content-shell">
-          <div class="section-heading workflow-heading">
-            <p class="section-label">Workflow</p>
-            <h2>PharmaPath reduces the time between “Where should I try?” and the first useful call.</h2>
-            <p>
-              Medication access often breaks because the user still has to guess
-              which pharmacies are worth checking next. PharmaPath tightens that
-              loop without overselling certainty it does not have.
-            </p>
-          </div>
-
-          <div class="workflow-grid">
-            <div class="workflow-statement">
-              <p class="workflow-lead">
-                The product story is simple: find nearby pharmacies, preserve the
-                prescription context, and make the next availability check easier
-                to start.
+            <div class="signal-callout">
+              <p class="eyebrow eyebrow-dark">Framing rule</p>
+              <h2>Signal-based, not shelf-based</h2>
+              <p>
+                The product never claims a pharmacy has stock on hand. It reads FDA datasets,
+                then shows whether those signals look steadier, mixed, or higher friction.
               </p>
-              <div class="workflow-callout">
-                <strong>That is strong hackathon positioning.</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-paths" data-reveal>
+        <div class="page-shell">
+          <div class="section-heading">
+            <p class="eyebrow eyebrow-dark">Choose a workflow</p>
+            <h2>Separate the patient and prescriber jobs instead of crowding them together.</h2>
+            <p>
+              Each route has one dominant purpose, less copy, and clearer next steps.
+            </p>
+          </div>
+
+          <div class="path-grid">
+            <article class="path-card surface-card">
+              <p class="eyebrow eyebrow-dark">Patient workflow</p>
+              <h3>Get a fast, plain-English read on likely fill friction.</h3>
+              <p>
+                See the top FDA-matched product family, what may make it harder to get,
+                and what to ask a pharmacist or clinician next.
+              </p>
+              <a class="text-link" href="/patient/">Go to patient search</a>
+            </article>
+
+            <article class="path-card surface-card">
+              <p class="eyebrow eyebrow-dark">Prescriber workflow</p>
+              <h3>Open a more technical supply and formulation view.</h3>
+              <p>
+                Review shortage records, manufacturer concentration, recall context, and
+                whether alternatives may be worth considering.
+              </p>
+              <a class="text-link" href="/prescriber/">Go to prescriber intelligence</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-explainer" data-reveal>
+        <div class="page-shell narrative-grid">
+          <div class="section-heading">
+            <p class="eyebrow eyebrow-dark">How PharmaPath reads FDA data</p>
+            <h2>Known facts first, inferences second, missing data stated plainly.</h2>
+          </div>
+
+          <div class="narrative-list">
+            <article class="narrative-step">
+              <span>01</span>
+              <div>
+                <h3>Find the FDA-listed product family</h3>
                 <p>
-                  The demo shows real pharmacy discovery, a clean shortlist, and
-                  an honest boundary around inventory verification.
+                  We match the medication search to openFDA listing and approval records,
+                  then group the likely product families and formulations.
                 </p>
               </div>
-            </div>
-
-            <ol class="workflow-steps">
-              <li>
-                <span class="workflow-number">01</span>
-                <div>
-                  <h3>Capture the medication and location</h3>
-                  <p>
-                    Start with the actual medication request plus a neighborhood,
-                    borough, ZIP code, or city to anchor the search.
-                  </p>
-                </div>
-              </li>
-              <li>
-                <span class="workflow-number">02</span>
-                <div>
-                  <h3>Compare nearby pharmacies fast</h3>
-                  <p>
-                    Show distance, address, rating, and open-now signals in one
-                    list so the first few calls are obvious.
-                  </p>
-                </div>
-              </li>
-              <li>
-                <span class="workflow-number">03</span>
-                <div>
-                  <h3>Confirm availability directly</h3>
-                  <p>
-                    Use PharmaPath to choose who to contact first, then confirm
-                    medication stock before transferring or sending the prescription.
-                  </p>
-                </div>
-              </li>
-            </ol>
+            </article>
+            <article class="narrative-step">
+              <span>02</span>
+              <div>
+                <h3>Pull shortage, discontinuation, and recall signals</h3>
+                <p>
+                  We surface matching FDA shortage entries, discontinuation notes, manufacturer
+                  concentration, and recent recall context when it exists.
+                </p>
+              </div>
+            </article>
+            <article class="narrative-step">
+              <span>03</span>
+              <div>
+                <h3>Translate that into careful guidance</h3>
+                <p>
+                  The product labels its summary as an estimate. It tells users what looks risky,
+                  what looks steadier, and what openFDA simply cannot tell them.
+                </p>
+              </div>
+            </article>
           </div>
         </div>
       </section>
 
-      <section class="value-section section-anchor" id="why-it-matters" data-section>
-        <div class="content-shell">
-          <div class="section-heading">
-            <p class="section-label">Value</p>
-            <h2>Designed for the people stuck in the pharmacy search loop.</h2>
-            <p>
-              Patients need direction, care teams need speed, and pharmacies
-              benefit when the inbound request already reflects a real nearby search.
-            </p>
+      <section class="section section-trust" data-reveal>
+        <div class="page-shell trust-grid">
+          <div class="trust-panel surface-card">
+            <p class="eyebrow eyebrow-dark">Directly known</p>
+            <ul class="list-clean">
+              <li>FDA product listings and matching NDCs</li>
+              <li>Manufacturer and sponsor names in the FDA records</li>
+              <li>Drug shortage entries and discontinuation notices</li>
+              <li>Recall notices and report dates</li>
+            </ul>
           </div>
-
-          <div class="value-grid">
-            <article class="value-card">
-              <p class="panel-eyebrow">For patients</p>
-              <h3>Less guesswork when a medication search gets urgent</h3>
-              <p>
-                Patients move from scattered Google searches to a shortlist of
-                nearby pharmacies worth contacting first.
-              </p>
-            </article>
-
-            <article class="value-card">
-              <p class="panel-eyebrow">For clinics</p>
-              <h3>Faster phone handoffs while the patient is still engaged</h3>
-              <p>
-                Staff can share a grounded next step instead of asking patients
-                to keep calling around with no structure.
-              </p>
-            </article>
-
-            <article class="value-card">
-              <p class="panel-eyebrow">For pharmacies</p>
-              <h3>More targeted inbound requests</h3>
-              <p>
-                The request starts with the medication and a real nearby search,
-                which reduces random outreach and dead-end follow-up.
-              </p>
-            </article>
+          <div class="trust-panel surface-card">
+            <p class="eyebrow eyebrow-dark">Inferred carefully</p>
+            <ul class="list-clean">
+              <li>Whether access looks steadier, mixed, or higher friction</li>
+              <li>Whether limited manufacturers may tighten supply options</li>
+              <li>Whether formulation breadth gives more prescribing flexibility</li>
+            </ul>
           </div>
-
-          <div class="capability-strip">
-            <div>
-              <span>Nearby pharmacy discovery</span>
-              <p>Google Places finds pharmacies around the requested location.</p>
-            </div>
-            <div>
-              <span>Medication-aware routing</span>
-              <p>The UI keeps the medication search visible during the entire handoff.</p>
-            </div>
-            <div>
-              <span>Credible demo language</span>
-              <p>The product is clear about what is live now and what still needs confirmation.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="closing-section section-anchor" id="close" data-section>
-        <div class="content-shell">
-          <div class="closing-card">
-            <p class="section-label">Demo close</p>
-            <h2>Show a real pharmacy search, a smarter shortlist, and an honest path to confirmation.</h2>
-            <p>
-              Search by medication and location, highlight the recommended first
-              pharmacy to check, and close by explaining that PharmaPath reduces
-              friction even before live inventory integrations are added.
-            </p>
-
-            <div class="closing-actions">
-              <a class="button button-primary" href="#demo">Run the PharmaPath demo</a>
-              <a class="button button-secondary" href="#top">Back to top</a>
-            </div>
-
-            <div class="closing-points">
-              <span>Real nearby pharmacies</span>
-              <span>Medication context preserved</span>
-              <span>Inventory claims kept honest</span>
-            </div>
+          <div class="trust-panel surface-card">
+            <p class="eyebrow eyebrow-dark">Not available</p>
+            <ul class="list-clean">
+              <li>Real-time shelf inventory at a local pharmacy</li>
+              <li>Insurance adjudication or patient copay</li>
+              <li>Wholesaler stock or store-to-store transfer success</li>
+              <li>Guaranteed same-day availability</li>
+            </ul>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <div class="content-shell footer-shell">
-        <p>
-          PharmaPath for RamHack 2026. Google Places-powered pharmacy discovery
-          with honest medication availability messaging.
-        </p>
-      </div>
-    </footer>
-
-    <script type="module" src="script.js"></script>
+    <footer class="site-footer" data-site-footer></footer>
+    <script type="module" src="/script.js"></script>
   </body>
 </html>

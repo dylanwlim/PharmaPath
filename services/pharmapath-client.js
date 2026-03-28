@@ -1,67 +1,49 @@
-const sampleSearches = [
-  {
-    id: "brooklyn-adderall",
-    label: "Brooklyn search",
-    title: "Controlled-medication handoff in Brooklyn",
-    description:
-      "Shows a higher-friction medication search where the first outreach favors trusted nearby pharmacies and an honest stock disclaimer.",
-    filters: {
-      medication: "Adderall XR",
-      location: "Brooklyn, NY",
-      radiusMiles: 5,
-      sortBy: "best_match",
-      onlyOpenNow: false,
-    },
-  },
-  {
-    id: "queens-adderall",
-    label: "Queens search",
-    title: "Same medication, different borough",
-    description:
-      "Use the same medication as Brooklyn to prove the real Google pharmacy set changes materially with the location input.",
-    filters: {
-      medication: "Adderall XR",
-      location: "Queens, NY",
-      radiusMiles: 5,
-      sortBy: "best_match",
-      onlyOpenNow: false,
-    },
-  },
-  {
-    id: "brooklyn-amoxicillin",
-    label: "Medication swap",
-    title: "Different medication, same borough",
-    description:
-      "Keeps Brooklyn fixed while changing the medication so the ranking emphasis and pharmacy call guidance both shift.",
-    filters: {
-      medication: "Amoxicillin 500mg",
-      location: "Brooklyn, NY",
-      radiusMiles: 5,
-      sortBy: "best_match",
-      onlyOpenNow: false,
-    },
-  },
-];
+const CACHE_PREFIX = "pharmapath:dossier:";
+const CACHE_TTL_MS = 10 * 60 * 1000;
 
-const medicationSuggestions = [
-  "Adderall XR",
-  "Amoxicillin 500mg",
-  "Ozempic",
-  "Sertraline",
-  "Vyvanse",
-  "Metformin",
-  "Wegovy",
-  "Albuterol",
-];
+function sanitizeText(value = "") {
+  return String(value).trim();
+}
 
-function buildRequestPayload(filters) {
-  return {
-    medication: filters.medication.trim(),
-    location: filters.location.trim(),
-    radiusMiles: Number(filters.radiusMiles || 5),
-    sortBy: filters.sortBy || "best_match",
-    onlyOpenNow: Boolean(filters.onlyOpenNow),
-  };
+function getCacheKey(query) {
+  return `${CACHE_PREFIX}${sanitizeText(query).toLowerCase()}`;
+}
+
+function readCache(query) {
+  try {
+    const cached = sessionStorage.getItem(getCacheKey(query));
+    if (!cached) {
+      return null;
+    }
+
+    const parsed = JSON.parse(cached);
+    if (!parsed?.storedAt || !parsed?.payload) {
+      return null;
+    }
+
+    if (Date.now() - parsed.storedAt > CACHE_TTL_MS) {
+      sessionStorage.removeItem(getCacheKey(query));
+      return null;
+    }
+
+    return parsed.payload;
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeCache(query, payload) {
+  try {
+    sessionStorage.setItem(
+      getCacheKey(query),
+      JSON.stringify({
+        storedAt: Date.now(),
+        payload,
+      }),
+    );
+  } catch (error) {
+    // Ignore storage failures and continue with the live payload.
+  }
 }
 
 function getErrorMessage(payload, fallback) {
@@ -74,30 +56,34 @@ function getErrorMessage(payload, fallback) {
 
 export function createPharmaPathClient({ fetchImpl = window.fetch.bind(window) } = {}) {
   return {
-    listSampleSearches() {
-      return sampleSearches;
+    readCachedDossier(query) {
+      return readCache(query);
     },
 
-    listMedicationSuggestions() {
-      return medicationSuggestions;
-    },
+    async getDrugIntelligence(query, { force = false } = {}) {
+      const normalizedQuery = sanitizeText(query);
 
-    getInitialFilters() {
-      return { ...sampleSearches[0].filters };
-    },
+      if (!normalizedQuery) {
+        throw new Error("A medication query is required.");
+      }
 
-    async searchPharmacies(filters) {
-      const response = await fetchImpl("/api/pharmacies/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+      if (!force) {
+        const cached = readCache(normalizedQuery);
+        if (cached) {
+          return cached;
+        }
+      }
+
+      const response = await fetchImpl(
+        `/api/drug-intelligence?query=${encodeURIComponent(normalizedQuery)}`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
         },
-        body: JSON.stringify(buildRequestPayload(filters)),
-      });
+      );
 
       let payload = null;
-
       try {
         payload = await response.json();
       } catch (error) {
@@ -106,8 +92,25 @@ export function createPharmaPathClient({ fetchImpl = window.fetch.bind(window) }
 
       if (!response.ok) {
         throw new Error(
-          getErrorMessage(payload, "Unable to search nearby pharmacies right now."),
+          getErrorMessage(payload, "Unable to load medication intelligence right now."),
         );
+      }
+
+      writeCache(normalizedQuery, payload);
+      return payload;
+    },
+
+    async getHealth() {
+      const response = await fetchImpl("/api/health", {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(getErrorMessage(payload, "Unable to load health status."));
       }
 
       return payload;
