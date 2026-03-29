@@ -467,7 +467,7 @@ export function PrescriberClient() {
       <section className="px-4 pb-10 pt-28 sm:px-6 lg:px-8">
         <div className="site-shell grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div>
-            <span className="eyebrow-label">Prescriber intelligence</span>
+            <span className="eyebrow-label">Medication Lookup</span>
             <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.4rem]">
               Evidence trail first, routing question second.
             </h1>
@@ -480,7 +480,7 @@ export function PrescriberClient() {
           <MedicationQueryForm
             action="/prescriber"
             initialQuery={query}
-            submitLabel="Run prescriber search"
+            submitLabel="Search medication"
             helper="Use this when the question is clinical planning, not store-level inventory."
           />
         </div>
@@ -491,20 +491,20 @@ export function PrescriberClient() {
           {!query ? (
             <EmptyState
               eyebrow="Ready when you are"
-              title="Search for a medication to load the prescriber view."
-              body="The prescriber route focuses on shortage, recall, formulation, and manufacturer context rather than the patient-facing explanation."
+              title="Search for a medication to load Medication Lookup."
+              body="Medication Lookup focuses on shortage, recall, formulation, and manufacturer context."
             />
           ) : isLoading ? (
             <div className="surface-panel flex min-h-[24rem] items-center justify-center rounded-[2rem]">
               <div className="flex items-center gap-3 text-slate-500">
                 <LoaderCircle className="h-5 w-5 animate-spin" />
-                Loading prescriber intelligence...
+                Loading medication data...
               </div>
             </div>
           ) : error ? (
             <div className="surface-panel rounded-[2rem] border-rose-200 bg-rose-50 p-6 text-rose-700">
               <div className="text-sm font-medium uppercase tracking-[0.18em]">
-                Unable to load prescriber intelligence
+                Unable to load medication data
               </div>
               <p className="mt-3 text-base leading-7">{error}</p>
             </div>
@@ -600,7 +600,7 @@ export function PrescriberClient() {
                     }
                     className="rounded-full border border-slate-300 px-[18px] py-[15px] text-sm font-medium leading-4 text-slate-900 transition-all duration-200 hover:rounded-2xl"
                   >
-                    Open patient view
+                    Open Pharmacy Finder
                   </Link>
                 </div>
               </div>

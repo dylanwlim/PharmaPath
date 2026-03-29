@@ -54,13 +54,13 @@ export function HeroSection() {
                   href="/patient"
                   className="template-button-primary"
                 >
-                  Start patient search
+                  Open Pharmacy Finder
                 </Link>
                 <Link
                   href="/prescriber"
                   className="template-button-secondary"
                 >
-                  Open prescriber view
+                  Open Medication Lookup
                 </Link>
               </div>
 

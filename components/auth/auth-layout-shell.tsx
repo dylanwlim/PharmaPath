@@ -29,7 +29,7 @@ const stats = [
 
 const features = [
   { icon: ShieldCheck, label: "Trust-weighted reports" },
-  { icon: Stethoscope, label: "Patient + prescriber routing" },
+  { icon: Stethoscope, label: "Pharmacy Finder + Medication Lookup" },
   { icon: Users, label: "Contributor profiles" },
 ];
 

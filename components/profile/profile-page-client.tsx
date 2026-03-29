@@ -209,7 +209,7 @@ export function ProfilePageClient() {
                   </div>
                 ) : (
                   <p className="mt-5 text-base leading-7 text-slate-600">
-                    Recent searches will appear here after you run a signed-in patient search.
+                    Recent searches will appear here after you run a signed-in search.
                   </p>
                 )}
               </div>

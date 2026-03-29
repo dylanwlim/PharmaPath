@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Overview", href: "/" },
-  { label: "Patient", href: "/patient" },
-  { label: "Prescriber", href: "/prescriber" },
+  { label: "Pharmacy Finder", href: "/patient" },
+  { label: "Medication Lookup", href: "/prescriber" },
   { label: "Methodology", href: "/methodology" },
 ];
 

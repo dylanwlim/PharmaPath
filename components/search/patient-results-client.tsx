@@ -594,7 +594,7 @@ export function PatientResultsClient() {
       <section className="px-4 pb-10 pt-28 sm:px-6 lg:px-8">
         <div className="site-shell grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div>
-            <span className="eyebrow-label">Patient results</span>
+            <span className="eyebrow-label">Pharmacy results</span>
             <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.4rem]">
               Nearby pharmacies on the left. Medication signal on the right.
             </h1>
@@ -621,7 +621,7 @@ export function PatientResultsClient() {
           {!query || !location ? (
             <EmptyState
               eyebrow="Ready when you are"
-              title="Enter both a medication and a location to load the live patient view."
+              title="Enter both a medication and a location to load Pharmacy Finder."
               body="PharmaPath will combine a live nearby pharmacy lookup with FDA-based access context, without claiming any pharmacy has the medication confirmed on the shelf."
             />
           ) : isLoading ? (
@@ -845,16 +845,10 @@ export function PatientResultsClient() {
                       <span className="eyebrow-label">Questions to ask next</span>
                       <div className="mt-6 flex flex-wrap gap-3">
                         <Link
-                          href={`/drug?query=${encodeURIComponent(query)}&id=${encodeURIComponent(featuredMatch.id)}&location=${encodeURIComponent(location)}`}
+                          href={`/prescriber?query=${encodeURIComponent(query)}&id=${encodeURIComponent(featuredMatch.id)}&location=${encodeURIComponent(location)}`}
                           className="rounded-full bg-slate-950 px-[18px] py-[15px] text-sm font-medium leading-4 text-white transition-all duration-200 hover:rounded-2xl"
                         >
-                          Open drug detail
-                        </Link>
-                        <Link
-                          href={`/prescriber?query=${encodeURIComponent(query)}&id=${encodeURIComponent(featuredMatch.id)}&location=${encodeURIComponent(location)}`}
-                          className="rounded-full border border-slate-300 px-[18px] py-[15px] text-sm font-medium leading-4 text-slate-900 transition-all duration-200 hover:rounded-2xl"
-                        >
-                          Open prescriber view
+                          Open Medication Lookup
                         </Link>
                       </div>
                     </div>

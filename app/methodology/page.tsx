@@ -57,16 +57,16 @@ export default function MethodologyPage() {
 
           <div className="mt-6 grid gap-5 lg:grid-cols-2">
             <div className="surface-panel rounded-[2rem] p-6">
-              <span className="eyebrow-label">Why the patient page is separate</span>
+              <span className="eyebrow-label">Why Pharmacy Finder is separate</span>
               <p className="mt-5 text-base leading-7 text-slate-700">
-                Patients need the nearby list, the signal label, and the next questions to ask. They
-                do not need the full approval or recall evidence first.
+                Pharmacy Finder keeps the nearby list, the signal label, and the next questions to ask. It does
+                not need the full approval or recall evidence first.
               </p>
             </div>
             <div className="surface-panel rounded-[2rem] p-6">
-              <span className="eyebrow-label">Why the prescriber page is separate</span>
+              <span className="eyebrow-label">Why Medication Lookup is separate</span>
               <p className="mt-5 text-base leading-7 text-slate-700">
-                Prescribers need the evidence trail. That includes shortage status, manufacturer
+                Medication Lookup surfaces the evidence trail: shortage status, manufacturer
                 breadth, formulation spread, and whether an alternative plan may deserve attention.
               </p>
             </div>

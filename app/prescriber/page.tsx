@@ -8,7 +8,7 @@ export default function PrescriberPage() {
     <>
       <SiteNavbar />
       <main>
-        <Suspense fallback={<div className="px-6 py-32 text-center text-slate-500">Loading prescriber view...</div>}>
+        <Suspense fallback={<div className="px-6 py-32 text-center text-slate-500">Loading...</div>}>
           <PrescriberClient />
         </Suspense>
       </main>

@@ -48,7 +48,7 @@ export const homeStats = [
   },
   {
     value: "2",
-    description: "Patient and prescriber\nviews kept separate",
+    description: "Pharmacy Finder and Medication\nLookup kept separate",
   },
   {
     value: "1",
@@ -63,7 +63,7 @@ export const homeStats = [
 export const workflowShowcase = [
   {
     id: "patient",
-    title: "Patient search keeps the first answer short.",
+    title: "Pharmacy Finder keeps the first answer short.",
     summary:
       "Medication plus location produces a live nearby list, FDA access info, and a call-ready set of questions.",
     bullets: [
@@ -76,7 +76,7 @@ export const workflowShowcase = [
   },
   {
     id: "prescriber",
-    title: "Prescriber view keeps the evidence trail intact.",
+    title: "Medication Lookup keeps the evidence trail intact.",
     summary:
       "Same medication search, but with shortage records, manufacturer spread, recall context, and alternative-planning cues surfaced first.",
     bullets: [

@@ -8,15 +8,14 @@ const footerSections = [
   {
     title: "Product",
     links: [
-      { label: "Patient search", href: "/patient" },
-      { label: "Patient results", href: "/patient/results" },
-      { label: "Prescriber view", href: "/prescriber" },
+      { label: "Pharmacy Finder", href: "/patient" },
+      { label: "Pharmacy results", href: "/patient/results" },
+      { label: "Medication Lookup", href: "/prescriber" },
     ],
   },
   {
     title: "Evidence",
     links: [
-      { label: "Drug detail", href: "/drug" },
       { label: "Methodology", href: "/methodology" },
       { label: "Health status", href: "/methodology#health" },
     ],

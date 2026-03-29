@@ -23,7 +23,7 @@ const routeVisualMeta: Record<
   }
 > = {
   patient: {
-    panelTitle: "Patient page",
+    panelTitle: "Pharmacy Finder",
     panelLabel: "Call-ready view",
     sections: [
       {
@@ -46,7 +46,7 @@ const routeVisualMeta: Record<
     accentColor: "#156d95",
   },
   prescriber: {
-    panelTitle: "Prescriber page",
+    panelTitle: "Medication Lookup",
     panelLabel: "Evidence-first view",
     sections: [
       {
@@ -80,7 +80,7 @@ const routeVisualMeta: Record<
       {
         title: "Config health",
         value: "/api/health",
-        detail: "Deployment health and integration status are visible here without cluttering the patient-facing pages.",
+        detail: "Deployment health and integration status are visible here without cluttering the main pages.",
       },
       {
         title: "Honest language",
