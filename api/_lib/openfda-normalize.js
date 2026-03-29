@@ -349,6 +349,16 @@ function mergeNdcRecord(group, record, referenceDate) {
     group.strengths.add(strength);
   });
 
+  // Collect individual active ingredient names (e.g. "Dextroamphetamine Saccharate",
+  // "Semaglutide") so the shortage search can match FDA shortage records that store
+  // these names in their generic_name field rather than the brand name.
+  ingredients.forEach((ingredient) => {
+    const ingredientName = sanitizeText(ingredient?.name);
+    if (ingredientName) {
+      group.genericNames.add(titleCase(ingredientName));
+    }
+  });
+
   if (record.marketing_category) {
     group.marketingCategories.add(sanitizeText(record.marketing_category));
   }

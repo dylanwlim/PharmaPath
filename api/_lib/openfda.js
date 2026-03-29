@@ -261,7 +261,15 @@ async function searchDrugApplications(searchPhrases) {
 // token from each generic name and add it as an additional search term so
 // openFDA's full-text search within the field value finds the records.
 function extractActiveIngredientTokens(genericNames) {
-  const stopWords = new Set(["and", "or", "with", "for", "the"]);
+  // Common pharmaceutical salt/form suffixes that are too generic to search on
+  const noiseWords = new Set([
+    "and", "or", "with", "for", "the",
+    "monohydrate", "hydrochloride", "sulfate", "saccharate",
+    "phosphate", "acetate", "citrate", "tartrate", "sodium",
+    "calcium", "potassium", "chloride", "bromide", "maleate",
+    "fumarate", "succinate", "besylate", "mesylate", "injection",
+    "tablet", "capsule", "solution", "suspension",
+  ]);
   const seen = new Set();
   const tokens = [];
 
@@ -269,8 +277,8 @@ function extractActiveIngredientTokens(genericNames) {
     sanitizeText(name)
       .split(/[\s,/]+/)
       .map((w) => w.toLowerCase().replace(/[^a-z]/g, ""))
-      .filter((w) => w.length >= 6 && !stopWords.has(w))
-      .slice(0, 2)
+      .filter((w) => w.length >= 6 && !noiseWords.has(w))
+      .slice(0, 3)
       .forEach((w) => {
         if (!seen.has(w)) {
           seen.add(w);
