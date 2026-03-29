@@ -352,11 +352,10 @@ function ShortagePanel({
         </div>
 
         {/* Stats row */}
-        <div className="mt-2 grid grid-cols-3 gap-2">
+        <div className="mt-2 grid grid-cols-2 gap-2">
           {[
             { label: "Duration", value: formatDuration(durationDays) },
             { label: "Last update", value: lastUpdate },
-            { label: "Cause", value: reasons[0] ?? "Unknown" },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-xl border border-white/70 bg-white/60 p-3 text-center backdrop-blur-sm">
               <div className="truncate text-sm font-semibold text-slate-900" title={value}>{value}</div>
@@ -364,6 +363,12 @@ function ShortagePanel({
             </div>
           ))}
         </div>
+        {(reasons[0] ?? null) && (
+          <div className="mt-2 rounded-xl border border-white/70 bg-white/60 p-3 backdrop-blur-sm">
+            <div className="text-[10px] uppercase tracking-wide text-slate-500">Cause</div>
+            <div className="mt-0.5 text-sm font-semibold leading-snug text-slate-900">{reasons[0]}</div>
+          </div>
+        )}
 
         <div className="mt-4 text-[10px] text-slate-400">
           Shortage data as of {formatDisplayDate(drugData.data_freshness.shortages_last_updated)} ·
