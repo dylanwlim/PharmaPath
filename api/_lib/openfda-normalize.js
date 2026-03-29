@@ -28,6 +28,11 @@ const MONTH_INDEX = {
   NOV: 10,
   DEC: 11,
 };
+const STRENGTH_TOKEN_PATTERN = /\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|iu|units?|%)\b/gi;
+const DOSAGE_FORM_PATTERN =
+  /\b(tablets?|capsules?|caplets?|solution|suspension|injections?|injectable|pen|kit|vial|powder|syrup|liquid(?:-filled)?|cream|ointment|patch|spray)\b/gi;
+const RELEASE_DESCRIPTOR_PATTERN =
+  /\b(extended[- ]release|delayed[- ]release|immediate[- ]release|orally[- ]disintegrating|xr|er|ir|dr|sr|xl|odt)\b/gi;
 
 function sanitizeText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -251,20 +256,72 @@ function simplifyBrandName(value) {
     .trim();
 }
 
-function buildSearchPhrases(query) {
-  const raw = sanitizeText(query);
+function cleanSearchPhrase(value) {
+  return sanitizeText(value)
+    .replace(/[()[\],]/g, " ")
+    .replace(/\s*\/\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildReleaseAliasPhrases(baseLabel, query) {
+  const normalizedQuery = normalizeText(query);
+  const base = cleanSearchPhrase(baseLabel);
+
+  if (!base || !normalizedQuery) {
+    return [];
+  }
+
+  if (/\b(extended[- ]release|xr|er|xl|sr)\b/.test(normalizedQuery)) {
+    return [`${base} XR`, `${base} ER`];
+  }
+
+  if (/\b(delayed[- ]release|dr)\b/.test(normalizedQuery)) {
+    return [`${base} DR`];
+  }
+
+  if (/\b(immediate[- ]release|ir)\b/.test(normalizedQuery)) {
+    return [`${base} IR`];
+  }
+
+  if (/\b(orally[- ]disintegrating|odt)\b/.test(normalizedQuery)) {
+    return [`${base} ODT`];
+  }
+
+  return [];
+}
+
+function buildMedicationLookupKeys(query) {
+  const raw = sanitizeText(query).replace(/\s+/g, " ").trim();
 
   if (!raw) {
     return [];
   }
 
-  const stripped = raw
-    .replace(/\b\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|iu|units?|%)\b/gi, "")
-    .replace(/\b(tablet|capsule|solution|suspension|injection|injectable|pen|kit)\b/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const withoutStrength = cleanSearchPhrase(raw.replace(STRENGTH_TOKEN_PATTERN, " "));
+  const withoutDosageForm = cleanSearchPhrase(withoutStrength.replace(DOSAGE_FORM_PATTERN, " "));
+  const familyBase = cleanSearchPhrase(
+    withoutDosageForm.replace(RELEASE_DESCRIPTOR_PATTERN, " "),
+  );
+  const releaseAliases = buildReleaseAliasPhrases(familyBase, raw);
+  const primaryFallback =
+    releaseAliases[0] ||
+    (withoutDosageForm && withoutDosageForm !== raw ? withoutDosageForm : "") ||
+    (familyBase && familyBase !== raw ? familyBase : "") ||
+    (withoutStrength && withoutStrength !== raw ? withoutStrength : "");
 
-  return uniqueStrings([raw, stripped]);
+  return uniqueStrings([
+    raw,
+    primaryFallback,
+    familyBase,
+    ...releaseAliases,
+    withoutDosageForm,
+    withoutStrength,
+  ]);
+}
+
+function buildSearchPhrases(query) {
+  return buildMedicationLookupKeys(query);
 }
 
 function extractStrengthTokens(query) {
@@ -971,6 +1028,7 @@ function buildDrugIntelligencePayload({
 }
 
 module.exports = {
+  buildMedicationLookupKeys,
   buildCandidateContexts,
   buildDrugIntelligencePayload,
   buildSearchPhrases,

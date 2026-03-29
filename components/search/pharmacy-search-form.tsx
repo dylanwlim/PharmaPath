@@ -353,7 +353,7 @@ export function PharmacySearchForm({
           <button
             type="submit"
             disabled={isPending || isResolvingMedication}
-            className="template-button-primary disabled:cursor-wait disabled:opacity-70"
+            className="template-button-primary relative z-40 disabled:cursor-wait disabled:opacity-70"
           >
             {isPending || isResolvingMedication ? "Loading..." : submitLabel}
           </button>

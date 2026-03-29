@@ -4,15 +4,34 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  buildMedicationLookupKeys,
   buildCandidateContexts,
   buildDrugIntelligencePayload,
   buildSearchPhrases,
 } = require("../api/_lib/openfda-normalize");
 
-test("buildSearchPhrases keeps the raw query and a stripped fallback", () => {
+test("buildSearchPhrases keeps the raw query and release-aware lookup fallbacks", () => {
   assert.deepEqual(buildSearchPhrases("Adderall XR 20 mg"), [
     "Adderall XR 20 mg",
     "Adderall XR",
+    "Adderall",
+    "Adderall ER",
+  ]);
+});
+
+test("buildMedicationLookupKeys strips dosage-heavy labels down to a searchable family", () => {
+  assert.deepEqual(buildMedicationLookupKeys("Wegovy 0.25 mg/0.5 ml"), [
+    "Wegovy 0.25 mg/0.5 ml",
+    "Wegovy",
+  ]);
+
+  assert.deepEqual(buildMedicationLookupKeys("Adderall 30 mg extended-release capsule"), [
+    "Adderall 30 mg extended-release capsule",
+    "Adderall XR",
+    "Adderall",
+    "Adderall ER",
+    "Adderall extended-release",
+    "Adderall extended-release capsule",
   ]);
 });
 
