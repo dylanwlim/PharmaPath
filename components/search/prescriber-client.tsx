@@ -448,6 +448,7 @@ export function PrescriberClient() {
   const query = searchParams.get("query")?.trim() || "";
   const matchId = searchParams.get("id")?.trim() || "";
   const location = searchParams.get("location")?.trim() || "";
+  const showExampleScenarios = !query;
   const [payload, setPayload] = useState<DrugIntelligenceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -524,16 +525,18 @@ export function PrescriberClient() {
         </div>
       </section>
 
-      <section className="px-4 pb-10 sm:px-6 lg:px-8">
-        <div className="site-shell">
-          <ExampleScenarioGrid
-            mode="prescriber"
-            eyebrow="Example scenarios"
-            title="Four useful starting points for Medication Lookup."
-            description="These show credible medication lookups that surface formulation, shortage, recall, and manufacturer context immediately, with demo-only entries kept clearly separate."
-          />
-        </div>
-      </section>
+      {showExampleScenarios ? (
+        <section className="px-4 pb-10 sm:px-6 lg:px-8">
+          <div className="site-shell">
+            <ExampleScenarioGrid
+              mode="prescriber"
+              eyebrow="Example scenarios"
+              title="Four useful starting points for Medication Lookup."
+              description="These show credible medication lookups that surface formulation, shortage, recall, and manufacturer context immediately, with demo-only entries kept clearly separate."
+            />
+          </div>
+        </section>
+      ) : null}
 
       <section className="px-4 pb-24 sm:px-6 lg:px-8">
         <div className="site-shell">
