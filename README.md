@@ -2,6 +2,8 @@
 
 PharmaPath is a tool that helps patients and prescribers understand medication access friction — combining nearby pharmacy discovery with FDA-sourced drug intelligence in one workflow.
 
+Built for RamHack 2026!
+
 ## What it does
 
 **Pharmacy Finder** — search a medication and location to see nearby pharmacies ranked by call priority, alongside an FDA-derived access signal (easy / moderate / difficult / unavailable) that reflects shortage, recall, discontinuation, and manufacturer context.
