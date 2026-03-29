@@ -1,6 +1,4 @@
 import {
-  locationOptions,
-  medicationOptions,
   searchScenarios,
 } from "./search-options";
 
@@ -15,9 +13,8 @@ export type FeaturedSearch = {
 export const featuredSearches: FeaturedSearch[] = searchScenarios.map((scenario) => ({
   id: scenario.id,
   label: scenario.label,
-  medication:
-    medicationOptions.find((option) => option.id === scenario.medicationId)?.value || "",
-  location: locationOptions.find((option) => option.id === scenario.locationId)?.value || "",
+  medication: scenario.medication,
+  location: scenario.location,
   description: scenario.description,
 }));
 
@@ -45,7 +42,7 @@ export const workflowShowcase = [
     id: "patient",
     title: "Pharmacy Finder keeps the first call path tight.",
     summary:
-      "Choose a supported medication and handled location to load the nearby list, one access read, and the next question to ask.",
+      "Search the FDA-backed medication index plus a handled location to load the nearby list, one access read, and the next question to ask.",
     bullets: [
       "Nearby list from Google Places",
       "Medication-wide FDA context, not store inventory",

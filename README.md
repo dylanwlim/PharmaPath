@@ -43,17 +43,23 @@ The product is intentionally explicit about its limits:
 - Next App Router API routes:
   - `app/api/pharmacies/search/route.js`
   - `app/api/drug-intelligence/route.js`
+  - `app/api/medications/search/route.ts`
   - `app/api/health/route.js`
 - Shared server-side API helpers:
   - `api/_lib/pharmacy-search.js`
   - `api/_lib/openfda.js`
   - `api/_lib/openfda-normalize.js`
+  - `lib/medications/normalize.js`
+  - `lib/medications/index-store.js`
 - Google Places / Geocoding used server-side for nearby pharmacy lookup
 - openFDA datasets used server-side:
   - Drug NDC
   - Drug shortages
   - Drugs@FDA
   - Drug enforcement / recalls
+- Scheduled medication index sync:
+  - `scripts/sync-medication-index.mjs`
+  - `.github/workflows/medication-index-sync.yml`
 
 ## Environment variables
 
@@ -79,6 +85,7 @@ Use the Next.js app directly so the pages and API routes run together:
 
 ```bash
 npm install
+npm run sync:medications
 npm run dev
 ```
 
@@ -159,6 +166,27 @@ Each match contains:
 - shortage evidence
 - recall evidence
 - manufacturer, formulation, and application context
+
+### `GET /api/medications/search?q=adderall%20xr%2020%20mg`
+
+Returns canonical medication matches from the FDA-backed local index:
+
+- brand, generic, ingredient, strength, dosage-form, route, and NDC-aware matching
+- canonical labels for UI selection
+- Rx / OTC badge hints
+- snapshot freshness metadata
+
+## Medication index sync
+
+The medication dropdown is backed by a normalized snapshot generated from the openFDA
+NDC bulk download:
+
+- local refresh: `npm run sync:medications`
+- checked-in snapshot: `data/medication-index.snapshot.json.gz`
+- scheduled refresh: GitHub Actions workflow at `.github/workflows/medication-index-sync.yml`
+
+The scheduled workflow rebuilds the snapshot on a timer, commits changes to `main`,
+and relies on the existing Vercel/Git deployment path to roll the refreshed index out.
 
 ## Product framing guardrails
 

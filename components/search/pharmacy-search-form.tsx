@@ -3,12 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { ControlledCombobox } from "@/components/search/controlled-combobox";
+import { MedicationCombobox } from "@/components/search/medication-combobox";
 import { featuredSearches } from "@/lib/content";
+import {
+  resolveMedicationOption,
+  type MedicationSearchOption,
+} from "@/lib/medications/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   findSupportedOption,
   locationOptions,
-  medicationOptions,
   resolveInitialOption,
   type SearchOption,
 } from "@/lib/search-options";
@@ -68,12 +72,8 @@ export function PharmacySearchForm({
   const router = useRouter();
   const { profile } = useAuth();
   const [isPending, startTransition] = useTransition();
-  const [medicationOption, setMedicationOption] = useState<SearchOption | null>(() =>
-    resolveInitialOption(medicationOptions, initialMedication),
-  );
-  const [medication, setMedication] = useState(
-    resolveInitialOption(medicationOptions, initialMedication)?.label || initialMedication,
-  );
+  const [medicationOption, setMedicationOption] = useState<MedicationSearchOption | null>(null);
+  const [medication, setMedication] = useState(initialMedication);
   const [locationOption, setLocationOption] = useState<SearchOption | null>(() =>
     resolveInitialOption(locationOptions, initialLocation),
   );
@@ -85,11 +85,11 @@ export function PharmacySearchForm({
   const [onlyOpenNow, setOnlyOpenNow] = useState(initialOnlyOpenNow);
   const [medicationError, setMedicationError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isResolvingMedication, setIsResolvingMedication] = useState(false);
 
   useEffect(() => {
-    const nextMedicationOption = resolveInitialOption(medicationOptions, initialMedication);
-    setMedicationOption(nextMedicationOption);
-    setMedication(nextMedicationOption?.label || initialMedication);
+    setMedicationOption(null);
+    setMedication(initialMedication);
   }, [initialMedication]);
 
   useEffect(() => {
@@ -157,43 +157,51 @@ export function PharmacySearchForm({
     <div className={cn("surface-panel rounded-[2rem] p-5 sm:p-6", className)}>
       <form
         className="space-y-4"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
+          setIsResolvingMedication(true);
+          try {
+            const resolvedMedication = medicationOption || (await resolveMedicationOption(medication));
+            const resolvedLocation = locationOption || findSupportedOption(locationOptions, location);
 
-          const resolvedMedication =
-            medicationOption || findSupportedOption(medicationOptions, medication);
-          const resolvedLocation = locationOption || findSupportedOption(locationOptions, location);
-
-          setMedicationError(
-            resolvedMedication ? null : "Choose a supported medication from the list.",
-          );
-          setLocationError(
-            resolvedLocation ? null : "Choose a supported city or ZIP-backed location.",
-          );
-
-          if (!resolvedMedication || !resolvedLocation) {
-            return;
-          }
-
-          startTransition(() => {
-            router.push(
-              buildResultsHref({
-                medication: resolvedMedication.value,
-                location: resolvedLocation.value,
-                radiusMiles,
-                sortBy,
-                onlyOpenNow,
-                action,
-              }),
+            setMedicationError(
+              resolvedMedication ? null : "Choose a medication from the FDA-backed search results.",
             );
-          });
+            setLocationError(
+              resolvedLocation ? null : "Choose a supported city or ZIP-backed location.",
+            );
+
+            if (!resolvedMedication || !resolvedLocation) {
+              return;
+            }
+
+            setMedicationOption(resolvedMedication);
+            setMedication(resolvedMedication.label);
+            startTransition(() => {
+              router.push(
+                buildResultsHref({
+                  medication: resolvedMedication.value,
+                  location: resolvedLocation.value,
+                  radiusMiles,
+                  sortBy,
+                  onlyOpenNow,
+                  action,
+                }),
+              );
+            });
+          } catch (reason) {
+            setMedicationError(
+              reason instanceof Error ? reason.message : "Unable to search medications right now.",
+            );
+          } finally {
+            setIsResolvingMedication(false);
+          }
         }}
       >
         <div className="grid gap-3 lg:grid-cols-2">
-          <ControlledCombobox
+          <MedicationCombobox
             label="Medication"
-            placeholder="Select a medication"
-            options={medicationOptions}
+            placeholder="Search FDA-backed medications"
             value={medication}
             selectedOptionId={medicationOption?.id || null}
             onValueChange={handleMedicationInputChange}
@@ -202,7 +210,7 @@ export function PharmacySearchForm({
               setMedication(option.label);
               setMedicationError(null);
             }}
-            emptyMessage="No supported medications match that search yet."
+            emptyMessage="No FDA-backed medications match that search yet."
             error={medicationError}
           />
 
@@ -279,10 +287,10 @@ export function PharmacySearchForm({
           </p>
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || isResolvingMedication}
             className="template-button-primary disabled:cursor-wait disabled:opacity-70"
           >
-            {isPending ? "Loading..." : submitLabel}
+            {isPending || isResolvingMedication ? "Loading..." : submitLabel}
           </button>
         </div>
       </form>

@@ -62,9 +62,9 @@ const boundaries = [
 const methodologyGuide = [
   {
     title: "Handled search inputs",
-    value: "Chosen from the list",
+    value: "Indexed server-side",
     detail:
-      "Medication and location inputs are constrained to the handled demo options so the app stays inside what this build is designed to support.",
+      "Medication typeahead hits a normalized FDA-backed index served from PharmaPath, while location stays constrained to the handled city and ZIP-backed entries in this build.",
   },
   {
     title: "Medication context",

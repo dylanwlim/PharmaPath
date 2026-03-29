@@ -10,69 +10,10 @@ export type SearchOption = {
 export type SearchScenario = {
   id: string;
   label: string;
-  medicationId: string;
-  locationId: string;
+  medication: string;
+  location: string;
   description: string;
 };
-
-export const medicationOptions: SearchOption[] = [
-  {
-    id: "adderall-xr-20mg",
-    label: "Adderall XR 20 mg",
-    value: "Adderall XR 20 mg",
-    description: "Controlled stimulant",
-    keywords: ["adderall", "amphetamine", "xr", "20 mg", "controlled"],
-  },
-  {
-    id: "vyvanse-30mg",
-    label: "Vyvanse 30 mg",
-    value: "Vyvanse 30 mg",
-    description: "Controlled stimulant",
-    keywords: ["vyvanse", "lisdexamfetamine", "30 mg", "controlled"],
-  },
-  {
-    id: "concerta-18mg",
-    label: "Concerta 18 mg",
-    value: "Concerta 18 mg",
-    description: "Controlled stimulant",
-    keywords: ["concerta", "methylphenidate", "18 mg", "controlled"],
-  },
-  {
-    id: "wegovy",
-    label: "Wegovy",
-    value: "Wegovy",
-    description: "GLP-1 refill",
-    keywords: ["wegovy", "semaglutide", "glp-1"],
-  },
-  {
-    id: "ozempic",
-    label: "Ozempic",
-    value: "Ozempic",
-    description: "GLP-1 refill",
-    keywords: ["ozempic", "semaglutide", "glp-1"],
-  },
-  {
-    id: "amoxicillin-500mg",
-    label: "Amoxicillin 500 mg",
-    value: "Amoxicillin 500 mg",
-    description: "Same-day antibiotic",
-    keywords: ["amoxicillin", "500 mg", "antibiotic", "acute"],
-  },
-  {
-    id: "azithromycin-250mg",
-    label: "Azithromycin 250 mg",
-    value: "Azithromycin 250 mg",
-    description: "Same-day antibiotic",
-    keywords: ["azithromycin", "250 mg", "antibiotic", "acute"],
-  },
-  {
-    id: "sertraline-50mg",
-    label: "Sertraline 50 mg",
-    value: "Sertraline 50 mg",
-    description: "Routine refill",
-    keywords: ["sertraline", "50 mg", "routine", "refill"],
-  },
-];
 
 export const locationOptions: SearchOption[] = [
   {
@@ -156,32 +97,32 @@ export const searchScenarios: SearchScenario[] = [
   {
     id: "controlled-stimulant",
     label: "Controlled stimulant",
-    medicationId: "adderall-xr-20mg",
-    locationId: "brooklyn-ny",
+    medication: "Adderall XR 20 mg",
+    location: "Brooklyn, NY",
     description:
       "A higher-friction handoff where the nearby list stays live and the medication context stays explicit.",
   },
   {
     id: "glp-1-refill",
     label: "GLP-1 refill",
-    medicationId: "wegovy",
-    locationId: "queens-ny",
+    medication: "Wegovy 0.25 mg/0.5 ml",
+    location: "Queens, NY",
     description:
       "Useful for shipment-sensitive questions without implying a specific dose is on the shelf.",
   },
   {
     id: "same-day-antibiotic",
     label: "Same-day antibiotic",
-    medicationId: "amoxicillin-500mg",
-    locationId: "hoboken-nj",
+    medication: "Amoxicillin 500 mg capsule",
+    location: "Hoboken, NJ",
     description:
       "A speed-sensitive path where open status and short travel time matter more than a perfect score.",
   },
   {
     id: "routine-refill",
     label: "Routine refill",
-    medicationId: "sertraline-50mg",
-    locationId: "lower-manhattan-ny",
+    medication: "Sertraline 50 mg tablet",
+    location: "Lower Manhattan, NY",
     description:
       "A steadier refill flow that still keeps transfer timing and confirmation separate from inventory claims.",
   },

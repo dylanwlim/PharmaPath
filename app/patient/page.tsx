@@ -32,7 +32,7 @@ export default function PatientPage() {
               mode="patient"
               eyebrow="Example searches"
               title="Four demo-ready searches, each tuned to a real workflow."
-              description="Use these to move quickly through the handled medication and location combinations without implying store-level inventory certainty."
+              description="Use these to move quickly through realistic medication and location combinations without implying store-level inventory certainty."
             />
 
             <div className="mt-8 flex flex-wrap gap-3">

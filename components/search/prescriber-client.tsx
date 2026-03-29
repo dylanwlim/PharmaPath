@@ -489,7 +489,7 @@ export function PrescriberClient() {
             action="/prescriber"
             initialQuery={query}
             submitLabel="Search medication"
-            helper="Choose a supported medication when the question is clinical planning, not store-level inventory."
+            helper="Search the FDA-backed medication index when the question is clinical planning, not store-level inventory."
           />
         </div>
       </section>
@@ -500,7 +500,7 @@ export function PrescriberClient() {
             mode="prescriber"
             eyebrow="Example scenarios"
             title="Four useful starting points for Medication Lookup."
-            description="These keep the demo grounded in supported medications while surfacing shortage, recall, formulation, and manufacturer context immediately."
+            description="These show FDA-backed search terms that surface shortage, recall, formulation, and manufacturer context immediately."
           />
         </div>
       </section>

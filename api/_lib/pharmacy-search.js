@@ -282,8 +282,18 @@ function normalizePlace(place, center) {
   };
 }
 
-function resolveMedicationProfile(medication) {
+function resolveMedicationProfile(medication, preferredProfileKey) {
   const normalizedMedication = normalizeMedicationText(medication);
+  const preferredProfile = sanitizeText(preferredProfileKey).toLowerCase();
+
+  if (preferredProfile && MEDICATION_PROFILES[preferredProfile]) {
+    return {
+      key: preferredProfile,
+      normalizedMedication,
+      ...MEDICATION_PROFILES[preferredProfile],
+    };
+  }
+
   const matchedProfile =
     MEDICATION_MATCHERS.find(({ patterns }) =>
       patterns.some((pattern) => pattern.test(normalizedMedication)),
@@ -572,8 +582,16 @@ async function geocodeLocation(location, apiKey) {
   };
 }
 
-async function searchNearbyPharmacies({ medication, center, radiusMiles, onlyOpenNow, apiKey, sortBy }) {
-  const medicationProfile = resolveMedicationProfile(medication);
+async function searchNearbyPharmacies({
+  medication,
+  medicationProfileKey,
+  center,
+  radiusMiles,
+  onlyOpenNow,
+  apiKey,
+  sortBy,
+}) {
+  const medicationProfile = resolveMedicationProfile(medication, medicationProfileKey);
   const radiusMeters = Math.max(1600, Math.round(radiusMiles * 1609.34));
   const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
 

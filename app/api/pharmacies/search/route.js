@@ -7,6 +7,7 @@ const {
   getSearchInput,
   searchNearbyPharmacies,
 } = require("../../../../api/_lib/pharmacy-search");
+const { resolveMedicationProfile } = require("../../../../lib/medications/index-store");
 
 export const dynamic = "force-dynamic";
 
@@ -54,9 +55,11 @@ async function handleSearch(request) {
       );
     }
 
+    const medicationProfile = await resolveMedicationProfile(input.medication);
     const resolvedLocation = await geocodeLocation(input.location, apiKey);
     const searchResult = await searchNearbyPharmacies({
-      medication: input.medication,
+      medication: medicationProfile.canonicalLabel,
+      medicationProfileKey: medicationProfile.workflowCategory,
       center: resolvedLocation.coordinates,
       radiusMiles: input.radiusMiles,
       onlyOpenNow: input.onlyOpenNow,
@@ -67,7 +70,7 @@ async function handleSearch(request) {
     return NextResponse.json({
       status: "ok",
       query: {
-        medication: input.medication,
+        medication: medicationProfile.canonicalLabel,
         location: input.location,
         radius_miles: input.radiusMiles,
         only_open_now: input.onlyOpenNow,
