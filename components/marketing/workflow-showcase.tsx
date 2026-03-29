@@ -101,7 +101,7 @@ function RouteVisualPanel({
   const panel = routeVisualMeta[routeId];
 
   return (
-    <div className="surface-panel mx-auto flex h-auto min-h-[430px] w-full max-w-[46rem] flex-col justify-center rounded-[2rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8">
+    <div className="surface-panel flex h-full min-h-[28rem] w-full flex-col justify-center rounded-[2rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8 lg:min-h-[32rem]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-slate-900">{panel.panelTitle}</p>
@@ -185,18 +185,52 @@ export function WorkflowShowcase() {
     };
   }, [currentIndex, isAutoPlaying]);
 
-  const slideVariants = {
+  const slideFrameVariants = {
     enter: (slideDirection: number) => ({
-      x: slideDirection > 0 ? 96 : -96,
       opacity: 0,
+      x: slideDirection > 0 ? 32 : -32,
     }),
     center: {
-      x: 0,
       opacity: 1,
+      x: 0,
+      transition: {
+        duration: motionTiming.base + 0.12,
+        ease: motionEase.standard,
+        when: "beforeChildren",
+        staggerChildren: 0.04,
+      },
     },
     exit: (slideDirection: number) => ({
-      x: slideDirection < 0 ? 96 : -96,
       opacity: 0,
+      x: slideDirection < 0 ? 32 : -32,
+      transition: {
+        duration: motionTiming.base,
+        ease: motionEase.standard,
+        when: "afterChildren",
+      },
+    }),
+  };
+
+  const slideChildVariants = {
+    enter: (slideDirection: number) => ({
+      opacity: 0,
+      x: slideDirection > 0 ? 18 : -18,
+    }),
+    center: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: motionTiming.base + 0.08,
+        ease: motionEase.standard,
+      },
+    },
+    exit: (slideDirection: number) => ({
+      opacity: 0,
+      x: slideDirection < 0 ? 18 : -18,
+      transition: {
+        duration: motionTiming.quick + 0.05,
+        ease: motionEase.standard,
+      },
     }),
   };
 
@@ -207,118 +241,116 @@ export function WorkflowShowcase() {
       onMouseLeave={() => setIsAutoPlaying(true)}
     >
       <div className="site-shell">
-        <div className="grid items-start gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
-          <div className="space-y-8">
-            <div>
-              <span className="eyebrow-label">Pages</span>
-              <h2 className="mt-6 section-title">Three surfaces. Three distinct jobs.</h2>
-              <p className="mt-4 max-w-[38rem] text-lg leading-7 text-slate-600">
-                Pharmacy Finder handles the nearby call list, Medication Lookup keeps the evidence
-                trail intact, and Methodology marks the boundary between direct data and inference.
-              </p>
-            </div>
-
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={active.id}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.5, ease: motionEase.standard }}
-                className="space-y-6"
-              >
-                <div className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">
-                  {activeMeta.panelTitle}
-                </div>
-                <h3 className="text-[2.25rem] leading-tight tracking-tight text-slate-950">
-                  {active.title}
-                </h3>
-                <p className="max-w-[36rem] text-lg leading-8 text-slate-700">{active.summary}</p>
-                <ul className="space-y-3">
-                  {active.bullets.map((bullet) => (
-                    <li key={bullet} className="flex gap-3 text-sm leading-6 text-slate-700 sm:text-base">
-                      <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-[#156d95]" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href={active.href} className="template-button-primary">
-                  Open {activeMeta.panelTitle}
-                </Link>
-              </motion.div>
-            </AnimatePresence>
-
-            <div className="flex items-center gap-6">
-              <div className="flex gap-2">
-                {workflowShowcase.map((item, index) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => goToSlide(index)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      index === currentIndex
-                        ? "w-8 bg-slate-900"
-                        : "w-2 bg-slate-400/30 hover:bg-slate-400/50"
-                    }`}
-                    aria-label={`Show ${routeVisualMeta[item.id].panelTitle}`}
-                  />
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={prevSlide}
-                  className="rounded-lg border border-slate-200 p-2 transition-colors hover:bg-slate-100"
-                  aria-label="Previous page"
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M12.5 15L7.5 10L12.5 5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={nextSlide}
-                  className="rounded-lg border border-slate-200 p-2 transition-colors hover:bg-slate-100"
-                  aria-label="Next page"
-                >
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M7.5 15L12.5 10L7.5 5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
+        <div className="mx-auto flex w-full max-w-[72rem] flex-col gap-10 lg:min-h-[46rem] lg:justify-center lg:gap-12">
+          <div className="mx-auto flex w-full max-w-[43rem] flex-col items-center text-center">
+            <span className="eyebrow-label justify-center">Pages</span>
+            <h2 className="mt-6 max-w-[30rem] section-title text-center">
+              Three surfaces. Three distinct jobs.
+            </h2>
+            <p className="mt-4 max-w-[40rem] text-lg leading-7 text-slate-600">
+              Pharmacy Finder handles the nearby call list, Medication Lookup keeps the evidence
+              trail intact, and Methodology marks the boundary between direct data and inference.
+            </p>
           </div>
 
-          <div className="relative flex min-h-[520px] items-center">
+          <div className="w-full">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={active.id}
                 custom={direction}
-                variants={slideVariants}
+                variants={slideFrameVariants}
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ duration: 0.5, ease: motionEase.standard }}
-                className="flex w-full items-center"
+                className="grid gap-10 lg:grid-cols-[minmax(0,38rem)_minmax(0,46rem)] lg:items-start lg:justify-center lg:gap-14"
               >
-                <RouteVisualPanel routeId={active.id} />
+                <motion.div
+                  custom={direction}
+                  variants={slideChildVariants}
+                  className="flex min-h-[26rem] w-full max-w-[38rem] flex-col justify-start space-y-6 lg:min-h-[32rem]"
+                >
+                  <div className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">
+                    {activeMeta.panelTitle}
+                  </div>
+                  <h3 className="text-[2.25rem] leading-tight tracking-tight text-slate-950">
+                    {active.title}
+                  </h3>
+                  <p className="max-w-[36rem] text-lg leading-8 text-slate-700">{active.summary}</p>
+                  <ul className="space-y-3">
+                    {active.bullets.map((bullet) => (
+                      <li key={bullet} className="flex gap-3 text-sm leading-6 text-slate-700 sm:text-base">
+                        <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-[#156d95]" />
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={active.href} className="template-button-primary">
+                    Open {activeMeta.panelTitle}
+                  </Link>
+                </motion.div>
+
+                <motion.div
+                  custom={direction}
+                  variants={slideChildVariants}
+                  className="relative flex w-full max-w-[46rem] items-start justify-center lg:justify-self-end"
+                >
+                  <RouteVisualPanel routeId={active.id} />
+                </motion.div>
               </motion.div>
             </AnimatePresence>
+          </div>
+
+          <div className="flex w-full max-w-[38rem] items-center gap-6">
+            <div className="flex gap-2">
+              {workflowShowcase.map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => goToSlide(index)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    index === currentIndex
+                      ? "w-8 bg-slate-900"
+                      : "w-2 bg-slate-400/30 hover:bg-slate-400/50"
+                  }`}
+                  aria-label={`Show ${routeVisualMeta[item.id].panelTitle}`}
+                />
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={prevSlide}
+                className="rounded-lg border border-slate-200 p-2 transition-colors hover:bg-slate-100"
+                aria-label="Previous page"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M12.5 15L7.5 10L12.5 5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={nextSlide}
+                className="rounded-lg border border-slate-200 p-2 transition-colors hover:bg-slate-100"
+                aria-label="Next page"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M7.5 15L12.5 10L7.5 5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
