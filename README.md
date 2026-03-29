@@ -1,16 +1,16 @@
 # PharmaPath
 
-PharmaPath is a tool that helps patients and prescribers understand medication access friction — combining nearby pharmacy discovery with FDA-sourced drug intelligence in one workflow.
+PharmaPath is a tool that helps patients and prescribers understand medication access friction by combining nearby pharmacy discovery with FDA-sourced drug intelligence in a single workflow.
 
 Built for RamHack 2026!
 
 ## What it does
 
-**Pharmacy Finder** — search a medication and location to see nearby pharmacies ranked by call priority, alongside an FDA-derived access signal (easy / moderate / difficult / unavailable) that reflects shortage, recall, discontinuation, and manufacturer context.
+**Pharmacy Finder** : search for a medication and location to see nearby pharmacies ranked by call priority, alongside an FDA-derived access signal (easy / moderate / difficult / unavailable) that reflects shortages, recalls, discontinuations, and manufacturer context.
 
-**Medication Lookup** — get a deeper intelligence view: shortage evidence, recall details, formulation alternatives, manufacturer history, approval status, and a plain-language takeaway for clinical decision-making.
+**Medication Lookup** : get a deeper intelligence view: shortage evidence, recall details, formulation alternatives, manufacturer history, approval status, and a plain-language takeaway for clinical decision-making.
 
-**What it does not do** — PharmaPath does not claim live shelf inventory. It uses Google Places for pharmacy discovery and FDA datasets for access signals. It is explicit about this distinction throughout the UI.
+**What it does not do** : PharmaPath does not claim live shelf inventory. It uses Google Places for pharmacy discovery and FDA datasets for access signals. This distinction is explicit throughout the UI.
 
 ## Crowd signal
 
