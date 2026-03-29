@@ -9,6 +9,7 @@ import {
   AuthButton,
   AuthInput,
   AuthLabel,
+  AuthSectionDivider,
 } from "@/components/auth/auth-primitives";
 import { PasswordInput } from "@/components/auth/password-input";
 import { PasswordStrength } from "@/components/auth/password-strength";
@@ -144,8 +145,8 @@ function RegisterPageInner() {
           Create an account
         </h1>
         <p className="text-slate-600">
-          Create a PharmaPath contributor profile so your reports can build trust over time instead
-          of counting like anonymous one-off votes.
+          Create your PharmaPath contributor profile to submit reports under your account and build
+          trusted history over time.
         </p>
       </div>
 
@@ -156,14 +157,7 @@ function RegisterPageInner() {
         </p>
       </div>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-slate-200" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-slate-500">Set up your contributor profile</span>
-        </div>
-      </div>
+      <AuthSectionDivider label="Set up your contributor profile" />
 
       {errorList.length > 0 ? (
         <div
@@ -193,13 +187,13 @@ function RegisterPageInner() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <AuthLabel htmlFor="firstName">First name</AuthLabel>
-          <AuthInput
-            id="firstName"
-            name="firstName"
-            placeholder="Jordan"
-            autoComplete="given-name"
-            disabled={isLoading}
-          />
+            <AuthInput
+              id="firstName"
+              name="firstName"
+              placeholder="Dylan"
+              autoComplete="given-name"
+              disabled={isLoading}
+            />
             {errors.firstName ? (
               <p className="text-sm text-rose-600 animate-in fade-in slide-in-from-top-1">
                 {errors.firstName}
@@ -211,7 +205,7 @@ function RegisterPageInner() {
             <AuthInput
               id="lastName"
               name="lastName"
-              placeholder="Patel"
+              placeholder="Lim"
               autoComplete="family-name"
               disabled={isLoading}
             />
@@ -289,7 +283,7 @@ function RegisterPageInner() {
 
         <AuthButton
           type="submit"
-          className="h-12 w-full hover:scale-[1.02] active:scale-[0.98]"
+          className="h-12 w-full"
           disabled={isLoading}
         >
           {isLoading ? "Creating account..." : "Create account"}

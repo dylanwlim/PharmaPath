@@ -20,11 +20,11 @@ export function AuthButton({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-4 focus-visible:ring-[#156d95]/15",
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-150 outline-none disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-4 focus-visible:ring-[#156d95]/15",
         variant === "default" &&
-          "bg-slate-950 text-white hover:bg-slate-900",
+          "bg-slate-950 text-white hover:-translate-y-px hover:bg-slate-900 active:translate-y-0 active:scale-[0.99]",
         variant === "outline" &&
-          "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+          "border border-slate-200 bg-white text-slate-900 hover:-translate-y-px hover:bg-slate-50 active:translate-y-0 active:scale-[0.99]",
         variant === "ghost" &&
           "bg-transparent text-slate-500 hover:bg-transparent hover:text-slate-900",
         className,
@@ -46,6 +46,24 @@ export const AuthInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLIn
 );
 
 AuthInput.displayName = "AuthInput";
+
+export function AuthSectionDivider({
+  label,
+  className,
+}: {
+  label: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <span className="h-px flex-1 bg-slate-200" />
+      <span className="text-[0.68rem] font-medium uppercase tracking-[0.18em] text-slate-500">
+        {label}
+      </span>
+      <span className="h-px flex-1 bg-slate-200" />
+    </div>
+  );
+}
 
 export function AuthLabel({
   className,
@@ -73,7 +91,9 @@ export function AuthCheckbox({
   label: ReactNode;
 }) {
   return (
-    <label className={cn("flex cursor-pointer items-center gap-3 text-sm text-slate-700", className)}>
+    <label
+      className={cn("flex cursor-pointer items-center gap-3 text-sm text-slate-700", className)}
+    >
       <input
         type="checkbox"
         className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"

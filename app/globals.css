@@ -139,16 +139,22 @@
   }
 
   .flat-chip {
-    @apply inline-flex items-center gap-2 rounded-lg border border-black/5 bg-white/78 px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-[0_1px_1px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-colors duration-150;
+    @apply inline-flex items-center gap-2 rounded-lg border border-black/5 bg-white/78 px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-[0_1px_1px_rgba(0,0,0,0.04)] backdrop-blur-sm transition-[background-color,border-color,color,transform] duration-150 hover:-translate-y-px active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/12;
+    transition-timing-function: var(--ease-button);
   }
 
   .template-button-primary {
-    @apply inline-flex items-center justify-center rounded-full bg-[#156d95] px-[18px] py-[15px] text-base leading-4 text-white transition-all duration-150 hover:rounded-2xl hover:bg-[#12597a];
+    @apply inline-flex items-center justify-center rounded-full bg-[#156d95] px-[18px] py-[15px] text-base leading-4 text-white transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-[#12597a] active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/14;
     transition-timing-function: var(--ease-button);
   }
 
   .template-button-secondary {
-    @apply inline-flex items-center justify-center rounded-full border border-[#202020] px-[18px] py-[15px] text-base leading-4 text-[#202020] transition-all duration-150 hover:rounded-2xl;
+    @apply inline-flex items-center justify-center rounded-full border border-[#202020] bg-transparent px-[18px] py-[15px] text-base leading-4 text-[#202020] transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-white/70 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/12;
+    transition-timing-function: var(--ease-button);
+  }
+
+  .template-button-dark {
+    @apply inline-flex items-center justify-center rounded-full bg-slate-950 px-[18px] py-[15px] text-base leading-4 text-white transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-px hover:bg-slate-900 active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-950/10;
     transition-timing-function: var(--ease-button);
   }
 

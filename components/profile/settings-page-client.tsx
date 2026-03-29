@@ -253,7 +253,7 @@ export function SettingsPageClient() {
                   <div className="mt-5 flex flex-wrap gap-3">
                     <AuthButton
                       type="submit"
-                      className="h-12 px-5 hover:scale-[1.02] active:scale-[0.98]"
+                      className="h-12 px-5"
                       disabled={isSaving}
                     >
                       <Save className="h-4 w-4" />

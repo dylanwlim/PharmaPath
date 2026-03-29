@@ -9,6 +9,7 @@ import {
   AuthCheckbox,
   AuthInput,
   AuthLabel,
+  AuthSectionDivider,
 } from "@/components/auth/auth-primitives";
 import { PasswordInput } from "@/components/auth/password-input";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -105,14 +106,7 @@ function LoginPageInner() {
         </p>
       </div>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-slate-200" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-slate-500">Contributor credentials</span>
-        </div>
-      </div>
+      <AuthSectionDivider label="Contributor credentials" />
 
       {errorList.length > 0 ? (
         <div
@@ -195,7 +189,7 @@ function LoginPageInner() {
 
         <AuthButton
           type="submit"
-          className="h-12 w-full hover:scale-[1.02] active:scale-[0.98]"
+          className="h-12 w-full"
           disabled={isLoading}
         >
           {isLoading ? "Signing in..." : "Sign in"}

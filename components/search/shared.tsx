@@ -33,6 +33,15 @@ export function formatMiles(value: number | null | undefined) {
   return `${miles < 10 ? miles.toFixed(1) : miles.toFixed(0)} mi`;
 }
 
+export function formatRecallClassification(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.trim().replace(/^class\s+/i, "");
+  return normalized ? `Class ${normalized}` : null;
+}
+
 export function SignalBadge({
   signal,
   className,

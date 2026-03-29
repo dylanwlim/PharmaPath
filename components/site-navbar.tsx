@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { motionEase, motionTiming } from "@/lib/motion";
+import { SiteBrand } from "@/components/site-brand";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -50,12 +51,7 @@ export function SiteNavbar() {
     >
       <div className="site-shell">
         <div className="flex h-20 items-center justify-between">
-          <Link
-            href="/"
-            className="text-2xl font-bold tracking-tight text-slate-900 transition-colors duration-200 hover:text-[#156d95]"
-          >
-            PharmaPath
-          </Link>
+          <SiteBrand />
 
           <div className="hidden items-center gap-2 md:flex">
             {navItems.map((item) => {
@@ -77,7 +73,7 @@ export function SiteNavbar() {
             })}
           </div>
 
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden items-center gap-1 md:flex">
             {isSignedIn ? (
               <>
                 <Link
@@ -105,15 +101,12 @@ export function SiteNavbar() {
                 <Link href="/login" className="nav-link-underline">
                   Login
                 </Link>
-                <Link href="/register" className="template-button-secondary text-sm">
+                <Link href="/register" className="nav-link-underline">
                   Register
                 </Link>
               </>
             )}
-            <Link
-              href="/patient"
-              className="template-button-primary shadow-sm hover:shadow-md"
-            >
+            <Link href="/patient" className="template-button-primary ml-1">
               Start Search
             </Link>
           </div>

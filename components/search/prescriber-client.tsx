@@ -11,6 +11,7 @@ import {
   EmptyState,
   TagList,
   formatDisplayDate,
+  formatRecallClassification,
 } from "@/components/search/shared";
 
 const client = createPharmaPathClient();
@@ -370,27 +371,33 @@ function ShortageEvidencePanel({
         <div className="surface-panel rounded-[2rem] p-6">
           <span className="eyebrow-label">Recent recall activity</span>
           <div className="mt-5 space-y-3">
-            {match.evidence.recalls.items.slice(0, 4).map((r, i) => (
-              <div key={i} className="rounded-[1.2rem] border border-amber-100 bg-amber-50 p-4">
-                {r.productDescription ? (
-                  <div className="text-sm font-medium text-slate-900">{r.productDescription}</div>
-                ) : null}
-                {r.recallingFirm ? (
-                  <div className="mt-0.5 text-xs text-slate-500">{r.recallingFirm}</div>
-                ) : null}
-                {r.reason ? (
-                  <div className="mt-1.5 text-sm text-slate-600">{r.reason}</div>
-                ) : null}
-                <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
-                  {r.classification ? (
-                    <span className="rounded-full bg-amber-200 px-2 py-0.5 font-semibold">
-                      Class {r.classification}
-                    </span>
+            {match.evidence.recalls.items.slice(0, 4).map((recall, index) => {
+              const classification = formatRecallClassification(recall.classification);
+
+              return (
+                <div key={index} className="rounded-[1.2rem] border border-amber-100 bg-amber-50 p-4">
+                  {recall.productDescription ? (
+                    <div className="text-sm font-medium text-slate-900">
+                      {recall.productDescription}
+                    </div>
                   ) : null}
-                  {r.reportDateLabel ? <span>{r.reportDateLabel}</span> : null}
+                  {recall.recallingFirm ? (
+                    <div className="mt-0.5 text-xs text-slate-500">{recall.recallingFirm}</div>
+                  ) : null}
+                  {recall.reason ? (
+                    <div className="mt-1.5 text-sm text-slate-600">{recall.reason}</div>
+                  ) : null}
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                    {classification ? (
+                      <span className="rounded-full bg-amber-200 px-2 py-0.5 font-semibold">
+                        {classification}
+                      </span>
+                    ) : null}
+                    {recall.reportDateLabel ? <span>{recall.reportDateLabel}</span> : null}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -598,7 +605,7 @@ export function PrescriberClient() {
                         ? `/patient/results?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}&radiusMiles=5&sortBy=best_match&onlyOpenNow=false`
                         : `/patient`
                     }
-                    className="rounded-full border border-slate-300 px-[18px] py-[15px] text-sm font-medium leading-4 text-slate-900 transition-all duration-200 hover:rounded-2xl"
+                    className="template-button-secondary text-sm"
                   >
                     Open Pharmacy Finder
                   </Link>

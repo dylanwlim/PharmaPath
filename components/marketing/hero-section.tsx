@@ -92,7 +92,7 @@ export function HeroSection() {
                     How it works
                   </p>
                   <h2 className="mt-2 text-[2.5rem] font-normal tracking-tight text-[#202020]">
-                    One search, three truths.
+                    One search, clearer next steps.
                   </h2>
                 </div>
               </div>

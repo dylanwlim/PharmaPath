@@ -16,8 +16,8 @@ function StatusRow({
   good: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-slate-200 bg-white px-4 py-3">
-      <span className="text-sm text-slate-600">{label}</span>
+    <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-slate-200/90 bg-white/92 px-4 py-3">
+      <span className="text-sm font-medium text-slate-700">{label}</span>
       <span
         className={`rounded-full px-3 py-1 text-xs uppercase tracking-[0.16em] ${
           good ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
@@ -60,8 +60,12 @@ export function HealthStatusCard() {
   }, []);
 
   return (
-    <div id="health" className="surface-panel rounded-[2rem] p-6">
+    <div id="health" className="surface-panel h-full rounded-[2rem] p-6 sm:p-7">
       <span className="eyebrow-label">Health status</span>
+      <p className="mt-4 max-w-md text-sm leading-6 text-slate-600">
+        Live route and integration checks from <code className="font-mono text-[0.82em]">/api/health</code>,
+        kept here so the search views stay focused on patient and medication questions.
+      </p>
       {payload ? (
         <div className="mt-5 space-y-3">
           <StatusRow label="Route status" value={payload.status} good={payload.status === "ok"} />
@@ -77,9 +81,9 @@ export function HealthStatusCard() {
           />
         </div>
       ) : error ? (
-        <p className="mt-5 text-base leading-7 text-rose-700">{error}</p>
+        <p className="mt-5 text-sm leading-6 text-rose-700">{error}</p>
       ) : (
-        <div className="mt-5 flex items-center gap-3 text-slate-500">
+        <div className="mt-5 flex items-center gap-3 text-sm text-slate-500">
           <LoaderCircle className="h-5 w-5 animate-spin" />
           Checking route status...
         </div>

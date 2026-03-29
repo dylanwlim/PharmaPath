@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
         <div className="space-y-4">
           <AuthButton
             variant="outline"
-            className="h-12 w-full bg-white hover:scale-[1.02] active:scale-[0.98]"
+            className="h-12 w-full bg-white"
             onClick={() => window.open(`mailto:${email}`, "_self")}
           >
             Open email app
@@ -138,7 +138,7 @@ export default function ForgotPasswordPage() {
 
         <AuthButton
           type="submit"
-          className="h-12 w-full hover:scale-[1.02] active:scale-[0.98]"
+          className="h-12 w-full"
           disabled={isLoading}
         >
           {isLoading ? "Sending..." : "Reset password"}

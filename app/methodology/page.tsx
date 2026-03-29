@@ -56,6 +56,24 @@ const boundaries = [
   { label: "Medication-wide access friction estimate", available: true },
 ];
 
+const methodologyGuide = [
+  {
+    title: "Live nearby discovery",
+    value: "Google Places",
+    detail: "Pharmacy names, distance, hours, ratings, and map links come from the live nearby search.",
+  },
+  {
+    title: "Medication context",
+    value: "openFDA evidence",
+    detail: "Shortages, recalls, approvals, and manufacturer breadth stay visible as separate evidence.",
+  },
+  {
+    title: "Store-level stock",
+    value: "Still manual",
+    detail: "PharmaPath does not claim a specific pharmacy has inventory confirmed without a direct call.",
+  },
+];
+
 export default function MethodologyPage() {
   return (
     <>
@@ -70,10 +88,26 @@ export default function MethodologyPage() {
                 What the data supports. What it doesn&apos;t.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Five public data sources. Two views. One rule: never claim more than the data can back.
+                Backed by five public data sources, with clear boundaries on every claim.
               </p>
             </div>
-            <HealthStatusCard />
+            <div className="surface-panel rounded-[2.25rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8">
+              <span className="eyebrow-label">Reading guide</span>
+              <div className="mt-6 space-y-3">
+                {methodologyGuide.map((item) => (
+                  <div
+                    key={item.title}
+                    className="rounded-[1.4rem] border border-slate-200/80 bg-slate-50/70 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-sm font-semibold text-slate-900">{item.title}</h2>
+                      <span className="text-sm font-medium text-slate-500">{item.value}</span>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
@@ -100,31 +134,48 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        {/* Boundaries */}
+        {/* Boundaries and health */}
         <section className="px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-2">
-            <div className="surface-panel rounded-[2rem] p-6">
-              <span className="eyebrow-label">Available</span>
-              <ul className="mt-5 space-y-3">
-                {boundaries.filter((b) => b.available).map((b) => (
-                  <li key={b.label} className="flex items-start gap-3 text-sm leading-6 text-slate-700">
-                    <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-emerald-500" />
-                    {b.label}
-                  </li>
-                ))}
-              </ul>
+          <div className="site-shell grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
+              <span className="eyebrow-label">Claim boundary</span>
+              <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
+                What PharmaPath can state directly, and what still needs a call.
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                The app keeps live nearby discovery, medication-wide evidence, and still-manual steps
+                separate so the product never overstates store-level availability.
+              </p>
+              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                <div className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50/70 p-5">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                    Shown directly
+                  </span>
+                  <ul className="mt-4 space-y-3">
+                    {boundaries.filter((b) => b.available).map((b) => (
+                      <li key={b.label} className="flex items-start gap-3 text-sm leading-6 text-slate-700">
+                        <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-emerald-500" />
+                        {b.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-[1.5rem] border border-rose-100 bg-rose-50/70 p-5">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
+                    Still manual
+                  </span>
+                  <ul className="mt-4 space-y-3">
+                    {boundaries.filter((b) => !b.available).map((b) => (
+                      <li key={b.label} className="flex items-start gap-3 text-sm leading-6 text-slate-700">
+                        <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-rose-400" />
+                        {b.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
-            <div className="surface-panel rounded-[2rem] p-6">
-              <span className="eyebrow-label">Not available</span>
-              <ul className="mt-5 space-y-3">
-                {boundaries.filter((b) => !b.available).map((b) => (
-                  <li key={b.label} className="flex items-start gap-3 text-sm leading-6 text-slate-700">
-                    <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-rose-400" />
-                    {b.label}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <HealthStatusCard />
           </div>
         </section>
 

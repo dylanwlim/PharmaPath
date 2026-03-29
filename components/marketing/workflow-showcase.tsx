@@ -101,7 +101,7 @@ function RouteVisualPanel({
   const panel = routeVisualMeta[routeId];
 
   return (
-    <div className="surface-panel h-full rounded-[2rem] bg-white/90 p-6 sm:p-8">
+    <div className="surface-panel mx-auto flex h-auto min-h-[430px] w-full max-w-[46rem] flex-col justify-center rounded-[2rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-slate-900">{panel.panelTitle}</p>
@@ -111,12 +111,11 @@ function RouteVisualPanel({
           className="mt-1 h-2.5 w-2.5 flex-none rounded-full"
           style={{
             backgroundColor: panel.accentColor,
-            boxShadow: `0 0 16px ${panel.accentColor}33`,
           }}
         />
       </div>
 
-      <div className="mt-6 grid gap-4">
+      <div className="mt-6 grid gap-3">
         {panel.sections.map((section) => (
           <div
             key={section.title}
@@ -146,6 +145,7 @@ export function WorkflowShowcase() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const active = workflowShowcase[currentIndex];
+  const activeMeta = routeVisualMeta[active.id];
 
   const nextSlide = () => {
     setDirection(1);
@@ -226,7 +226,7 @@ export function WorkflowShowcase() {
                 className="space-y-6"
               >
                 <div className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">
-                  {active.id}
+                  {activeMeta.panelTitle}
                 </div>
                 <h3 className="text-[2.25rem] leading-tight tracking-tight text-slate-950">
                   {active.title}
@@ -241,7 +241,7 @@ export function WorkflowShowcase() {
                   ))}
                 </ul>
                 <Link href={active.href} className="template-button-primary">
-                  Open {active.id} page
+                  Open {activeMeta.panelTitle}
                 </Link>
               </motion.div>
             </AnimatePresence>
@@ -300,7 +300,7 @@ export function WorkflowShowcase() {
             </div>
           </div>
 
-          <div className="relative h-[520px] overflow-hidden">
+          <div className="relative flex h-[520px] items-center overflow-hidden">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={active.id}
@@ -310,7 +310,7 @@ export function WorkflowShowcase() {
                 animate="center"
                 exit="exit"
                 transition={{ duration: 0.5, ease: motionEase.standard }}
-                className="absolute inset-0"
+                className="absolute inset-0 flex items-center"
               >
                 <RouteVisualPanel routeId={active.id} />
               </motion.div>

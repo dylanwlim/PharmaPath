@@ -1,22 +1,15 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { ShieldCheck, Stethoscope, Users } from "lucide-react";
+import { SiteBrand } from "@/components/site-brand";
 
 function Logo() {
-  return (
-    <Link href="/" className="flex items-center gap-2 text-slate-900 transition-opacity hover:opacity-80">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-950">
-        <span className="text-sm font-bold text-white">P</span>
-      </div>
-      <span className="text-lg font-semibold">PharmaPath</span>
-    </Link>
-  );
+  return <SiteBrand />;
 }
 
 const testimonial = {
   quote:
     "PharmaPath keeps the nearby pharmacy search credible by separating live location data, FDA context, and community reporting instead of blurring them together.",
-  author: "Jordan Patel",
+  author: "Dylan Lim",
   role: "Hackathon Product Lead",
   company: "RamHack 2026",
 };
@@ -24,7 +17,7 @@ const testimonial = {
 const stats = [
   { value: "Live", label: "Google Places pharmacy discovery" },
   { value: "Weighted", label: "Crowd reports by trust + recency" },
-  { value: "Honest", label: "No fake inventory certainty" },
+  { value: "Truthful", label: "No false stock claims" },
 ];
 
 const features = [
