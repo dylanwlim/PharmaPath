@@ -152,19 +152,13 @@ test("resolveLocationInput prefers autocomplete plus place details for freeform 
   assert.equal(requests.length, 2);
 });
 
-test("resolveLocationInput falls back to geocoding when autocomplete has no usable result", async () => {
+test("resolveLocationInput resolves bare ZIP input with postal-code constrained geocoding", async () => {
   await withMockedFetch(async (url) => {
     const requestUrl = new URL(url);
 
-    if (requestUrl.pathname.endsWith("/autocomplete/json")) {
-      return createJsonResponse({
-        status: "ZERO_RESULTS",
-        predictions: [],
-      });
-    }
-
     if (requestUrl.pathname.endsWith("/geocode/json")) {
       assert.equal(requestUrl.searchParams.get("address"), "10019");
+      assert.equal(requestUrl.searchParams.get("components"), "postal_code:10019|country:US");
 
       return createJsonResponse({
         status: "OK",
@@ -220,6 +214,92 @@ test("resolveLocationInput falls back to geocoding when autocomplete has no usab
     assert.equal(location.city, "New York");
     assert.equal(location.state, "NY");
     assert.equal(location.postal_code, "10019");
+    assert.equal(location.resolution_source, "geocode");
+  });
+});
+
+test("resolveLocationInput falls back to geocoding when autocomplete has no usable result", async () => {
+  await withMockedFetch(async (url) => {
+    const requestUrl = new URL(url);
+
+    if (requestUrl.pathname.endsWith("/autocomplete/json")) {
+      assert.equal(requestUrl.searchParams.get("input"), "350 5th Ave, New York, NY 10118");
+
+      return createJsonResponse({
+        status: "ZERO_RESULTS",
+        predictions: [],
+      });
+    }
+
+    if (requestUrl.pathname.endsWith("/geocode/json")) {
+      assert.equal(requestUrl.searchParams.get("address"), "350 5th Ave, New York, NY 10118");
+      assert.equal(requestUrl.searchParams.get("components"), null);
+
+      return createJsonResponse({
+        status: "OK",
+        results: [
+          {
+            place_id: "empire-state-place-id",
+            formatted_address: "350 5th Ave, New York, NY 10118, USA",
+            geometry: {
+              location: {
+                lat: 40.74844,
+                lng: -73.985664,
+              },
+            },
+            address_components: [
+              {
+                long_name: "350",
+                short_name: "350",
+                types: ["street_number"],
+              },
+              {
+                long_name: "5th Avenue",
+                short_name: "5th Ave",
+                types: ["route"],
+              },
+              {
+                long_name: "New York",
+                short_name: "New York",
+                types: ["locality", "political"],
+              },
+              {
+                long_name: "New York",
+                short_name: "NY",
+                types: ["administrative_area_level_1", "political"],
+              },
+              {
+                long_name: "10118",
+                short_name: "10118",
+                types: ["postal_code"],
+              },
+              {
+                long_name: "United States",
+                short_name: "US",
+                types: ["country", "political"],
+              },
+            ],
+            types: ["street_address"],
+          },
+        ],
+      });
+    }
+
+    throw new Error(`Unexpected Google URL: ${requestUrl.toString()}`);
+  }, async () => {
+    const location = await resolveLocationInput(
+      {
+        query: "350 5th Ave, New York, NY 10118",
+      },
+      "test-google-key",
+    );
+
+    assert.equal(location.display_label, "350 5th Ave, New York, NY 10118, USA");
+    assert.equal(location.place_id, "empire-state-place-id");
+    assert.equal(location.city, "New York");
+    assert.equal(location.state, "NY");
+    assert.equal(location.route, "5th Avenue");
+    assert.equal(location.street_number, "350");
     assert.equal(location.resolution_source, "geocode");
   });
 });

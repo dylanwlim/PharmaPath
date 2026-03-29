@@ -173,6 +173,10 @@ function sanitizeText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function isLikelyUsPostalCode(value) {
+  return /^\d{5}(?:-\d{4})?$/.test(sanitizeText(value));
+}
+
 function normalizeMedicationText(value) {
   return sanitizeText(value).toLowerCase();
 }
@@ -790,10 +794,21 @@ async function getPlaceDetails(placeId, apiKey, { displayLabel, rawQuery, sessio
   });
 }
 
-async function geocodeLocation(location, apiKey, { displayLabel, rawQuery } = {}) {
+async function geocodeLocation(location, apiKey, { displayLabel, rawQuery, components } = {}) {
   const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
   url.searchParams.set("address", location);
   url.searchParams.set("key", apiKey);
+
+  if (components && typeof components === "object") {
+    const serializedComponents = Object.entries(components)
+      .map(([key, value]) => `${key}:${sanitizeText(value)}`)
+      .filter((entry) => !entry.endsWith(":"))
+      .join("|");
+
+    if (serializedComponents) {
+      url.searchParams.set("components", serializedComponents);
+    }
+  }
 
   const payload = await fetchJson(url);
 
@@ -841,6 +856,22 @@ async function resolveLocationInput({ query, placeId, sessionToken } = {}, apiKe
       rawQuery: normalizedQuery || undefined,
       sessionToken,
     });
+  }
+
+  if (isLikelyUsPostalCode(normalizedQuery)) {
+    try {
+      return await geocodeLocation(normalizedQuery, apiKey, {
+        rawQuery: normalizedQuery,
+        components: {
+          postal_code: normalizedQuery,
+          country: "US",
+        },
+      });
+    } catch (error) {
+      if (error?.code !== "location_not_found") {
+        throw error;
+      }
+    }
   }
 
   try {
