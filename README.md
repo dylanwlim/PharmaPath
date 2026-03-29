@@ -66,6 +66,8 @@ The product is intentionally explicit about its limits:
 
 The nearby pharmacy route requires `GOOGLE_API_KEY`.
 The openFDA routes work without an API key, but rate limits are better with one.
+For Vercel, set `GOOGLE_API_KEY`, `OPENFDA_API_KEY`, and every `NEXT_PUBLIC_FIREBASE_*` variable in both Preview and Production.
+`FDA_API_KEY` remains a legacy local fallback and is not required when `OPENFDA_API_KEY` is set.
 
 ## Run locally
 
@@ -76,6 +78,20 @@ npx vercel dev --listen 3000
 ```
 
 Then open [http://localhost:3000](http://localhost:3000).
+
+## Deploy Firestore rules and indexes
+
+If Firebase CLI auth is available:
+
+```bash
+npx firebase-tools deploy --project pharma-path --only firestore:rules,firestore:indexes
+```
+
+If you prefer to use the checked-in project alias:
+
+```bash
+npx firebase-tools deploy --only firestore:rules,firestore:indexes
+```
 
 ## API routes
 

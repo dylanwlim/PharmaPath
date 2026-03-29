@@ -65,7 +65,7 @@ export type CrowdReportRecord = {
   reporterDisplayName: string;
   publicAliasSnapshot: string;
   reporterContributionCount: number;
-  reporterTrustWeight: number;
+  reporterTrustWeight?: number | null;
 };
 
 export type CrowdSignalSummary = {

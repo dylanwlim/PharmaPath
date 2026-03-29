@@ -188,11 +188,7 @@ export function computeCrowdSignal(
     }
 
     const freshnessWeight = 0.5 ** (hoursSince(report.createdAt) / REPORT_HALF_LIFE_HOURS);
-    const trustWeight = clamp(
-      report.reporterTrustWeight || computeTrustWeight(report.reporterContributionCount),
-      0.05,
-      0.8,
-    );
+    const trustWeight = clamp(computeTrustWeight(report.reporterContributionCount), 0.05, 0.8);
     const weightedSignal = reportType.signal * reportType.reliability * freshnessWeight * trustWeight;
 
     signedWeight += weightedSignal;

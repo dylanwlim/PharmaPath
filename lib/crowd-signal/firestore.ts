@@ -51,7 +51,10 @@ function mapCrowdReport(id: string, value: RawCrowdReport): CrowdReportRecord {
     reporterDisplayName: String(value.reporterDisplayName || ""),
     publicAliasSnapshot: String(value.publicAliasSnapshot || ""),
     reporterContributionCount: Number(value.reporterContributionCount || 0),
-    reporterTrustWeight: Number(value.reporterTrustWeight || 0),
+    reporterTrustWeight:
+      value.reporterTrustWeight === undefined || value.reporterTrustWeight === null
+        ? null
+        : Number(value.reporterTrustWeight || 0),
   };
 }
 
@@ -176,7 +179,6 @@ export async function submitCrowdReport(input: {
       reporterDisplayName: displayName,
       publicAliasSnapshot: currentProfile.publicContributorAlias ? contributorAlias : "Private contributor",
       reporterContributionCount: currentContributionCount,
-      reporterTrustWeight: computeTrustWeight(currentContributionCount),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
