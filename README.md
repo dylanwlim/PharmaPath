@@ -18,6 +18,8 @@ The product is intentionally explicit about its limits:
 - It **does** use live Google Places data for nearby pharmacy lookup
 - It **does** translate FDA listing, shortage, approval, and recall datasets into a
   signal-based access summary
+- It **does** let signed-in contributors submit pharmacy-specific availability reports
+- It **does** weight those reports by contributor history and recency instead of treating every report equally
 
 ## Route structure
 
@@ -27,14 +29,25 @@ The product is intentionally explicit about its limits:
 - `/drug?query=...&id=...` drug detail page
 - `/prescriber?query=...&id=...` prescriber intelligence page
 - `/methodology` methodology and limitations page
+- `/login` contributor login
+- `/register` contributor registration
+- `/forgot-password` password reset flow
+- `/profile` signed-in contributor profile
+- `/settings` signed-in contributor settings
 
 ## Stack
 
 - Next.js App Router frontend: `app/`, `components/`, `lib/`
-- Serverless API routes for Vercel:
-  - `api/pharmacies/search.js`
-  - `api/drug-intelligence.js`
-  - `api/health.js`
+- Firebase Authentication for contributor accounts
+- Firestore for contributor profiles and crowd availability reports
+- Next App Router API routes:
+  - `app/api/pharmacies/search/route.js`
+  - `app/api/drug-intelligence/route.js`
+  - `app/api/health/route.js`
+- Shared server-side API helpers:
+  - `api/_lib/pharmacy-search.js`
+  - `api/_lib/openfda.js`
+  - `api/_lib/openfda-normalize.js`
 - Google Places / Geocoding used server-side for nearby pharmacy lookup
 - openFDA datasets used server-side:
   - Drug NDC
@@ -47,19 +60,50 @@ The product is intentionally explicit about its limits:
 - `GOOGLE_API_KEY`
 - `OPENFDA_API_KEY`
 - `FDA_API_KEY` (legacy fallback still supported by the current server code)
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (optional)
 
 The nearby pharmacy route requires `GOOGLE_API_KEY`.
 The openFDA routes work without an API key, but rate limits are better with one.
+For Vercel, set `GOOGLE_API_KEY`, `OPENFDA_API_KEY`, and every `NEXT_PUBLIC_FIREBASE_*` variable in both Preview and Production.
+`FDA_API_KEY` remains a legacy local fallback and is not required when `OPENFDA_API_KEY` is set.
 
 ## Run locally
 
-Use Vercel dev so the static pages and API routes run together:
+Use the Next.js app directly so the pages and API routes run together:
 
 ```bash
-npx vercel dev --listen 3000
+npm install
+npm run dev
+```
+
+For a production smoke check:
+
+```bash
+npm run build
+npm run start
 ```
 
 Then open [http://localhost:3000](http://localhost:3000).
+
+## Deploy Firestore rules and indexes
+
+If Firebase CLI auth is available:
+
+```bash
+npx firebase-tools deploy --project pharma-path --only firestore:rules,firestore:indexes
+```
+
+If you prefer to use the checked-in project alias:
+
+```bash
+npx firebase-tools deploy --only firestore:rules,firestore:indexes
+```
 
 ## API routes
 
@@ -128,3 +172,27 @@ PharmaPath is credible when it keeps these distinctions clear:
 If the UI says a medication is easier or harder to obtain, that statement should
 always be framed as an estimate derived from FDA signals, not as verified retail
 availability.
+
+## Crowd signal model
+
+Crowd reports are stored in Firestore and tied to:
+
+- medication query
+- pharmacy identity
+- reporting user
+- report type
+- timestamp
+
+The signal intentionally stays simple and demo-friendly:
+
+- new contributors start with very low influence
+- trust rises gradually with contribution count
+- influence caps before any single account can dominate
+- fresh reports matter more than stale ones
+- contradictory reports reduce confidence and can produce a mixed signal
+
+The starter Firestore rules in [firestore.rules](./firestore.rules) allow:
+
+- users to read and update only their own profile document
+- signed-in users to create crowd reports for themselves
+- anyone to read crowd reports so the live signal can render publicly

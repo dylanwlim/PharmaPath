@@ -1,39 +1,35 @@
-"use strict";
+import { createRequire } from "module";
+import { NextResponse } from "next/server";
 
+const require = createRequire(import.meta.url);
 const {
   getQueryInput,
   searchDrugApplications,
   searchNdcRecords,
   searchRecallsForCandidate,
   searchShortagesForCandidate,
-  sendJson,
-} = require("./_lib/openfda");
+} = require("../../../api/_lib/openfda");
 const {
   buildCandidateContexts,
   buildDrugIntelligencePayload,
   buildSearchPhrases,
-} = require("./_lib/openfda-normalize");
+} = require("../../../api/_lib/openfda-normalize");
 
-module.exports = async function handler(req, res) {
-  if (req.method === "OPTIONS") {
-    res.setHeader("Allow", "GET, OPTIONS");
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
+export const dynamic = "force-dynamic";
 
-  if (req.method !== "GET") {
-    res.setHeader("Allow", "GET, OPTIONS");
-    return sendJson(res, 405, { error: "Method not allowed." });
-  }
-
+export async function GET(request) {
   try {
-    const input = getQueryInput(req);
+    const input = getQueryInput({
+      query: Object.fromEntries(request.nextUrl.searchParams.entries()),
+    });
 
     if (!input.query) {
-      return sendJson(res, 400, {
-        error: "A medication query is required.",
-      });
+      return NextResponse.json(
+        {
+          error: "A medication query is required.",
+        },
+        { status: 400 },
+      );
     }
 
     const searchPhrases = buildSearchPhrases(input.query);
@@ -74,9 +70,7 @@ module.exports = async function handler(req, res) {
       evidencePairs.map((entry) => [entry.id, entry.recalls]),
     );
 
-    return sendJson(
-      res,
-      200,
+    return NextResponse.json(
       buildDrugIntelligencePayload({
         query: input.query,
         ndcPayload,
@@ -86,8 +80,20 @@ module.exports = async function handler(req, res) {
       }),
     );
   } catch (error) {
-    return sendJson(res, error.statusCode || 500, {
-      error: error.message || "Unable to load medication intelligence right now.",
-    });
+    return NextResponse.json(
+      {
+        error: error.message || "Unable to load medication intelligence right now.",
+      },
+      { status: error.statusCode || 500 },
+    );
   }
-};
+}
+
+export function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      Allow: "GET, OPTIONS",
+    },
+  });
+}

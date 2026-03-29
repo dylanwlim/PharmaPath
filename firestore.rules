@@ -1,0 +1,202 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function profilePath(userId) {
+      return /databases/$(database)/documents/profiles/$(userId);
+    }
+
+    function profileAfter(userId) {
+      return getAfter(profilePath(userId));
+    }
+
+    function validProfilePayload(userId, data) {
+      return data.keys().hasOnly([
+          "uid",
+          "email",
+          "displayName",
+          "firstName",
+          "lastName",
+          "city",
+          "state",
+          "zipCode",
+          "defaultLocationLabel",
+          "preferredSearchRadius",
+          "publicContributorAlias",
+          "contributorAlias",
+          "notifyCrowdUpdates",
+          "notifyShortageChanges",
+          "notifySavedSearchUpdates",
+          "contributionCount",
+          "contributionLevel",
+          "createdAt",
+          "updatedAt",
+          "lastContributionAt",
+          "recentSearches"
+        ])
+        && data.uid == userId
+        && data.email is string
+        && data.displayName is string
+        && data.displayName.size() > 0
+        && data.displayName.size() <= 80
+        && data.firstName is string
+        && data.firstName.size() <= 40
+        && data.lastName is string
+        && data.lastName.size() <= 60
+        && data.city is string
+        && data.city.size() <= 80
+        && data.state is string
+        && data.state.size() <= 40
+        && data.zipCode is string
+        && data.zipCode.size() <= 12
+        && data.defaultLocationLabel is string
+        && data.defaultLocationLabel.size() <= 120
+        && data.preferredSearchRadius in [2, 5, 10, 25]
+        && data.publicContributorAlias is bool
+        && data.contributorAlias is string
+        && data.contributorAlias.size() <= 80
+        && data.notifyCrowdUpdates is bool
+        && data.notifyShortageChanges is bool
+        && data.notifySavedSearchUpdates is bool
+        && data.contributionCount is int
+        && data.contributionCount >= 0
+        && data.contributionLevel is string
+        && data.contributionLevel.size() > 0
+        && data.contributionLevel.size() <= 40
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && (
+          !("lastContributionAt" in data)
+          || data.lastContributionAt == null
+          || data.lastContributionAt is timestamp
+        )
+        && (
+          !("recentSearches" in data)
+          || (data.recentSearches is list && data.recentSearches.size() <= 6)
+        );
+    }
+
+    function validProfileCreate(userId) {
+      let data = request.resource.data;
+      return validProfilePayload(userId, data)
+        && data.createdAt == request.time
+        && data.updatedAt == request.time
+        && (
+          !("lastContributionAt" in data)
+          || data.lastContributionAt == null
+        );
+    }
+
+    function validProfileUpdate(userId) {
+      let data = request.resource.data;
+      let previous = resource.data;
+      let authEmail = request.auth.token.email;
+
+      return validProfilePayload(userId, data)
+        && data.createdAt == previous.createdAt
+        && data.updatedAt == request.time
+        && (
+          authEmail == null
+          || data.email == authEmail
+          || data.email == previous.email
+        )
+        && data.contributionCount >= previous.contributionCount
+        && data.contributionCount <= previous.contributionCount + 1
+        && (
+          data.contributionCount == previous.contributionCount
+          ? data.lastContributionAt == previous.lastContributionAt
+          : data.lastContributionAt == request.time
+        );
+    }
+
+    function validCrowdReport(reportId) {
+      let data = request.resource.data;
+      let profile = profileAfter(request.auth.uid);
+      let expectedAlias =
+        profile.data.publicContributorAlias
+          ? profile.data.contributorAlias
+          : "Private contributor";
+
+      return profile.exists()
+        && data.keys().hasOnly([
+          "signalKey",
+          "medicationKey",
+          "pharmacyKey",
+          "pharmacyName",
+          "pharmacyAddress",
+          "pharmacyPlaceId",
+          "googleMapsUrl",
+          "medicationQuery",
+          "strengthDescriptor",
+          "formulationDescriptor",
+          "reportType",
+          "note",
+          "userId",
+          "reporterDisplayName",
+          "publicAliasSnapshot",
+          "reporterContributionCount",
+          "createdAt",
+          "updatedAt"
+        ])
+        && data.signalKey is string
+        && data.signalKey.size() > 0
+        && data.signalKey.size() <= 200
+        && data.medicationKey is string
+        && data.medicationKey.size() > 0
+        && data.medicationKey.size() <= 160
+        && data.pharmacyKey is string
+        && data.pharmacyKey.size() > 0
+        && data.pharmacyKey.size() <= 160
+        && data.pharmacyName is string
+        && data.pharmacyName.size() > 0
+        && data.pharmacyName.size() <= 120
+        && data.pharmacyAddress is string
+        && data.pharmacyAddress.size() > 0
+        && data.pharmacyAddress.size() <= 200
+        && (!("pharmacyPlaceId" in data) || data.pharmacyPlaceId == null || data.pharmacyPlaceId is string)
+        && (!("googleMapsUrl" in data) || data.googleMapsUrl == null || data.googleMapsUrl is string)
+        && data.medicationQuery is string
+        && data.medicationQuery.size() > 0
+        && data.medicationQuery.size() <= 160
+        && (!("strengthDescriptor" in data) || data.strengthDescriptor == null || data.strengthDescriptor is string)
+        && (!("formulationDescriptor" in data) || data.formulationDescriptor == null || data.formulationDescriptor is string)
+        && data.reportType in [
+          "in_stock",
+          "low_stock_uncertain",
+          "out_of_stock",
+          "successfully_filled",
+          "could_not_fill",
+          "called_and_confirmed"
+        ]
+        && (!("note" in data) || (data.note is string && data.note.size() <= 240))
+        && data.userId == request.auth.uid
+        && data.reporterDisplayName == profile.data.displayName
+        && data.publicAliasSnapshot == expectedAlias
+        && data.reporterContributionCount == profile.data.contributionCount - 1
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    match /profiles/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && validProfileCreate(userId);
+      allow update: if isOwner(userId) && validProfileUpdate(userId);
+      allow delete: if false;
+    }
+
+    match /crowdReports/{reportId} {
+      allow read: if true;
+      allow create: if isSignedIn() && validCrowdReport(reportId);
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
