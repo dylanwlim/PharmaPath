@@ -209,7 +209,7 @@ export function ControlledCombobox({
         </div>
 
         {isOpen ? (
-          <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white/96 shadow-[0_22px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white/96 shadow-[0_22px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl">
             <div
               id={listboxId}
               role="listbox"

@@ -195,7 +195,7 @@ export function MedicationCombobox({
         </div>
 
         {isOpen ? (
-          <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white/96 shadow-[0_22px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white/96 shadow-[0_22px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl">
             <div id={listboxId} role="listbox" className="max-h-72 space-y-1 overflow-y-auto p-2">
               {loadState === "error" ? (
                 <div className="rounded-[1rem] border border-dashed border-rose-200 bg-rose-50/85 px-4 py-4 text-sm leading-6 text-rose-700">
