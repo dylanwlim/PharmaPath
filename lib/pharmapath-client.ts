@@ -118,6 +118,7 @@ export type DrugIntelligenceResponse = {
           companyName?: string;
           shortageReason?: string;
           availability?: string;
+          updateDate?: string | null;
           updateLabel?: string;
         }>;
       };
