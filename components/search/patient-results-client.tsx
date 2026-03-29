@@ -4,11 +4,16 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, ExternalLink, LoaderCircle, MapPin, PhoneCall } from "lucide-react";
+import { CrowdSignalCard } from "@/components/crowd-signal/crowd-signal-card";
 import {
   createPharmaPathClient,
   type DrugIntelligenceResponse,
   type PharmacySearchResponse,
 } from "@/lib/pharmapath-client";
+import { useAuth } from "@/lib/auth/auth-context";
+import { subscribeToCrowdReportsForMedication } from "@/lib/crowd-signal/firestore";
+import { buildCrowdSignalMap, buildSignalKey } from "@/lib/crowd-signal/scoring";
+import { saveRecentSearch } from "@/lib/profile/profile-service";
 import { PharmacySearchForm } from "@/components/search/pharmacy-search-form";
 import {
   CalloutList,
@@ -44,11 +49,14 @@ export function PatientResultsClient() {
   const radiusMiles = Number(searchParams.get("radiusMiles") || 5);
   const sortBy = (searchParams.get("sortBy") || "best_match") as "best_match" | "distance" | "rating";
   const onlyOpenNow = searchParams.get("onlyOpenNow") === "true";
+  const { user } = useAuth();
 
   const [pharmacyData, setPharmacyData] = useState<PharmacySearchResponse | null>(null);
   const [drugData, setDrugData] = useState<DrugIntelligenceResponse | null>(null);
   const [pharmacyError, setPharmacyError] = useState<string | null>(null);
   const [drugError, setDrugError] = useState<string | null>(null);
+  const [crowdSignals, setCrowdSignals] = useState<Record<string, ReturnType<typeof buildCrowdSignalMap>[string]>>({});
+  const [crowdReady, setCrowdReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
@@ -112,8 +120,47 @@ export function PatientResultsClient() {
     };
   }, [query, location, radiusMiles, sortBy, onlyOpenNow]);
 
+  useEffect(() => {
+    if (!query) {
+      setCrowdSignals({});
+      setCrowdReady(true);
+      return;
+    }
+
+    setCrowdReady(false);
+    const unsubscribe = subscribeToCrowdReportsForMedication(query, (reports) => {
+      setCrowdSignals(buildCrowdSignalMap(reports));
+      setCrowdReady(true);
+    });
+
+    return () => unsubscribe();
+  }, [query]);
+
+  useEffect(() => {
+    if (!user || !query || !location) {
+      return;
+    }
+
+    void saveRecentSearch(user.uid, {
+      medication: query,
+      location,
+      radiusMiles,
+    });
+  }, [location, query, radiusMiles, user]);
+
   const extraResults = pharmacyData?.results.slice(1) || [];
   const visibleExtras = showAll ? extraResults : extraResults.slice(0, 4);
+
+  function getCrowdSignalForPharmacy(result: PharmacySearchResponse["results"][number]) {
+    const signalKey = buildSignalKey({
+      medicationQuery: query,
+      placeId: result.place_id,
+      pharmacyName: result.name,
+      pharmacyAddress: result.address,
+    });
+
+    return crowdSignals[signalKey];
+  }
 
   return (
     <>
@@ -238,6 +285,19 @@ export function PatientResultsClient() {
                           <p className="mt-2">{pharmacyData.recommended.next_step}</p>
                         </div>
 
+                        <div className="mt-5">
+                          <CrowdSignalCard
+                            medicationQuery={query}
+                            pharmacy={{
+                              name: pharmacyData.recommended.name,
+                              address: pharmacyData.recommended.address,
+                              placeId: pharmacyData.recommended.place_id,
+                              googleMapsUrl: pharmacyData.recommended.google_maps_url,
+                            }}
+                            summary={getCrowdSignalForPharmacy(pharmacyData.recommended)}
+                          />
+                        </div>
+
                         <div className="mt-5 flex flex-wrap items-center gap-3">
                           {pharmacyData.recommended.google_maps_url ? (
                             <a
@@ -286,6 +346,19 @@ export function PatientResultsClient() {
                                   </div>
                                 </div>
                                 <p className="mt-3 text-sm leading-6 text-slate-600">{result.match_reason}</p>
+                                <div className="mt-3">
+                                  <CrowdSignalCard
+                                    medicationQuery={query}
+                                    pharmacy={{
+                                      name: result.name,
+                                      address: result.address,
+                                      placeId: result.place_id,
+                                      googleMapsUrl: result.google_maps_url,
+                                    }}
+                                    summary={getCrowdSignalForPharmacy(result)}
+                                    compact
+                                  />
+                                </div>
                                 {result.google_maps_url ? (
                                   <a
                                     href={result.google_maps_url}
@@ -308,7 +381,17 @@ export function PatientResultsClient() {
                           <MapPin className="h-4 w-4 text-[#156d95]" />
                           {pharmacyData.disclaimer}
                         </div>
-                        <p className="mt-2">{pharmacyData.guidance.demo_boundary}</p>
+                        <p className="mt-2">
+                          {pharmacyData.guidance.demo_boundary} Community reports sit on top of the
+                          live nearby list as a separate, weighted layer rather than as a claim of
+                          verified shelf inventory.
+                        </p>
+                        {!crowdReady ? (
+                          <div className="mt-3 flex items-center gap-2 text-slate-500">
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                            Loading crowd signal...
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   ) : (

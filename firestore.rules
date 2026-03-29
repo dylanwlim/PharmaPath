@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /profiles/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    match /crowdReports/{reportId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.signalKey is string
+        && request.resource.data.signalKey.size() > 0
+        && request.resource.data.medicationKey is string
+        && request.resource.data.medicationKey.size() > 0
+        && request.resource.data.pharmacyKey is string
+        && request.resource.data.pharmacyKey.size() > 0
+        && request.resource.data.pharmacyName is string
+        && request.resource.data.pharmacyAddress is string
+        && request.resource.data.reportType in [
+          "in_stock",
+          "low_stock_uncertain",
+          "out_of_stock",
+          "successfully_filled",
+          "could_not_fill",
+          "called_and_confirmed"
+        ]
+        && (!("note" in request.resource.data) || request.resource.data.note.size() <= 240);
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

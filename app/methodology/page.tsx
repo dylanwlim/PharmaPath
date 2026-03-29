@@ -32,6 +32,7 @@ export default function MethodologyPage() {
               <ul className="mt-5 space-y-3 text-base leading-7 text-slate-700">
                 <li>Live nearby pharmacy discovery from Google Places</li>
                 <li>FDA listing, shortage, approval, and recall records</li>
+                <li>Signed-in community reports tied to a specific pharmacy and medication search</li>
                 <li>Store addresses, ratings, open-now status, and map links</li>
               </ul>
             </div>
@@ -40,6 +41,7 @@ export default function MethodologyPage() {
               <span className="eyebrow-label">Inferred carefully</span>
               <ul className="mt-5 space-y-3 text-base leading-7 text-slate-700">
                 <li>Medication-wide access friction labels such as steadier, mixed, or higher friction</li>
+                <li>Crowd availability likelihood weighted by contributor history and report recency</li>
                 <li>Whether broader planning or alternative consideration may help</li>
                 <li>Which nearby pharmacy is the best first call based on the workflow heuristic</li>
               </ul>
@@ -64,10 +66,30 @@ export default function MethodologyPage() {
               </p>
             </div>
             <div className="surface-panel rounded-[2rem] p-6">
+              <span className="eyebrow-label">Crowd weighting</span>
+              <p className="mt-5 text-base leading-7 text-slate-700">
+                Brand-new contributors barely move the estimate. Influence rises gradually with
+                repeat reporting, caps before any single user can dominate, and decays as reports
+                get stale. If recent reports conflict, the UI lowers confidence and shows a mixed
+                signal instead of forcing certainty.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-5 lg:grid-cols-2">
+            <div className="surface-panel rounded-[2rem] p-6">
               <span className="eyebrow-label">Why the prescriber page is separate</span>
               <p className="mt-5 text-base leading-7 text-slate-700">
                 Prescribers need the evidence trail. That includes shortage status, manufacturer
                 breadth, formulation spread, and whether an alternative plan may deserve attention.
+              </p>
+            </div>
+            <div className="surface-panel rounded-[2rem] p-6">
+              <span className="eyebrow-label">Still recommended</span>
+              <p className="mt-5 text-base leading-7 text-slate-700">
+                Nearby pharmacy results are live, FDA context is evidence-backed, and the crowd
+                layer is helpful. None of those layers replace a direct pharmacy confirmation before
+                promising a patient that a prescription will be ready.
               </p>
             </div>
           </div>

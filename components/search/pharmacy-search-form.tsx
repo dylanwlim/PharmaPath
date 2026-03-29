@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { featuredSearches } from "@/lib/content";
+import { useAuth } from "@/lib/auth/auth-context";
 import { cn } from "@/lib/utils";
 
 type PharmacySearchFormProps = {
@@ -57,12 +58,30 @@ export function PharmacySearchForm({
   className,
 }: PharmacySearchFormProps) {
   const router = useRouter();
+  const { profile } = useAuth();
   const [isPending, startTransition] = useTransition();
   const [medication, setMedication] = useState(initialMedication);
   const [location, setLocation] = useState(initialLocation);
   const [radiusMiles, setRadiusMiles] = useState(initialRadiusMiles);
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [onlyOpenNow, setOnlyOpenNow] = useState(initialOnlyOpenNow);
+
+  useEffect(() => {
+    if (!initialLocation && !location && profile?.defaultLocationLabel) {
+      setLocation(profile.defaultLocationLabel);
+    }
+  }, [initialLocation, location, profile?.defaultLocationLabel]);
+
+  useEffect(() => {
+    if (
+      (!initialRadiusMiles || initialRadiusMiles === 5) &&
+      radiusMiles === initialRadiusMiles &&
+      profile?.preferredSearchRadius &&
+      profile.preferredSearchRadius !== radiusMiles
+    ) {
+      setRadiusMiles(profile.preferredSearchRadius);
+    }
+  }, [initialRadiusMiles, profile?.preferredSearchRadius, radiusMiles]);
 
   return (
     <div className={cn("surface-panel rounded-[2rem] p-5 sm:p-6", className)}>

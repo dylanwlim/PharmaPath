@@ -55,8 +55,8 @@ export const homeStats = [
     description: "Live nearby pharmacy\nlookup route",
   },
   {
-    value: "0",
-    description: "Fake claims about\nverified inventory",
+    value: "3",
+    description: "Separate layers:\nlive, FDA, crowd",
   },
 ];
 
@@ -117,11 +117,16 @@ export const homeFaqs = [
   {
     question: "Does PharmaPath know whether a pharmacy has the medication in stock right now?",
     answer:
-      "No. PharmaPath can show live nearby pharmacy results from Google Places, but stock still has to be confirmed directly with the pharmacy. The medication signal is derived from FDA listing, shortage, approval, and recall data, not from shelf-level inventory feeds.",
+      "No. PharmaPath can show live nearby pharmacy results from Google Places and a weighted community signal, but stock still has to be confirmed directly with the pharmacy. The medication signal is derived from FDA listing, shortage, approval, and recall data, not from shelf-level inventory feeds.",
   },
   {
     question: "Why separate patient and prescriber views?",
     answer:
       "Patients need a fast shortlist, a signal label, and the right next question. Prescribers need the evidence trail that shaped that signal: shortage status, manufacturer breadth, formulation spread, and recall context. Mixing those into one page makes both views worse.",
+  },
+  {
+    question: "How does the community signal work?",
+    answer:
+      "Community reports are tied to signed-in accounts, weighted lightly for new contributors, strengthened gradually as they report more often, capped so no one user can dominate, and decayed as reports get older. When reports conflict, PharmaPath surfaces that as a mixed signal instead of pretending certainty.",
   },
 ];

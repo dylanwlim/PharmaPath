@@ -45,11 +45,12 @@ export default function PatientPage() {
               </p>
             </div>
             <div className="surface-panel rounded-[2rem] p-6">
-              <span className="eyebrow-label">Boundary</span>
-              <h2 className="mt-5 text-2xl tracking-tight text-slate-950">Inventory still needs a call.</h2>
+              <span className="eyebrow-label">Crowd layer</span>
+              <h2 className="mt-5 text-2xl tracking-tight text-slate-950">Weighted community signal.</h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                PharmaPath will not claim that a nearby pharmacy has the medication confirmed on the
-                shelf right now.
+                Signed-in contributors can report whether a pharmacy looked stocked, uncertain, or
+                unable to fill. Recent reports matter most and contradictory reports lower
+                confidence.
               </p>
             </div>
           </div>
