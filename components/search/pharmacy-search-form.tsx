@@ -347,13 +347,12 @@ export function PharmacySearchForm({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-sm leading-6 text-slate-600">
-            Nearby pharmacies come from live Google Places results. Strength-aware medication
-            context is preserved, but inventory still requires direct confirmation.
+            Nearby pharmacies come from live Google Places. Stock still needs a direct call.
           </p>
           <button
             type="submit"
             disabled={isPending || isResolvingMedication}
-            className="template-button-primary relative z-40 disabled:cursor-wait disabled:opacity-70"
+            className="template-button-primary relative z-40 whitespace-nowrap px-4 py-3.5 text-sm disabled:cursor-wait disabled:opacity-70 sm:self-start"
           >
             {isPending || isResolvingMedication ? "Loading..." : submitLabel}
           </button>

@@ -18,12 +18,12 @@ export default function PatientPage() {
                 Search a medication and location without pretending the stock is guaranteed.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                Pharmacy Finder keeps one live nearby list, one clearly sourced medication signal,
-                and the next question to ask. It stays useful by keeping those jobs separate.
+                Pharmacy Finder keeps the live nearby list, medication context, and next question
+                separate so the first call stays clear.
               </p>
             </div>
 
-            <PharmacySearchForm showSamples submitLabel="Search live nearby pharmacies" />
+            <PharmacySearchForm showSamples submitLabel="Find nearby pharmacies" />
           </div>
         </section>
 
@@ -33,7 +33,7 @@ export default function PatientPage() {
               mode="patient"
               eyebrow="Example searches"
               title="Four demo-ready searches, each tuned to a real workflow."
-              description="Use these to move quickly through realistic medication and location combinations without implying store-level inventory certainty."
+              description="Use these to move through realistic medication and location combinations without implying store-level inventory."
             />
 
             <div className="mt-8 flex flex-wrap gap-3">
