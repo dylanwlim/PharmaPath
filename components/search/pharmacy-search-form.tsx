@@ -34,16 +34,32 @@ type PharmacySearchFormProps = {
 
 function buildResultsHref({
   medication,
+  medicationSource,
+  medicationWorkflowCategory,
+  medicationLabel,
+  medicationSelectedStrength,
+  medicationDosageForm,
+  medicationFormulation,
   location,
   locationPlaceId,
+  locationLat,
+  locationLng,
   radiusMiles,
   sortBy,
   onlyOpenNow,
   action = "/patient/results",
 }: {
   medication: string;
+  medicationSource?: string | null;
+  medicationWorkflowCategory?: string | null;
+  medicationLabel?: string | null;
+  medicationSelectedStrength?: string | null;
+  medicationDosageForm?: string | null;
+  medicationFormulation?: string | null;
   location: string;
   locationPlaceId?: string | null;
+  locationLat?: number | null;
+  locationLng?: number | null;
   radiusMiles: number;
   sortBy: string;
   onlyOpenNow: boolean;
@@ -59,6 +75,38 @@ function buildResultsHref({
 
   if (locationPlaceId) {
     params.set("locationPlaceId", locationPlaceId);
+  }
+
+  if (medicationSource) {
+    params.set("medicationSource", medicationSource);
+  }
+
+  if (medicationWorkflowCategory) {
+    params.set("medicationWorkflowCategory", medicationWorkflowCategory);
+  }
+
+  if (medicationLabel) {
+    params.set("medicationLabel", medicationLabel);
+  }
+
+  if (medicationSelectedStrength) {
+    params.set("medicationSelectedStrength", medicationSelectedStrength);
+  }
+
+  if (medicationDosageForm) {
+    params.set("medicationDosageForm", medicationDosageForm);
+  }
+
+  if (medicationFormulation) {
+    params.set("medicationFormulation", medicationFormulation);
+  }
+
+  if (typeof locationLat === "number" && Number.isFinite(locationLat)) {
+    params.set("locationLat", String(locationLat));
+  }
+
+  if (typeof locationLng === "number" && Number.isFinite(locationLng)) {
+    params.set("locationLng", String(locationLng));
   }
 
   return `${action}?${params.toString()}`;
@@ -295,8 +343,16 @@ export function PharmacySearchForm({
               router.push(
                 buildResultsHref({
                   medication: buildMedicationQueryLabel(resolvedMedication, resolvedStrength),
+                  medicationSource: resolvedMedication.source,
+                  medicationWorkflowCategory: resolvedMedication.workflowCategory,
+                  medicationLabel: resolvedMedication.label,
+                  medicationSelectedStrength: resolvedStrength || null,
+                  medicationDosageForm: resolvedMedication.dosageForm,
+                  medicationFormulation: resolvedMedication.formulation,
                   location: resolvedLocation.display_label,
                   locationPlaceId: resolvedLocation.place_id,
+                  locationLat: resolvedLocation.coordinates.lat,
+                  locationLng: resolvedLocation.coordinates.lng,
                   radiusMiles,
                   sortBy,
                   onlyOpenNow,

@@ -8,8 +8,20 @@ const {
   searchNearbyPharmacies,
 } = require("../../../../api/_lib/pharmacy-search");
 const { resolveMedicationProfile } = require("../../../../lib/medications/index-store");
+const {
+  buildMedicationProfileFromSubmittedSearch,
+  buildResolvedLocationFromSubmittedSearch,
+} = require("../../../../lib/search/submitted-search-metadata");
 
 export const dynamic = "force-dynamic";
+
+function readMetadataValue(body, searchParams, key) {
+  if (body && Object.prototype.hasOwnProperty.call(body, key)) {
+    return body[key];
+  }
+
+  return searchParams.get(key);
+}
 
 async function readRequestBody(request) {
   if (request.method !== "POST") {
@@ -28,10 +40,11 @@ async function readRequestBody(request) {
 async function handleSearch(request) {
   try {
     const body = await readRequestBody(request);
+    const searchParams = request.nextUrl.searchParams;
     const input = getSearchInput(
       {
         method: request.method,
-        query: Object.fromEntries(request.nextUrl.searchParams.entries()),
+        query: Object.fromEntries(searchParams.entries()),
       },
       body,
     );
@@ -55,14 +68,29 @@ async function handleSearch(request) {
       );
     }
 
-    const medicationProfile = await resolveMedicationProfile(input.medication);
-    const resolvedLocation = await resolveLocationInput(
-      {
-        query: input.location,
-        placeId: input.locationPlaceId,
-      },
-      apiKey,
-    );
+    const metadata = {
+      medicationSource: readMetadataValue(body, searchParams, "medicationSource"),
+      medicationWorkflowCategory: readMetadataValue(body, searchParams, "medicationWorkflowCategory"),
+      medicationLabel: readMetadataValue(body, searchParams, "medicationLabel"),
+      medicationSelectedStrength: readMetadataValue(body, searchParams, "medicationSelectedStrength"),
+      medicationDosageForm: readMetadataValue(body, searchParams, "medicationDosageForm"),
+      medicationFormulation: readMetadataValue(body, searchParams, "medicationFormulation"),
+      locationLat: readMetadataValue(body, searchParams, "locationLat"),
+      locationLng: readMetadataValue(body, searchParams, "locationLng"),
+    };
+
+    const medicationProfile =
+      buildMedicationProfileFromSubmittedSearch(input, metadata) ||
+      (await resolveMedicationProfile(input.medication));
+    const resolvedLocation =
+      buildResolvedLocationFromSubmittedSearch(input, metadata) ||
+      (await resolveLocationInput(
+        {
+          query: input.location,
+          placeId: input.locationPlaceId,
+        },
+        apiKey,
+      ));
     const searchResult = await searchNearbyPharmacies({
       medication: medicationProfile.canonicalLabel,
       medicationProfileKey: medicationProfile.workflowCategory,
@@ -78,7 +106,7 @@ async function handleSearch(request) {
       query: {
         medication: medicationProfile.canonicalLabel,
         location: input.location,
-        location_place_id: input.locationPlaceId || null,
+        location_place_id: input.locationPlaceId || resolvedLocation.place_id || null,
         radius_miles: input.radiusMiles,
         only_open_now: input.onlyOpenNow,
         sort_by: input.sortBy,

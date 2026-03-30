@@ -501,6 +501,20 @@ export function PatientResultsClient() {
   const query = searchParams.get("query")?.trim() || "";
   const location = searchParams.get("location")?.trim() || "";
   const locationPlaceId = searchParams.get("locationPlaceId")?.trim() || "";
+  const medicationSourceParam = searchParams.get("medicationSource")?.trim().toLowerCase() || "";
+  const medicationSource =
+    medicationSourceParam === "demo"
+      ? "demo"
+      : medicationSourceParam === "openfda"
+        ? "openfda"
+        : undefined;
+  const medicationWorkflowCategory = searchParams.get("medicationWorkflowCategory")?.trim() || "";
+  const medicationLabel = searchParams.get("medicationLabel")?.trim() || "";
+  const medicationSelectedStrength = searchParams.get("medicationSelectedStrength")?.trim() || "";
+  const medicationDosageForm = searchParams.get("medicationDosageForm")?.trim() || "";
+  const medicationFormulation = searchParams.get("medicationFormulation")?.trim() || "";
+  const locationLat = Number(searchParams.get("locationLat"));
+  const locationLng = Number(searchParams.get("locationLng"));
   const radiusMiles = Number(searchParams.get("radiusMiles") || 5);
   const sortBy = (searchParams.get("sortBy") || "best_match") as "best_match" | "distance" | "rating";
   const onlyOpenNow = searchParams.get("onlyOpenNow") === "true";
@@ -551,6 +565,14 @@ export function PatientResultsClient() {
         medication: query,
         location,
         locationPlaceId: locationPlaceId || undefined,
+        medicationSource: medicationSource || undefined,
+        medicationWorkflowCategory: medicationWorkflowCategory || undefined,
+        medicationLabel: medicationLabel || undefined,
+        medicationSelectedStrength: medicationSelectedStrength || undefined,
+        medicationDosageForm: medicationDosageForm || undefined,
+        medicationFormulation: medicationFormulation || undefined,
+        locationLat: Number.isFinite(locationLat) ? locationLat : undefined,
+        locationLng: Number.isFinite(locationLng) ? locationLng : undefined,
         radiusMiles,
         sortBy,
         onlyOpenNow,
