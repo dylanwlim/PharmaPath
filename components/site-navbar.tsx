@@ -85,7 +85,7 @@ export function SiteNavbar() {
                   </span>
                   Profile
                 </Link>
-                <Link href="/settings" className="template-button-secondary text-sm">
+                <Link href="/settings" className="action-button-secondary text-sm">
                   Settings
                 </Link>
                 <button
@@ -106,7 +106,7 @@ export function SiteNavbar() {
                 </Link>
               </>
             )}
-            <Link href="/patient" className="template-button-primary ml-1">
+            <Link href="/patient" className="action-button-primary ml-1">
               Start Search
             </Link>
           </div>
@@ -189,7 +189,7 @@ export function SiteNavbar() {
               )}
               <Link
                 href="/patient"
-                className="template-button-primary mt-2"
+                className="action-button-primary mt-2"
                 onClick={() => setIsOpen(false)}
               >
                 Start Search

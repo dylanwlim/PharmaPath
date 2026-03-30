@@ -883,7 +883,7 @@ export function PatientResultsClient() {
                               href={pharmacyData.recommended.google_maps_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="template-button-dark text-sm"
+                              className="action-button-dark text-sm"
                             >
                               Open in Google Maps
                             </a>
@@ -1002,7 +1002,7 @@ export function PatientResultsClient() {
                       <div className="mt-6 flex flex-wrap gap-3">
                         <Link
                           href={`/prescriber?query=${encodeURIComponent(query)}&id=${encodeURIComponent(featuredMatch.id)}&location=${encodeURIComponent(location)}`}
-                          className="template-button-dark text-sm"
+                          className="action-button-dark text-sm"
                         >
                           Open Medication Lookup
                         </Link>

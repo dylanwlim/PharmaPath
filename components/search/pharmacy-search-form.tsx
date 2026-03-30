@@ -352,7 +352,7 @@ export function PharmacySearchForm({
           <button
             type="submit"
             disabled={isPending || isResolvingMedication}
-            className="template-button-primary relative z-40 whitespace-nowrap px-4 py-3.5 text-sm disabled:cursor-wait disabled:opacity-70 sm:self-start"
+            className="action-button-primary relative z-40 whitespace-nowrap px-4 py-3.5 text-sm disabled:cursor-wait disabled:opacity-70 sm:self-start"
           >
             {isPending || isResolvingMedication ? "Loading..." : submitLabel}
           </button>
