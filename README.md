@@ -8,7 +8,7 @@ It brings nearby pharmacy discovery and medication-access context into one exper
 
 Medication access is often harder than it looks. A drug may be familiar, approved, or widely prescribed, but still be difficult to obtain because availability on the ground is inconsistent and the signals people rely on are scattered across different places.
 
-PharmaPath is designed to reduce that friction. Instead of forcing users to piece together location search, medication context, and next-step judgment on their own, it presents those pieces in a clearer and more honest workflow.
+PharmaPath is designed to reduce this. Instead of forcing users to piece together location search, medication context, and next-step judgment on their own, it presents those pieces in a clearer and more honest workflow.
 
 ## What PharmaPath Does
 
@@ -28,7 +28,7 @@ PharmaPath is built for:
 
 ## Why It Matters
 
-Delays in finding a medication can create stress, wasted time, repeated calls, and avoidable treatment friction. PharmaPath aims to make that process more navigable by helping people ask better questions sooner and by being clear about what the product can and cannot tell them.
+Delays in finding a medication can create stress, wasted time, repeated calls, and avoidable treatment. PharmaPath aims to make that process more navigable by helping people ask better questions sooner and by being clear about what the product can and cannot tell them.
 
 ## Current Status
 
