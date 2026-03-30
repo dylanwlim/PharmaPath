@@ -41,8 +41,6 @@ The safest way to understand the product is through the app:
 - App: [pharmapath.org](https://www.pharmapath.org/)
 - Public methodology page: [pharmapath.org/methodology](https://www.pharmapath.org/methodology)
 
-Public setup and operational details are intentionally kept out of this README.
-
 ## Contact
 
 - Email: [contact@pharmapath.org](mailto:contact@pharmapath.org)
