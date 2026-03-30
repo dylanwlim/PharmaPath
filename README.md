@@ -36,7 +36,7 @@ PharmaPath is in active development. The current public experience is centered o
 
 ## Getting Started
 
-The safest way to understand the product is through the public app:
+The safest way to understand the product is through the app:
 
 - App: [pharmapath.org](https://www.pharmapath.org/)
 - Public methodology page: [pharmapath.org/methodology](https://www.pharmapath.org/methodology)
