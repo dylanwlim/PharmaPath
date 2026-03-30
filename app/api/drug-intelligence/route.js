@@ -15,12 +15,16 @@ const {
   buildSearchPhrases,
 } = require("../../../api/_lib/openfda-normalize");
 const { buildDemoDrugIntelligencePayload } = require("../../../lib/medications/demo");
-const { resolveMedicationOption } = require("../../../lib/medications/index-store");
+const {
+  buildRuntimeSnapshotUrl,
+  resolveMedicationOption,
+} = require("../../../lib/medications/index-store");
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {
   try {
+    const snapshotUrl = buildRuntimeSnapshotUrl(request.url);
     const input = getQueryInput({
       query: Object.fromEntries(request.nextUrl.searchParams.entries()),
     });
@@ -34,7 +38,9 @@ export async function GET(request) {
       );
     }
 
-    const resolvedMedication = await resolveMedicationOption(input.query);
+    const resolvedMedication = await resolveMedicationOption(input.query, {
+      snapshotUrl,
+    });
     if (resolvedMedication?.source === "demo") {
       const demoPayload = buildDemoDrugIntelligencePayload(input.query);
 

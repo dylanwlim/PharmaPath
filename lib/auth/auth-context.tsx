@@ -8,23 +8,9 @@ import {
   useMemo,
   useState,
 } from "react";
-import {
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  updateProfile as updateFirebaseProfile,
-  type User,
-} from "firebase/auth";
+import type { User } from "firebase/auth";
 import { formatAuthError } from "@/lib/auth/auth-errors";
-import { getFirebaseAuth, setAuthPersistence } from "@/lib/firebase/client";
 import { isFirebaseConfigured, missingFirebaseEnv } from "@/lib/firebase/config";
-import {
-  ensureUserProfile,
-  saveUserProfile,
-  subscribeToUserProfile,
-} from "@/lib/profile/profile-service";
 import type { UserProfileRecord } from "@/lib/profile/profile-types";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
@@ -63,6 +49,20 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+async function loadAuthDependencies() {
+  const [firebaseAuth, firebaseClient, profileService] = await Promise.all([
+    import("firebase/auth"),
+    import("@/lib/firebase/client"),
+    import("@/lib/profile/profile-service"),
+  ]);
+
+  return {
+    ...firebaseAuth,
+    ...firebaseClient,
+    ...profileService,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfileRecord | null>(null);
@@ -70,42 +70,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getFirebaseAuth();
-    if (!auth || !isFirebaseConfigured) {
+    if (!isFirebaseConfigured) {
       setStatus("unauthenticated");
       setProfileLoading(false);
       return () => undefined;
     }
 
+    let cancelled = false;
     let unsubscribeProfile: () => void = () => undefined;
+    let unsubscribeAuth: () => void = () => undefined;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, async (nextUser) => {
-      unsubscribeProfile();
-      setUser(nextUser);
+    void loadAuthDependencies()
+      .then(({ ensureUserProfile, getFirebaseAuth, onAuthStateChanged, subscribeToUserProfile }) => {
+        if (cancelled) {
+          return;
+        }
 
-      if (!nextUser) {
-        setProfile(null);
+        const auth = getFirebaseAuth();
+        if (!auth) {
+          setStatus("unauthenticated");
+          setProfileLoading(false);
+          return;
+        }
+
+        unsubscribeAuth = onAuthStateChanged(auth, async (nextUser) => {
+          unsubscribeProfile();
+          setUser(nextUser);
+
+          if (!nextUser) {
+            setProfile(null);
+            setStatus("unauthenticated");
+            setProfileLoading(false);
+            return;
+          }
+
+          setStatus("authenticated");
+          setProfileLoading(true);
+
+          try {
+            await ensureUserProfile(nextUser);
+          } catch {
+            // Profile creation is retried on explicit writes later.
+          }
+
+          if (cancelled) {
+            return;
+          }
+
+          unsubscribeProfile = subscribeToUserProfile(nextUser.uid, (nextProfile) => {
+            if (cancelled) {
+              return;
+            }
+
+            setProfile(nextProfile);
+            setProfileLoading(false);
+          });
+        });
+      })
+      .catch(() => {
+        if (cancelled) {
+          return;
+        }
+
         setStatus("unauthenticated");
         setProfileLoading(false);
-        return;
-      }
-
-      setStatus("authenticated");
-      setProfileLoading(true);
-
-      try {
-        await ensureUserProfile(nextUser);
-      } catch {
-        // Profile creation is retried on explicit writes later.
-      }
-
-      unsubscribeProfile = subscribeToUserProfile(nextUser.uid, (nextProfile) => {
-        setProfile(nextProfile);
-        setProfileLoading(false);
       });
-    });
 
     return () => {
+      cancelled = true;
       unsubscribeProfile();
       unsubscribeAuth();
     };
@@ -122,6 +154,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       profileLoading,
       async signIn(input) {
+        const {
+          ensureUserProfile,
+          getFirebaseAuth,
+          setAuthPersistence,
+          signInWithEmailAndPassword,
+        } = await loadAuthDependencies();
         const auth = getFirebaseAuth();
         if (!auth) {
           throw new Error("Firebase authentication is not configured.");
@@ -140,6 +178,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       async signUp(input) {
+        const {
+          createUserWithEmailAndPassword,
+          ensureUserProfile,
+          getFirebaseAuth,
+          setAuthPersistence,
+          updateProfile,
+        } = await loadAuthDependencies();
         const auth = getFirebaseAuth();
         if (!auth) {
           throw new Error("Firebase authentication is not configured.");
@@ -153,7 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             input.password,
           );
 
-          await updateFirebaseProfile(credential.user, {
+          await updateProfile(credential.user, {
             displayName: input.displayName.trim(),
           });
 
@@ -173,14 +218,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       async signOut() {
+        const { getFirebaseAuth, signOut } = await loadAuthDependencies();
         const auth = getFirebaseAuth();
         if (!auth) {
           return;
         }
 
-        await firebaseSignOut(auth);
+        await signOut(auth);
       },
       async sendResetEmail(email: string) {
+        const { getFirebaseAuth, sendPasswordResetEmail } = await loadAuthDependencies();
         const auth = getFirebaseAuth();
         if (!auth) {
           throw new Error("Firebase authentication is not configured.");
@@ -193,13 +240,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       async updateProfileRecord(input) {
+        const { getFirebaseAuth, saveUserProfile, updateProfile } = await loadAuthDependencies();
         if (!user) {
           throw new Error("Sign in to update profile settings.");
         }
 
         try {
           if (input.displayName?.trim() && input.displayName.trim() !== user.displayName) {
-            await updateFirebaseProfile(user, {
+            await updateProfile(user, {
               displayName: input.displayName.trim(),
             });
           }

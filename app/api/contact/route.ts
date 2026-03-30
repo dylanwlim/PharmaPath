@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
-
-const CONTACT_EMAIL = process.env.CONTACT_EMAIL ?? "";
 
 interface ContactPayload {
   name: string;
@@ -12,6 +9,22 @@ interface ContactPayload {
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function readEnvValue(name: "CONTACT_EMAIL" | "RESEND_API_KEY") {
+  const value = process.env[name];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function createResendClient() {
+  const apiKey = readEnvValue("RESEND_API_KEY");
+
+  if (!apiKey) {
+    return null;
+  }
+
+  const { Resend } = await import("resend");
+  return new Resend(apiKey);
 }
 
 export async function POST(request: Request) {
@@ -43,19 +56,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Message must be at least 10 characters." }, { status: 400 });
     }
 
-    if (!CONTACT_EMAIL) {
-      return NextResponse.json({ error: "Contact email is not configured." }, { status: 500 });
+    const contactEmail = readEnvValue("CONTACT_EMAIL");
+
+    if (!contactEmail) {
+      return NextResponse.json({ error: "Contact email is not configured." }, { status: 503 });
     }
 
-    if (!process.env.RESEND_API_KEY) {
-      return NextResponse.json({ error: "Email service is not configured." }, { status: 500 });
-    }
+    const resend = await createResendClient();
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    if (!resend) {
+      return NextResponse.json({ error: "Email service is not configured." }, { status: 503 });
+    }
 
     await resend.emails.send({
       from: "PharmaPath Contact <onboarding@resend.dev>",
-      to: CONTACT_EMAIL,
+      to: contactEmail,
       replyTo: email,
       subject: `[PharmaPath Contact] ${subject}`,
       text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\n${message}`,

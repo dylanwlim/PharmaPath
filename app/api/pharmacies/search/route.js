@@ -7,7 +7,10 @@ const {
   resolveLocationInput,
   searchNearbyPharmacies,
 } = require("../../../../api/_lib/pharmacy-search");
-const { resolveMedicationProfile } = require("../../../../lib/medications/index-store");
+const {
+  buildRuntimeSnapshotUrl,
+  resolveMedicationProfile,
+} = require("../../../../lib/medications/index-store");
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +30,7 @@ async function readRequestBody(request) {
 
 async function handleSearch(request) {
   try {
+    const snapshotUrl = buildRuntimeSnapshotUrl(request.url);
     const body = await readRequestBody(request);
     const input = getSearchInput(
       {
@@ -55,7 +59,9 @@ async function handleSearch(request) {
       );
     }
 
-    const medicationProfile = await resolveMedicationProfile(input.medication);
+    const medicationProfile = await resolveMedicationProfile(input.medication, {
+      snapshotUrl,
+    });
     const resolvedLocation = await resolveLocationInput(
       {
         query: input.location,

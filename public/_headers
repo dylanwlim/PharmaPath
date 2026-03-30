@@ -1,0 +1,5 @@
+/_next/static/*
+  Cache-Control: public,max-age=31536000,immutable
+
+/medication-index.snapshot.json.gz
+  Cache-Control: public,max-age=3600,stale-while-revalidate=86400

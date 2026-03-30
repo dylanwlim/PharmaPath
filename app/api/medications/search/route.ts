@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 const require = createRequire(import.meta.url);
 const {
   DEFAULT_SEARCH_LIMIT,
+  buildRuntimeSnapshotUrl,
   searchMedicationOptions,
 } = require("../../../../lib/medications/index-store");
 
@@ -16,6 +17,7 @@ function sanitizeText(value: string | null) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const snapshotUrl = buildRuntimeSnapshotUrl(request.url);
     const query = sanitizeText(searchParams.get("q") || searchParams.get("query"));
     const exact = ["1", "true", "yes"].includes(
       sanitizeText(searchParams.get("exact")).toLowerCase(),
@@ -24,7 +26,11 @@ export async function GET(request: Request) {
       Math.max(Number(searchParams.get("limit")) || DEFAULT_SEARCH_LIMIT, 1),
       12,
     );
-    const { results, snapshot } = await searchMedicationOptions(query, { limit, exact });
+    const { results, snapshot } = await searchMedicationOptions(query, {
+      limit,
+      exact,
+      snapshotUrl,
+    });
 
     return NextResponse.json({
       status: "ok",
