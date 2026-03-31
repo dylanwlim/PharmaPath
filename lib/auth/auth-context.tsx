@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -42,6 +43,11 @@ type SignUpInput = {
   defaultLocationLabel?: string;
 };
 
+type PendingSignUpProfile = {
+  email: string;
+  overrides: Partial<UserProfileRecord>;
+};
+
 type AuthContextValue = {
   firebaseReady: boolean;
   firebaseMessage: string | null;
@@ -58,11 +64,27 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function buildSignUpProfileOverrides(input: SignUpInput): Partial<UserProfileRecord> {
+  const displayName = input.displayName.trim();
+
+  return {
+    displayName,
+    firstName: input.firstName?.trim() || "",
+    lastName: input.lastName?.trim() || "",
+    city: input.city?.trim() || "",
+    state: input.state?.trim() || "",
+    zipCode: input.zipCode?.trim() || "",
+    defaultLocationLabel: input.defaultLocationLabel?.trim() || "",
+    contributorAlias: displayName,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfileRecord | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [profileLoading, setProfileLoading] = useState(true);
+  const pendingSignUpProfileRef = useRef<PendingSignUpProfile | null>(null);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -96,10 +118,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setStatus("authenticated");
           setProfileLoading(true);
 
+          const pendingSignUpProfile = pendingSignUpProfileRef.current;
+          const pendingSignUpEmail = pendingSignUpProfile?.email || "";
+          const nextUserEmail = nextUser.email?.trim().toLowerCase() || "";
+          const bootstrapOverrides =
+            pendingSignUpEmail && pendingSignUpEmail === nextUserEmail
+              ? pendingSignUpProfile?.overrides || {}
+              : {};
+
           try {
-            await ensureUserProfile(nextUser);
+            await ensureUserProfile(nextUser, bootstrapOverrides);
           } catch {
             // Profile creation is retried on explicit writes later.
+          } finally {
+            if (pendingSignUpEmail && pendingSignUpEmail === nextUserEmail) {
+              pendingSignUpProfileRef.current = null;
+            }
           }
 
           unsubscribeProfile = subscribeToUserProfile(nextUser.uid, (nextProfile) => {
@@ -143,13 +177,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
           await setAuthPersistence(input.remember ? "local" : "session");
-          const credential = await signInWithEmailAndPassword(
+          await signInWithEmailAndPassword(
             auth,
             input.email.trim(),
             input.password,
           );
-          const { ensureUserProfile } = await import("@/lib/profile/profile-service");
-          await ensureUserProfile(credential.user);
         } catch (error) {
           throw new Error(formatAuthError(error));
         }
@@ -160,31 +192,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("Firebase authentication is not configured.");
         }
 
+        const normalizedEmail = input.email.trim().toLowerCase();
+        const profileOverrides = buildSignUpProfileOverrides(input);
+        let accountCreated = false;
+
+        pendingSignUpProfileRef.current = {
+          email: normalizedEmail,
+          overrides: profileOverrides,
+        };
+
         try {
           await setAuthPersistence("local");
           const credential = await createUserWithEmailAndPassword(
             auth,
-            input.email.trim(),
+            normalizedEmail,
             input.password,
           );
-          const { ensureUserProfile } = await import("@/lib/profile/profile-service");
+          accountCreated = true;
 
           await updateFirebaseProfile(credential.user, {
-            displayName: input.displayName.trim(),
+            displayName: profileOverrides.displayName || "",
           });
 
-          await ensureUserProfile(credential.user, {
-            displayName: input.displayName.trim(),
-            firstName: input.firstName?.trim() || "",
-            lastName: input.lastName?.trim() || "",
-            city: input.city?.trim() || "",
-            state: input.state?.trim() || "",
-            zipCode: input.zipCode?.trim() || "",
-            defaultLocationLabel: input.defaultLocationLabel?.trim() || "",
-            contributorAlias: input.displayName.trim(),
-          });
           return credential.user;
         } catch (error) {
+          if (!accountCreated) {
+            pendingSignUpProfileRef.current = null;
+          }
           throw new Error(formatAuthError(error));
         }
       },

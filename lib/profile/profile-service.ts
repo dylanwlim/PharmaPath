@@ -3,8 +3,10 @@
 import type { User } from "firebase/auth";
 import {
   doc,
+  getDoc,
   onSnapshot,
   runTransaction,
+  setDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { getTrustTier } from "@/lib/crowd-signal/scoring";
@@ -225,40 +227,35 @@ export async function saveRecentSearch(
   }
 
   const profileRef = doc(db, "profiles", uid);
-
-  await runTransaction(db, async (transaction) => {
-    const snapshot = await transaction.get(profileRef);
-    const existing = snapshot.exists() ? mapProfileDoc(snapshot.id, snapshot.data()) : null;
-
-    const nextEntry = {
-      medication: input.medication.trim(),
-      location: input.location.trim(),
-      radiusMiles: input.radiusMiles,
-      createdAt: new Date().toISOString(),
-    };
-
-    const currentEntries = (existing?.recentSearches || [])
-      .map((entry) => ({
-        medication: entry.medication,
-        location: entry.location,
-        radiusMiles: entry.radiusMiles,
-        createdAt: entry.createdAt?.toISOString() || new Date().toISOString(),
-      }))
-      .filter(
-        (entry) =>
-          !(
-            entry.medication.toLowerCase() === nextEntry.medication.toLowerCase() &&
-            entry.location.toLowerCase() === nextEntry.location.toLowerCase()
-          ),
-      );
-
-    transaction.set(
-      profileRef,
-      {
-        recentSearches: [nextEntry, ...currentEntries].slice(0, 6),
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true },
+  const snapshot = await getDoc(profileRef);
+  const existing = snapshot.exists() ? mapProfileDoc(snapshot.id, snapshot.data()) : null;
+  const nextEntry = {
+    medication: input.medication.trim(),
+    location: input.location.trim(),
+    radiusMiles: input.radiusMiles,
+    createdAt: new Date().toISOString(),
+  };
+  const currentEntries = (existing?.recentSearches || [])
+    .map((entry) => ({
+      medication: entry.medication,
+      location: entry.location,
+      radiusMiles: entry.radiusMiles,
+      createdAt: entry.createdAt?.toISOString() || new Date().toISOString(),
+    }))
+    .filter(
+      (entry) =>
+        !(
+          entry.medication.toLowerCase() === nextEntry.medication.toLowerCase() &&
+          entry.location.toLowerCase() === nextEntry.location.toLowerCase()
+        ),
     );
-  });
+
+  await setDoc(
+    profileRef,
+    {
+      recentSearches: [nextEntry, ...currentEntries].slice(0, 6),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
 }

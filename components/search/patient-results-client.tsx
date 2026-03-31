@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, ExternalLink, LoaderCircle, MapPin, PhoneCall } from "lucide-react";
 import { CrowdSignalCard } from "@/components/crowd-signal/crowd-signal-card";
 import {
@@ -28,6 +28,15 @@ type Match = DrugIntelligenceResponse["matches"][number];
 type ShortageItem = Match["evidence"]["shortages"]["items"][number];
 
 // ─── data helpers ──────────────────────────────────────────────────────────
+
+function parseOptionalNumber(value: string | null) {
+  if (!value?.trim()) {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
 
 function normalizedStatus(s: ShortageItem) {
   return s.normalizedStatus ?? s.status?.toLowerCase() ?? "";
@@ -511,12 +520,13 @@ export function PatientResultsClient() {
   const medicationSelectedStrength = searchParams.get("medicationSelectedStrength")?.trim() || "";
   const medicationDosageForm = searchParams.get("medicationDosageForm")?.trim() || "";
   const medicationFormulation = searchParams.get("medicationFormulation")?.trim() || "";
-  const locationLat = Number(searchParams.get("locationLat"));
-  const locationLng = Number(searchParams.get("locationLng"));
+  const locationLat = parseOptionalNumber(searchParams.get("locationLat"));
+  const locationLng = parseOptionalNumber(searchParams.get("locationLng"));
   const radiusMiles = Number(searchParams.get("radiusMiles") || 5);
   const sortBy = (searchParams.get("sortBy") || "best_match") as "best_match" | "distance" | "rating";
   const onlyOpenNow = searchParams.get("onlyOpenNow") === "true";
   const { user } = useAuth();
+  const lastSavedRecentSearchKeyRef = useRef<string | null>(null);
 
   const [pharmacyData, setPharmacyData] = useState<PharmacySearchResponse | null>(null);
   const [drugData, setDrugData] = useState<DrugIntelligenceResponse | null>(null);
@@ -569,8 +579,8 @@ export function PatientResultsClient() {
         medicationSelectedStrength: medicationSelectedStrength || undefined,
         medicationDosageForm: medicationDosageForm || undefined,
         medicationFormulation: medicationFormulation || undefined,
-        locationLat: Number.isFinite(locationLat) ? locationLat : undefined,
-        locationLng: Number.isFinite(locationLng) ? locationLng : undefined,
+        locationLat,
+        locationLng,
         radiusMiles,
         sortBy,
         onlyOpenNow,
@@ -660,6 +670,19 @@ export function PatientResultsClient() {
       return;
     }
 
+    const recentSearchKey = [
+      user.uid,
+      query.trim().toLowerCase(),
+      location.trim().toLowerCase(),
+      String(radiusMiles),
+    ].join("::");
+
+    if (lastSavedRecentSearchKeyRef.current === recentSearchKey) {
+      return;
+    }
+
+    lastSavedRecentSearchKeyRef.current = recentSearchKey;
+
     void import("@/lib/profile/profile-service")
       .then(({ saveRecentSearch }) =>
         saveRecentSearch(user.uid, {
@@ -668,7 +691,11 @@ export function PatientResultsClient() {
           radiusMiles,
         }),
       )
-      .catch(() => undefined);
+      .catch(() => {
+        if (lastSavedRecentSearchKeyRef.current === recentSearchKey) {
+          lastSavedRecentSearchKeyRef.current = null;
+        }
+      });
   }, [location, query, radiusMiles, user]);
 
   const extraResults = pharmacyData?.results.slice(1) || [];
