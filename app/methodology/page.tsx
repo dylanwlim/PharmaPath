@@ -1,61 +1,89 @@
 import { PageTransitionShell } from "@/components/page-transition-shell";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
-
-const signalSections = [
-  {
-    label: "Local search layer",
-    title: "Nearby pharmacy discovery",
-    description:
-      "PharmaPath resolves the searched place and keeps distance, hours, ratings, and map links attached to that nearby search result set.",
-    shellClass: "border-sky-200 bg-sky-50",
-    markerClass: "bg-sky-500",
-    labelClass: "text-sky-700",
-  },
-  {
-    label: "Medication reference layer",
-    title: "Medication family matching",
-    description:
-      "Medication names are normalized against public reference records so strengths, routes, dosage forms, and manufacturer breadth stay attached to the right family.",
-    shellClass: "border-emerald-200 bg-emerald-50",
-    markerClass: "bg-emerald-500",
-    labelClass: "text-emerald-700",
-  },
-  {
-    label: "Public safety layer",
-    title: "Shortage and recall context",
-    description:
-      "Public shortage and recall records add planning context, but they do not turn into a confirmed claim that a specific pharmacy has the medication on the shelf.",
-    shellClass: "border-amber-200 bg-amber-50",
-    markerClass: "bg-amber-500",
-    labelClass: "text-amber-700",
-  },
-  {
-    label: "Contributor layer",
-    title: "Community signal",
-    description:
-      "Signed-in contributors can add reports, but those reports stay visibly separate from verified reference data and store-level confirmation.",
-    shellClass: "border-teal-200 bg-teal-50",
-    markerClass: "bg-teal-500",
-    labelClass: "text-teal-700",
-  },
-];
-
+import { surfaceNames } from "@/lib/surface-labels";
+type SignalTone = "sky" | "emerald" | "amber" | "teal";
+type SignalLayer = {
+  label: string;
+  title: string;
+  description: string;
+  tone: SignalTone;
+};
+type SignalToneStyle = {
+  cardClass: string;
+  dotClass: string;
+  labelClass: string;
+};
+function createSignalToneStyle(
+  cardClass: string,
+  dotClass: string,
+  labelClass: string,
+): SignalToneStyle {
+  return { cardClass, dotClass, labelClass };
+}
+const signalToneStyles = {
+  sky: createSignalToneStyle("border-sky-200 bg-sky-50", "bg-sky-500", "text-sky-700"),
+  emerald: createSignalToneStyle(
+    "border-emerald-200 bg-emerald-50",
+    "bg-emerald-500",
+    "text-emerald-700",
+  ),
+  amber: createSignalToneStyle(
+    "border-amber-200 bg-amber-50",
+    "bg-amber-500",
+    "text-amber-700",
+  ),
+  teal: createSignalToneStyle("border-teal-200 bg-teal-50", "bg-teal-500", "text-teal-700"),
+} satisfies Record<SignalTone, SignalToneStyle>;
+const localSearchLayer: SignalLayer = {
+  tone: "sky",
+  label: "Local search layer",
+  title: "Nearby pharmacy discovery",
+  description:
+    "PharmaPath resolves the searched place and keeps distance, hours, ratings, and map links attached to that nearby search result set.",
+};
+const medicationReferenceLayer: SignalLayer = {
+  tone: "emerald",
+  label: "Medication reference layer",
+  title: "Medication family matching",
+  description:
+    "Medication names are normalized against public reference records so strengths, routes, dosage forms, and manufacturer breadth stay attached to the right family.",
+};
+const publicSafetyLayer: SignalLayer = {
+  tone: "amber",
+  label: "Public safety layer",
+  title: "Shortage and recall context",
+  description:
+    "Public shortage and recall records add planning context, but they do not turn into a confirmed claim that a specific pharmacy has the medication on the shelf.",
+};
+const contributorSignalLayer: SignalLayer = {
+  tone: "teal",
+  label: "Contributor layer",
+  title: "Community signal",
+  description:
+    "Signed-in contributors can add reports, but those reports stay visibly separate from verified reference data and store-level confirmation.",
+};
+function getSignalLayers(): SignalLayer[] {
+  return Array.of(
+    localSearchLayer,
+    medicationReferenceLayer,
+    publicSafetyLayer,
+    contributorSignalLayer,
+  );
+}
+const signalLayers = getSignalLayers();
 const interpretationNotes = [
   {
     heading: "Use the nearby list to decide who to call first",
-    body:
-      "Pharmacy Finder is a routing tool. It helps prioritize outreach order, but it does not promise that the medication is already available.",
+    body: `${surfaceNames.patient} is a routing tool. It helps prioritize outreach order, but it does not promise that the medication is already available.`,
   },
   {
-    heading: "Use Medication Lookup when the question is formulation context",
-    body:
-      "Medication Lookup keeps shortage, recall, manufacturer, and dosage-form evidence together when the question is broader than one store.",
+    heading: `Use ${surfaceNames.prescriber} when the question is formulation context`,
+    body: `${surfaceNames.prescriber} keeps shortage, recall, manufacturer, and dosage-form evidence together when the question is broader than one store.`,
   },
   {
     heading: "Keep contributor reports in the supporting-evidence bucket",
-    body:
-      "Contributor input can sharpen the next question, but it should not replace direct confirmation from the pharmacy.",
+    body: "Contributor input can sharpen the next question, but it should not replace direct confirmation from the pharmacy.",
   },
 ];
 
@@ -78,6 +106,123 @@ const usageRules = [
   "Do not rely on PharmaPath alone for emergencies or urgent clinical decisions.",
 ];
 
+function SignalLayerCard({ layer }: { layer: SignalLayer }) {
+  const tone = signalToneStyles[layer.tone];
+
+  return (
+    <article className={`rounded-[2rem] border p-6 ${tone.cardClass}`}>
+      <div className="flex items-center gap-2">
+        <span className={`h-2.5 w-2.5 rounded-full ${tone.dotClass}`} />
+        <span
+          className={`text-xs font-semibold uppercase tracking-[0.18em] ${tone.labelClass}`}
+        >
+          {layer.label}
+        </span>
+      </div>
+      <h2 className="mt-4 text-lg font-semibold tracking-tight text-slate-950">
+        {layer.title}
+      </h2>
+      <p className="mt-3 text-sm leading-6 text-slate-700">
+        {layer.description}
+      </p>
+    </article>
+  );
+}
+
+function BulletList({
+  items,
+  dotClass,
+}: {
+  items: string[];
+  dotClass: string;
+}) {
+  return (
+    <ul className="mt-4 space-y-3">
+      {items.map((item) => (
+        <li
+          key={item}
+          className="flex items-start gap-3 text-sm leading-6 text-slate-700"
+        >
+          <span
+            className={`mt-2 h-1.5 w-1.5 flex-none rounded-full ${dotClass}`}
+          />
+          {item}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SignalLayersSection() {
+  return (
+    <section className="px-4 pb-20 sm:px-6 lg:px-8">
+      <div className="site-shell space-y-6">
+        <div>
+          <span className="eyebrow-label">Signal layers</span>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+            Each layer stays visible, but each one carries a different
+            confidence boundary so nearby routing, public medication evidence,
+            and contributor input do not blur together.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {signalLayers.map((layer) => (
+            <SignalLayerCard key={layer.title} layer={layer} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MethodologyBoundarySection() {
+  return (
+    <section className="px-4 pb-16 sm:px-6 lg:px-8">
+      <div className="site-shell grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+        <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
+          <span className="eyebrow-label">Claim boundary</span>
+          <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
+            Useful context belongs in the product. Guarantees do not.
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            The interface is intentionally structured so local search,
+            medication evidence, contributor context, and unresolved questions
+            do not blur into a false inventory promise.
+          </p>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            <div className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50/70 p-5">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                Shown directly
+              </span>
+              <BulletList items={explicitClaims} dotClass="bg-emerald-500" />
+            </div>
+
+            <div className="rounded-[1.5rem] border border-rose-100 bg-rose-50/70 p-5">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
+                Still manual
+              </span>
+              <BulletList items={manualChecks} dotClass="bg-rose-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
+          <span className="eyebrow-label">Responsible use</span>
+          <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
+            Use the shortlist, then verify the answer.
+          </h2>
+          <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
+            PharmaPath is a routing and context tool. Direct pharmacy
+            confirmation, clinician judgment, and urgency assessment still sit
+            outside the product.
+          </p>
+          <BulletList items={usageRules} dotClass="bg-slate-400" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function MethodologyPage() {
   return (
     <>
@@ -88,12 +233,14 @@ export default function MethodologyPage() {
             <div>
               <span className="eyebrow-label">Methodology</span>
               <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.45rem]">
-                What PharmaPath shows directly, what it infers, and what still needs verification.
+                What PharmaPath shows directly, what it infers, and what still
+                needs verification.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                PharmaPath is built to shorten the next step without overstating certainty. The
-                product keeps local search results, public medication context, and still-manual
-                verification clearly separated.
+                PharmaPath is built to shorten the next step without overstating
+                certainty. The product keeps local search results, public
+                medication context, and still-manual verification clearly
+                separated.
               </p>
             </div>
 
@@ -105,8 +252,12 @@ export default function MethodologyPage() {
                     key={note.heading}
                     className="rounded-[1.45rem] border border-slate-200/80 bg-slate-50/70 p-4"
                   >
-                    <h2 className="text-sm font-semibold text-slate-900">{note.heading}</h2>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{note.body}</p>
+                    <h2 className="text-sm font-semibold text-slate-900">
+                      {note.heading}
+                    </h2>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">
+                      {note.body}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -114,105 +265,9 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        <section className="px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="site-shell">
-            <span className="eyebrow-label">Signal layers</span>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {signalSections.map((section) => (
-                <article
-                  key={section.title}
-                  className={`rounded-[2rem] border p-6 ${section.shellClass}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${section.markerClass}`} />
-                    <span
-                      className={`text-xs font-semibold uppercase tracking-[0.18em] ${section.labelClass}`}
-                    >
-                      {section.label}
-                    </span>
-                  </div>
-                  <h2 className="mt-4 text-lg font-semibold tracking-tight text-slate-950">
-                    {section.title}
-                  </h2>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">{section.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+        <SignalLayersSection />
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-            <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
-              <span className="eyebrow-label">Claim boundary</span>
-              <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
-                Useful context belongs in the product. Guarantees do not.
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                The interface is intentionally structured so local search, medication evidence,
-                contributor context, and unresolved questions do not blur into a false inventory
-                promise.
-              </p>
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50/70 p-5">
-                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                    Shown directly
-                  </span>
-                  <ul className="mt-4 space-y-3">
-                    {explicitClaims.map((item) => (
-                      <li
-                        key={item}
-                        className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-                      >
-                        <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-emerald-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="rounded-[1.5rem] border border-rose-100 bg-rose-50/70 p-5">
-                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
-                    Still manual
-                  </span>
-                  <ul className="mt-4 space-y-3">
-                    {manualChecks.map((item) => (
-                      <li
-                        key={item}
-                        className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-                      >
-                        <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-rose-400" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
-              <span className="eyebrow-label">Responsible use</span>
-              <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
-                Use the shortlist, then verify the answer.
-              </h2>
-              <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
-                PharmaPath is a routing and context tool. Direct pharmacy confirmation, clinician
-                judgment, and urgency assessment still sit outside the product.
-              </p>
-              <ul className="mt-6 space-y-3">
-                {usageRules.map((rule) => (
-                  <li
-                    key={rule}
-                    className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-                  >
-                    <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-slate-400" />
-                    {rule}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
+        <MethodologyBoundarySection />
       </PageTransitionShell>
       <SiteFooter />
     </>

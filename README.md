@@ -1,8 +1,6 @@
 # PharmaPath
 
-PharmaPath helps patients, caregivers, and prescribers answer a practical medication-access question faster: which pharmacy is worth calling first, and what should happen next if that first option does not work out.
-
-The product combines nearby pharmacy discovery, medication access context, and clear next-step guidance without pretending to know real-time shelf inventory.
+PharmaPath helps patients, caregivers, and prescribers answer a practical medication-access question faster: which pharmacy is worth calling first, and what should happen next if that first option does not work out. The product combines nearby pharmacy discovery, medication access context, and clear next-step guidance without pretending to know real-time shelf inventory.
 
 ## What It Solves
 
@@ -17,7 +15,6 @@ PharmaPath is designed to reduce that friction. It helps users build a better sh
 - Contributors who want to add lightweight reports that can help future searches.
 
 ## Core Experiences
-
 - `Pharmacy Finder`: Search by medication and location, review nearby options, and start with a tighter first-call path.
 - `Medication Lookup`: Review medication-wide access context, manufacturer spread, recall activity, and planning cues without turning that context into a stock claim.
 - `Methodology`: See what PharmaPath can support directly, what is inferred, and what still requires confirmation.
@@ -28,7 +25,7 @@ PharmaPath is designed to reduce that friction. It helps users build a better sh
 - Handling a same-day medication search where travel time and open hours matter.
 - Planning around higher-friction medications that may require extra calls or backup options.
 - Giving prescribers a faster way to think through alternatives before repeated failed routing attempts.
-
+Those scenarios still depend on direct pharmacy confirmation and clinical judgment.
 ## Responsible Use
 
 - PharmaPath is informational and workflow-oriented.
