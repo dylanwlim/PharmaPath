@@ -4,14 +4,6 @@ export type PharmacySearchFilters = {
   medication: string;
   location: string;
   locationPlaceId?: string;
-  medicationSource?: "openfda" | "demo";
-  medicationWorkflowCategory?: string;
-  medicationLabel?: string;
-  medicationSelectedStrength?: string;
-  medicationDosageForm?: string;
-  medicationFormulation?: string;
-  locationLat?: number;
-  locationLng?: number;
   radiusMiles?: number;
   sortBy?: "best_match" | "distance" | "rating";
   onlyOpenNow?: boolean;
@@ -275,14 +267,6 @@ function buildPharmacyCacheKey(filters: PharmacySearchFilters) {
     medication: sanitizeText(filters.medication).toLowerCase(),
     location: sanitizeText(filters.location).toLowerCase(),
     locationPlaceId: sanitizeText(filters.locationPlaceId || "").toLowerCase(),
-    medicationSource: sanitizeText(filters.medicationSource || "").toLowerCase(),
-    medicationWorkflowCategory: sanitizeText(filters.medicationWorkflowCategory || "").toLowerCase(),
-    medicationLabel: sanitizeText(filters.medicationLabel || "").toLowerCase(),
-    medicationSelectedStrength: sanitizeText(filters.medicationSelectedStrength || "").toLowerCase(),
-    medicationDosageForm: sanitizeText(filters.medicationDosageForm || "").toLowerCase(),
-    medicationFormulation: sanitizeText(filters.medicationFormulation || "").toLowerCase(),
-    locationLat: typeof filters.locationLat === "number" ? filters.locationLat : null,
-    locationLng: typeof filters.locationLng === "number" ? filters.locationLng : null,
     radiusMiles: Number(filters.radiusMiles || 5),
     sortBy: filters.sortBy || "best_match",
     onlyOpenNow: Boolean(filters.onlyOpenNow),
@@ -290,25 +274,10 @@ function buildPharmacyCacheKey(filters: PharmacySearchFilters) {
 }
 
 function buildPharmacyPayload(filters: PharmacySearchFilters): PharmacySearchFilters {
-  const medicationSource: PharmacySearchFilters["medicationSource"] =
-    sanitizeText(filters.medicationSource || "") === "demo"
-      ? "demo"
-      : sanitizeText(filters.medicationSource || "") === "openfda"
-        ? "openfda"
-        : undefined;
-
   return {
     medication: sanitizeText(filters.medication),
     location: sanitizeText(filters.location),
     locationPlaceId: sanitizeText(filters.locationPlaceId || "") || undefined,
-    medicationSource,
-    medicationWorkflowCategory: sanitizeText(filters.medicationWorkflowCategory || "") || undefined,
-    medicationLabel: sanitizeText(filters.medicationLabel || "") || undefined,
-    medicationSelectedStrength: sanitizeText(filters.medicationSelectedStrength || "") || undefined,
-    medicationDosageForm: sanitizeText(filters.medicationDosageForm || "") || undefined,
-    medicationFormulation: sanitizeText(filters.medicationFormulation || "") || undefined,
-    locationLat: typeof filters.locationLat === "number" ? filters.locationLat : undefined,
-    locationLng: typeof filters.locationLng === "number" ? filters.locationLng : undefined,
     radiusMiles: Number(filters.radiusMiles || 5),
     sortBy: filters.sortBy || "best_match",
     onlyOpenNow: Boolean(filters.onlyOpenNow),

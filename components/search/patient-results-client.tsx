@@ -27,17 +27,6 @@ const client = createPharmaPathClient();
 type Match = DrugIntelligenceResponse["matches"][number];
 type ShortageItem = Match["evidence"]["shortages"]["items"][number];
 
-// ─── data helpers ──────────────────────────────────────────────────────────
-
-function parseOptionalNumber(value: string | null) {
-  if (!value?.trim()) {
-    return undefined;
-  }
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
 function normalizedStatus(s: ShortageItem) {
   return s.normalizedStatus ?? s.status?.toLowerCase() ?? "";
 }
@@ -507,20 +496,6 @@ export function PatientResultsClient() {
   const query = searchParams.get("query")?.trim() || "";
   const location = searchParams.get("location")?.trim() || "";
   const locationPlaceId = searchParams.get("locationPlaceId")?.trim() || "";
-  const medicationSourceParam = searchParams.get("medicationSource")?.trim().toLowerCase() || "";
-  const medicationSource =
-    medicationSourceParam === "demo"
-      ? "demo"
-      : medicationSourceParam === "openfda"
-        ? "openfda"
-        : undefined;
-  const medicationWorkflowCategory = searchParams.get("medicationWorkflowCategory")?.trim() || "";
-  const medicationLabel = searchParams.get("medicationLabel")?.trim() || "";
-  const medicationSelectedStrength = searchParams.get("medicationSelectedStrength")?.trim() || "";
-  const medicationDosageForm = searchParams.get("medicationDosageForm")?.trim() || "";
-  const medicationFormulation = searchParams.get("medicationFormulation")?.trim() || "";
-  const locationLat = parseOptionalNumber(searchParams.get("locationLat"));
-  const locationLng = parseOptionalNumber(searchParams.get("locationLng"));
   const radiusMiles = Number(searchParams.get("radiusMiles") || 5);
   const sortBy = (searchParams.get("sortBy") || "best_match") as "best_match" | "distance" | "rating";
   const onlyOpenNow = searchParams.get("onlyOpenNow") === "true";
@@ -572,14 +547,6 @@ export function PatientResultsClient() {
         medication: query,
         location,
         locationPlaceId: locationPlaceId || undefined,
-        medicationSource: medicationSource || undefined,
-        medicationWorkflowCategory: medicationWorkflowCategory || undefined,
-        medicationLabel: medicationLabel || undefined,
-        medicationSelectedStrength: medicationSelectedStrength || undefined,
-        medicationDosageForm: medicationDosageForm || undefined,
-        medicationFormulation: medicationFormulation || undefined,
-        locationLat,
-        locationLng,
         radiusMiles,
         sortBy,
         onlyOpenNow,
@@ -616,14 +583,6 @@ export function PatientResultsClient() {
     query,
     location,
     locationPlaceId,
-    medicationSource,
-    medicationWorkflowCategory,
-    medicationLabel,
-    medicationSelectedStrength,
-    medicationDosageForm,
-    medicationFormulation,
-    locationLat,
-    locationLng,
     radiusMiles,
     sortBy,
     onlyOpenNow,

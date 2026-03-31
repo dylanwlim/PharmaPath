@@ -8,20 +8,8 @@ const {
   searchNearbyPharmacies,
 } = require("../../../../lib/server/pharmacy-search");
 const { resolveMedicationProfile } = require("../../../../lib/medications/index-store");
-const {
-  buildMedicationProfileFromSubmittedSearch,
-  buildResolvedLocationFromSubmittedSearch,
-} = require("../../../../lib/search/submitted-search-metadata");
 
 export const dynamic = "force-dynamic";
-
-function readMetadataValue(body, searchParams, key) {
-  if (body && Object.prototype.hasOwnProperty.call(body, key)) {
-    return body[key];
-  }
-
-  return searchParams.get(key);
-}
 
 async function readRequestBody(request) {
   if (request.method !== "POST") {
@@ -69,32 +57,15 @@ async function handleSearch(request) {
       );
     }
 
-    const metadata = {
-      medicationSource: readMetadataValue(body, searchParams, "medicationSource"),
-      medicationWorkflowCategory: readMetadataValue(body, searchParams, "medicationWorkflowCategory"),
-      medicationLabel: readMetadataValue(body, searchParams, "medicationLabel"),
-      medicationSelectedStrength: readMetadataValue(body, searchParams, "medicationSelectedStrength"),
-      medicationDosageForm: readMetadataValue(body, searchParams, "medicationDosageForm"),
-      medicationFormulation: readMetadataValue(body, searchParams, "medicationFormulation"),
-      locationLat: readMetadataValue(body, searchParams, "locationLat"),
-      locationLng: readMetadataValue(body, searchParams, "locationLng"),
-    };
-
-    const submittedMedicationProfile = buildMedicationProfileFromSubmittedSearch(input, metadata);
-    const submittedResolvedLocation = buildResolvedLocationFromSubmittedSearch(input, metadata);
     const [medicationProfile, resolvedLocation] = await Promise.all([
-      submittedMedicationProfile
-        ? Promise.resolve(submittedMedicationProfile)
-        : resolveMedicationProfile(input.medication, { assetBaseUrl }),
-      submittedResolvedLocation
-        ? Promise.resolve(submittedResolvedLocation)
-        : resolveLocationInput(
-            {
-              query: input.location,
-              placeId: input.locationPlaceId,
-            },
-            apiKey,
-          ),
+      resolveMedicationProfile(input.medication, { assetBaseUrl }),
+      resolveLocationInput(
+        {
+          query: input.location,
+          placeId: input.locationPlaceId,
+        },
+        apiKey,
+      ),
     ]);
     const searchResult = await searchNearbyPharmacies({
       medication: medicationProfile.canonicalLabel,

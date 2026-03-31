@@ -10,7 +10,7 @@ const {
 export const dynamic = "force-dynamic";
 
 function sanitizeText(value: string | null) {
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === "string" ? value.trim().slice(0, 120) : "";
 }
 
 export async function GET(request: Request) {

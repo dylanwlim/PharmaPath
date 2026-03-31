@@ -19,7 +19,7 @@ import {
   type User,
 } from "firebase/auth";
 import { formatAuthError } from "@/lib/auth/auth-errors";
-import { getFirebaseAuth, setAuthPersistence } from "@/lib/firebase/auth-client";
+import { getFirebaseAuth, setAuthPersistence } from "@/lib/firebase/client";
 import { isFirebaseConfigured, missingFirebaseEnv } from "@/lib/firebase/config";
 import type { UserProfileRecord } from "@/lib/profile/profile-types";
 
