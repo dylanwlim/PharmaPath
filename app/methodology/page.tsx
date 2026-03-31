@@ -2,76 +2,80 @@ import { PageTransitionShell } from "@/components/page-transition-shell";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
 
-const signalLayers = [
+const signalSections = [
   {
-    label: "Nearby search",
+    label: "Local search layer",
+    title: "Nearby pharmacy discovery",
     description:
-      "Shows nearby pharmacies, hours, ratings, distance, and map links for the area you searched.",
-    accent: "bg-sky-50 border-sky-200",
-    dot: "bg-sky-500",
-    eyebrow: "text-sky-600",
+      "PharmaPath resolves the searched place and keeps distance, hours, ratings, and map links attached to that nearby search result set.",
+    shellClass: "border-sky-200 bg-sky-50",
+    markerClass: "bg-sky-500",
+    labelClass: "text-sky-700",
   },
   {
-    label: "Medication reference",
+    label: "Medication reference layer",
+    title: "Medication family matching",
     description:
-      "Helps match names, strengths, dosage forms, and medication families so the lookup stays specific.",
-    accent: "bg-emerald-50 border-emerald-200",
-    dot: "bg-emerald-500",
-    eyebrow: "text-emerald-600",
+      "Medication names are normalized against public reference records so strengths, routes, dosage forms, and manufacturer breadth stay attached to the right family.",
+    shellClass: "border-emerald-200 bg-emerald-50",
+    markerClass: "bg-emerald-500",
+    labelClass: "text-emerald-700",
   },
   {
-    label: "Supply context",
+    label: "Public safety layer",
+    title: "Shortage and recall context",
     description:
-      "Adds shortage and recall context that may affect how hard a medication is to fill.",
-    accent: "bg-amber-50 border-amber-200",
-    dot: "bg-amber-500",
-    eyebrow: "text-amber-600",
+      "Public shortage and recall records add planning context, but they do not turn into a confirmed claim that a specific pharmacy has the medication on the shelf.",
+    shellClass: "border-amber-200 bg-amber-50",
+    markerClass: "bg-amber-500",
+    labelClass: "text-amber-700",
   },
   {
-    label: "Community reports",
+    label: "Contributor layer",
+    title: "Community signal",
     description:
-      "Signed-in contributors can add reports. Those reports remain separate from the nearby search and are never shown as guaranteed inventory.",
-    accent: "bg-teal-50 border-teal-200",
-    dot: "bg-teal-500",
-    eyebrow: "text-teal-600",
+      "Signed-in contributors can add reports, but those reports stay visibly separate from verified reference data and store-level confirmation.",
+    shellClass: "border-teal-200 bg-teal-50",
+    markerClass: "bg-teal-500",
+    labelClass: "text-teal-700",
   },
 ];
 
-const boundaries = [
-  { label: "Nearby pharmacies and call-ready sorting", available: true },
-  { label: "Medication-wide supply and safety context", available: true },
-  { label: "Community reports with clear caveats", available: true },
-  { label: "Real-time shelf inventory at a specific store", available: false },
-  { label: "Guaranteed same-day pickup", available: false },
-  { label: "Insurance approval or copay outcome", available: false },
-];
-
-const readingGuide = [
+const interpretationNotes = [
   {
-    title: "Search inputs",
-    value: "Plain-language search",
-    detail:
-      "Medication and location inputs are normalized into a cleaner shortlist and a clearer next question.",
+    heading: "Use the nearby list to decide who to call first",
+    body:
+      "Pharmacy Finder is a routing tool. It helps prioritize outreach order, but it does not promise that the medication is already available.",
   },
   {
-    title: "Access summary",
-    value: "Context, not certainty",
-    detail:
-      "PharmaPath describes likely fill difficulty and relevant follow-up questions, not confirmed inventory.",
+    heading: "Use Medication Lookup when the question is formulation context",
+    body:
+      "Medication Lookup keeps shortage, recall, manufacturer, and dosage-form evidence together when the question is broader than one store.",
   },
   {
-    title: "Community layer",
-    value: "Separate by design",
-    detail:
-      "Recent reports add context where available, but they never replace direct confirmation from the pharmacy.",
+    heading: "Keep contributor reports in the supporting-evidence bucket",
+    body:
+      "Contributor input can sharpen the next question, but it should not replace direct confirmation from the pharmacy.",
   },
 ];
 
-const responsibleUse = [
-  "Call the pharmacy directly before assuming availability.",
-  "Confirm the exact strength and formulation that matters for the prescription.",
-  "Use clinician judgment for treatment changes, substitutions, and urgency.",
-  "Do not rely on PharmaPath for emergency care decisions.",
+const explicitClaims = [
+  "Nearby pharmacies, distance, hours, ratings, and map links.",
+  "Medication family context including strengths, dosage forms, routes, manufacturers, shortage signals, and recall activity.",
+  "Contributor reports that stay labeled as contributor context rather than as verified stock.",
+];
+
+const manualChecks = [
+  "Real-time shelf inventory at a specific store.",
+  "Guaranteed same-day pickup or transfer success.",
+  "Insurance adjudication, prior authorization, or final patient cost.",
+];
+
+const usageRules = [
+  "Confirm the exact strength and formulation with the pharmacy before assuming availability.",
+  "Use clinician judgment for substitutions, urgency, and treatment changes.",
+  "Treat PharmaPath as a routing and context product rather than a guaranteed inventory feed.",
+  "Do not rely on PharmaPath alone for emergencies or urgent clinical decisions.",
 ];
 
 export default function MethodologyPage() {
@@ -79,32 +83,30 @@ export default function MethodologyPage() {
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-16 pt-28 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+        <section className="px-4 pb-14 pt-28 sm:px-6 lg:px-8">
+          <div className="site-shell grid gap-8 lg:grid-cols-[0.98fr_1.02fr] lg:items-start">
             <div>
               <span className="eyebrow-label">Methodology</span>
-              <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.5rem]">
-                What PharmaPath can support directly, and what still needs a call.
+              <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.45rem]">
+                What PharmaPath shows directly, what it infers, and what still needs verification.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                PharmaPath is built to be useful without overselling certainty. This page explains
-                how the product separates direct information, inferred context, and still-manual
-                steps.
+                PharmaPath is built to shorten the next step without overstating certainty. The
+                product keeps local search results, public medication context, and still-manual
+                verification clearly separated.
               </p>
             </div>
-            <div className="surface-panel rounded-[2.25rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8">
-              <span className="eyebrow-label">Reading guide</span>
+
+            <div className="surface-panel rounded-[2.2rem] bg-white/94 p-6 shadow-none backdrop-blur-none sm:p-8">
+              <span className="eyebrow-label">How to read the product</span>
               <div className="mt-6 space-y-3">
-                {readingGuide.map((item) => (
+                {interpretationNotes.map((note) => (
                   <div
-                    key={item.title}
-                    className="rounded-[1.4rem] border border-slate-200/80 bg-slate-50/70 p-4"
+                    key={note.heading}
+                    className="rounded-[1.45rem] border border-slate-200/80 bg-slate-50/70 p-4"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <h2 className="text-sm font-semibold text-slate-900">{item.title}</h2>
-                      <span className="text-sm font-medium text-slate-500">{item.value}</span>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{item.detail}</p>
+                    <h2 className="text-sm font-semibold text-slate-900">{note.heading}</h2>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{note.body}</p>
                   </div>
                 ))}
               </div>
@@ -112,37 +114,44 @@ export default function MethodologyPage() {
           </div>
         </section>
 
-        <section className="px-4 pb-24 sm:px-6 lg:px-8">
+        <section className="px-4 pb-20 sm:px-6 lg:px-8">
           <div className="site-shell">
             <span className="eyebrow-label">Signal layers</span>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {signalLayers.map((layer) => (
-                <div key={layer.label} className={`rounded-[2rem] border p-6 ${layer.accent}`}>
+              {signalSections.map((section) => (
+                <article
+                  key={section.title}
+                  className={`rounded-[2rem] border p-6 ${section.shellClass}`}
+                >
                   <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${layer.dot}`} />
+                    <span className={`h-2.5 w-2.5 rounded-full ${section.markerClass}`} />
                     <span
-                      className={`text-xs font-semibold uppercase tracking-[0.18em] ${layer.eyebrow}`}
+                      className={`text-xs font-semibold uppercase tracking-[0.18em] ${section.labelClass}`}
                     >
-                      {layer.label}
+                      {section.label}
                     </span>
                   </div>
-                  <p className="mt-4 text-sm leading-6 text-slate-700">{layer.description}</p>
-                </div>
+                  <h2 className="mt-4 text-lg font-semibold tracking-tight text-slate-950">
+                    {section.title}
+                  </h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-700">{section.description}</p>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
         <section className="px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="site-shell grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
             <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
               <span className="eyebrow-label">Claim boundary</span>
               <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
-                Useful guidance stays visible. Guarantees stay out.
+                Useful context belongs in the product. Guarantees do not.
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                PharmaPath keeps live nearby discovery, medication context, contributor reports, and
-                still-manual steps separate so the product never reads like a stock feed.
+                The interface is intentionally structured so local search, medication evidence,
+                contributor context, and unresolved questions do not blur into a false inventory
+                promise.
               </p>
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <div className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50/70 p-5">
@@ -150,35 +159,32 @@ export default function MethodologyPage() {
                     Shown directly
                   </span>
                   <ul className="mt-4 space-y-3">
-                    {boundaries
-                      .filter((item) => item.available)
-                      .map((item) => (
-                        <li
-                          key={item.label}
-                          className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-                        >
-                          <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-emerald-500" />
-                          {item.label}
-                        </li>
-                      ))}
+                    {explicitClaims.map((item) => (
+                      <li
+                        key={item}
+                        className="flex items-start gap-3 text-sm leading-6 text-slate-700"
+                      >
+                        <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-emerald-500" />
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
+
                 <div className="rounded-[1.5rem] border border-rose-100 bg-rose-50/70 p-5">
                   <span className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
                     Still manual
                   </span>
                   <ul className="mt-4 space-y-3">
-                    {boundaries
-                      .filter((item) => !item.available)
-                      .map((item) => (
-                        <li
-                          key={item.label}
-                          className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-                        >
-                          <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-rose-400" />
-                          {item.label}
-                        </li>
-                      ))}
+                    {manualChecks.map((item) => (
+                      <li
+                        key={item}
+                        className="flex items-start gap-3 text-sm leading-6 text-slate-700"
+                      >
+                        <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-rose-400" />
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </div>
@@ -190,14 +196,17 @@ export default function MethodologyPage() {
                 Use the shortlist, then verify the answer.
               </h2>
               <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
-                PharmaPath is designed to help people ask better questions faster. It does not
-                replace direct confirmation, clinical judgment, or urgent care.
+                PharmaPath is a routing and context tool. Direct pharmacy confirmation, clinician
+                judgment, and urgency assessment still sit outside the product.
               </p>
               <ul className="mt-6 space-y-3">
-                {responsibleUse.map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-sm leading-6 text-slate-700">
+                {usageRules.map((rule) => (
+                  <li
+                    key={rule}
+                    className="flex items-start gap-3 text-sm leading-6 text-slate-700"
+                  >
                     <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-slate-400" />
-                    {item}
+                    {rule}
                   </li>
                 ))}
               </ul>
