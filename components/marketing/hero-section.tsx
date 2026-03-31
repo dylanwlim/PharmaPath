@@ -44,7 +44,7 @@ export function HeroSection() {
               </h1>
               <p className="mt-6 max-w-[32rem] text-lg leading-7 text-[#404040]">
                 PharmaPath finds nearby pharmacies, layers FDA access data on top, and is
-                upfront about what it can and can't confirm.
+                upfront about what it can and can&apos;t confirm.
               </p>
             </div>
 

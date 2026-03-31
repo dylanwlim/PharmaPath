@@ -44,7 +44,7 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
           <div className="space-y-8">
             <blockquote className="space-y-4">
               <p className="text-2xl font-medium leading-relaxed text-slate-950 text-balance">
-                "{testimonial.quote}"
+                &ldquo;{testimonial.quote}&rdquo;
               </p>
               <footer className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/75 font-medium text-slate-700 shadow-sm">

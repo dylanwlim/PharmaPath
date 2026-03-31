@@ -1,50 +1,67 @@
 # PharmaPath
 
-PharmaPath is a web application for people trying to answer a practical question quickly: which pharmacy should I call first for this medication?
+PharmaPath helps patients and prescribers answer a practical medication-access question quickly: which pharmacy should I call first for this medication?
 
-It brings nearby pharmacy discovery and medication-access context into one experience so patients and prescribers can move from uncertainty to a clearer next step without treating public data like a real-time inventory feed.
+It combines nearby pharmacy discovery, medication-access context, and clear patient-facing guidance without presenting public data as real-time shelf inventory.
 
-## The Problem
+## Product
 
-Medication access is often harder than it looks. A drug may be familiar, approved, or widely prescribed, but still be difficult to obtain because availability on the ground is inconsistent and the signals people rely on are scattered across different places.
+- Patient workflow: search by medication and location, review nearby pharmacies, and call with clearer context.
+- Prescriber workflow: look up medication access context, shortage signals, and formulation-specific guidance.
+- Product guardrail: stay explicit about what the app can infer versus what still requires direct pharmacy confirmation.
 
-PharmaPath is designed to reduce this. Instead of forcing users to piece together location search, medication context, and next-step judgment on their own, it presents those pieces in a clearer and more honest workflow.
+## Stack
 
-## What PharmaPath Does
+- Next.js App Router
+- Cloudflare Workers via OpenNext
+- Firebase Authentication and Firestore
+- Google Places and Geocoding APIs
+- openFDA medication data and nightly snapshot sync
 
-- Helps users search for nearby pharmacies based on a medication and location.
-- Gives patients a simpler, call-ready starting point instead of a vague list of options.
-- Gives prescribers a cleaner medication lookup experience for understanding access context.
-- Makes an explicit distinction between helpful guidance and confirmed pharmacy stock.
-- Keeps the user experience focused on practical decisions, not technical jargon.
+## Quick Start
 
-## Who It Is For
+1. Use Node `22.x`.
+2. Run `npm ci`.
+3. Copy `.env.example` to `.env.local` if you need local secret overrides for `GOOGLE_API_KEY`, `OPENFDA_API_KEY`, or `RESEND_API_KEY`.
+4. Run `npm run dev`.
 
-PharmaPath is built for:
+For Cloudflare preview or deployment flows, copy `.dev.vars.example` to `.dev.vars` and populate the Worker secrets locally.
 
-- Patients trying to find the best place to start.
-- Prescribers who want clearer context around medication access.
-- Reviewers, recruiters, collaborators, and judges evaluating the product as a real-world healthcare workflow tool.
+## Common Commands
 
-## Why It Matters
+- `npm run dev` starts the Next.js development server.
+- `npm run lint` runs repository linting.
+- `npm run typecheck` runs TypeScript validation.
+- `npm test` runs the Node test suite after preparing medication runtime assets.
+- `npm run build` creates the production Next.js build.
+- `npm run cloudflare:build` validates the Cloudflare/OpenNext deployment build.
+- `npm run medications:sync` refreshes the tracked openFDA medication snapshot.
+- `npm run validate` runs the full local validation suite used by CI.
 
-Delays in finding a medication can create stress, wasted time, repeated calls, and avoidable treatment. PharmaPath aims to make that process more navigable by helping people ask better questions sooner and by being clear about what the product can and cannot tell them.
+## Repository Map
 
-## Current Status
+- `app/`: route segments, pages, and route handlers.
+- `components/`: reusable UI broken down by feature area.
+- `lib/`: application logic, domain models, integrations, and server helpers.
+- `data/`: canonical medication snapshot and demo medication catalog.
+- `scripts/medications/`: asset preparation and snapshot maintenance scripts.
+- `tests/`: Node-based regression tests for search, location, and medication data flows.
+- `docs/`: architecture and deployment notes.
 
-PharmaPath is centered on pharmacy discovery, medication lookup, and transparent communication around medication-access uncertainty.
+## Documentation
 
-## Getting Started
+- [Architecture](./docs/architecture.md)
+- [Deployment](./docs/deployment.md)
+- Methodology page: [pharmapath.org/methodology](https://www.pharmapath.org/methodology)
 
-The safest way to understand the product is through the app:
+## Public Links
 
-- App: [pharmapath.org](https://www.pharmapath.org/)
-- Public methodology page: [pharmapath.org/methodology](https://www.pharmapath.org/methodology)
+- App: [pharmapath.org](https://www.pharmapath.org)
+- GitHub: [dylanwlim/PharmaPath](https://github.com/dylanwlim/PharmaPath)
 
 ## Contact
 
 - Email: [contact@pharmapath.org](mailto:contact@pharmapath.org)
-- GitHub: [dylanwlim/PharmaPath](https://github.com/dylanwlim/PharmaPath)
 
 ## Notes
 

@@ -333,14 +333,13 @@ function ShortagePanel({
   const tier = severityTier(score);
   const doses = buildDoseAvailability(items);
   const mfgRows = buildManufacturerRows(items);
-
-  const now = Date.now();
+  const [referenceTime] = useState(() => Date.now());
   const earliestActiveMs = activeShortages
     .map((s) => (s.updateDate ? new Date(s.updateDate).getTime() : null))
     .filter((t): t is number => t !== null && !isNaN(t))
     .sort((a, b) => a - b)[0];
   const durationDays = earliestActiveMs
-    ? Math.floor((now - earliestActiveMs) / 86_400_000)
+    ? Math.floor((referenceTime - earliestActiveMs) / 86_400_000)
     : 0;
 
   const lastUpdate = activeShortages.find((s) => s.updateLabel)?.updateLabel ?? "Unknown";
