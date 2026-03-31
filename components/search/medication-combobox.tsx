@@ -5,6 +5,7 @@ import {
   useDeferredValue,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
@@ -43,10 +44,34 @@ export function MedicationCombobox({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const deferredValue = useDeferredValue(value);
   const [isOpen, setIsOpen] = useState(false);
-  const [loadState, setLoadState] = useState<LoadState>("idle");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [options, setOptions] = useState<MedicationSearchOption[]>([]);
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [lastCompletedQuery, setLastCompletedQuery] = useState<string | null>(null);
+  const [highlightedIndexState, setHighlightedIndexState] = useState(0);
+  const normalizedValue = deferredValue.trim();
+  const loadState: LoadState = !isOpen
+    ? "idle"
+    : lastCompletedQuery === normalizedValue
+      ? loadError
+        ? "error"
+        : "ready"
+      : "loading";
+  const visibleOptions = useMemo(
+    () => (loadState === "ready" ? options : []),
+    [loadState, options],
+  );
+  const highlightedIndex = useMemo(() => {
+    if (!visibleOptions.length) {
+      return 0;
+    }
+
+    const selectedIndex = visibleOptions.findIndex((option) => option.id === selectedOptionId);
+    if (selectedIndex >= 0) {
+      return selectedIndex;
+    }
+
+    return Math.min(highlightedIndexState, visibleOptions.length - 1);
+  }, [highlightedIndexState, selectedOptionId, visibleOptions]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -54,10 +79,8 @@ export function MedicationCombobox({
     }
 
     const abortController = new AbortController();
-    setLoadState("loading");
-    setLoadError(null);
 
-    searchMedicationIndex(deferredValue, {
+    searchMedicationIndex(normalizedValue, {
       limit: 8,
       signal: abortController.signal,
     })
@@ -67,7 +90,8 @@ export function MedicationCombobox({
         }
 
         setOptions(response.results);
-        setLoadState("ready");
+        setLoadError(null);
+        setLastCompletedQuery(normalizedValue);
       })
       .catch((reason: Error) => {
         if (abortController.signal.aborted) {
@@ -75,31 +99,12 @@ export function MedicationCombobox({
         }
 
         setOptions([]);
-        setLoadState("error");
         setLoadError(reason.message);
+        setLastCompletedQuery(normalizedValue);
       });
 
     return () => abortController.abort();
-  }, [deferredValue, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const selectedIndex = options.findIndex((option) => option.id === selectedOptionId);
-    setHighlightedIndex((currentIndex) => {
-      if (!options.length) {
-        return 0;
-      }
-
-      if (selectedIndex >= 0) {
-        return selectedIndex;
-      }
-
-      return Math.min(currentIndex, options.length - 1);
-    });
-  }, [isOpen, options, selectedOptionId]);
+  }, [isOpen, normalizedValue]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -117,30 +122,34 @@ export function MedicationCombobox({
   }, [isOpen]);
 
   useEffect(() => {
-    const activeOption = options[highlightedIndex];
+    const activeOption = visibleOptions[highlightedIndex];
     if (!isOpen || !activeOption) {
       return;
     }
 
     const element = document.getElementById(`${listboxId}-${activeOption.id}`);
     element?.scrollIntoView({ block: "nearest" });
-  }, [highlightedIndex, isOpen, listboxId, options]);
+  }, [highlightedIndex, isOpen, listboxId, visibleOptions]);
 
-  const activeOption = options[highlightedIndex] || null;
+  const activeOption = visibleOptions[highlightedIndex] || null;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setIsOpen(true);
-      setHighlightedIndex((currentIndex) => (options.length ? (currentIndex + 1) % options.length : 0));
+      setHighlightedIndexState((currentIndex) =>
+        visibleOptions.length ? (currentIndex + 1) % visibleOptions.length : 0,
+      );
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       setIsOpen(true);
-      setHighlightedIndex((currentIndex) =>
-        options.length ? (currentIndex - 1 + options.length) % options.length : 0,
+      setHighlightedIndexState((currentIndex) =>
+        visibleOptions.length
+          ? (currentIndex - 1 + visibleOptions.length) % visibleOptions.length
+          : 0,
       );
       return;
     }
@@ -179,6 +188,7 @@ export function MedicationCombobox({
           onChange={(event) => {
             onValueChange(event.target.value);
             setIsOpen(true);
+            setHighlightedIndexState(0);
           }}
           onClick={() => setIsOpen(true)}
           onFocus={() => setIsOpen(true)}
@@ -201,12 +211,12 @@ export function MedicationCombobox({
                 <div className="rounded-[1rem] border border-dashed border-rose-200 bg-rose-50/85 px-4 py-4 text-sm leading-6 text-rose-700">
                   {loadError || "Unable to load medication matches right now."}
                 </div>
-              ) : loadState === "loading" && !options.length ? (
+              ) : loadState === "loading" && !visibleOptions.length ? (
                 <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
                   Loading medication matches...
                 </div>
-              ) : options.length ? (
-                options.map((option, index) => {
+              ) : visibleOptions.length ? (
+                visibleOptions.map((option, index) => {
                   const isSelected = option.id === selectedOptionId;
                   const isHighlighted = index === highlightedIndex;
 
@@ -225,7 +235,7 @@ export function MedicationCombobox({
                         isSelected && !isHighlighted && "bg-slate-100/90",
                       )}
                       onMouseDown={(event) => event.preventDefault()}
-                      onMouseEnter={() => setHighlightedIndex(index)}
+                      onMouseEnter={() => setHighlightedIndexState(index)}
                       onClick={() => {
                         onSelect(option);
                         setIsOpen(false);

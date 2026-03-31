@@ -5,6 +5,7 @@ import {
   useDeferredValue,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
@@ -46,28 +47,42 @@ export function LocationCombobox({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const deferredValue = useDeferredValue(value);
   const [isOpen, setIsOpen] = useState(false);
-  const [loadState, setLoadState] = useState<LoadState>("idle");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [options, setOptions] = useState<LocationSuggestion[]>([]);
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
+  const [lastCompletedQuery, setLastCompletedQuery] = useState<string | null>(null);
+  const [highlightedIndexState, setHighlightedIndexState] = useState(0);
+  const normalizedValue = isOpen ? deferredValue.trim() : "";
+  const isSearchable = normalizedValue.length >= 2;
+  const loadState: LoadState = !isOpen || !isSearchable
+    ? "idle"
+    : lastCompletedQuery === normalizedValue
+      ? loadError
+        ? "error"
+        : "ready"
+      : "loading";
+  const visibleOptions = useMemo(
+    () => (loadState === "ready" ? options : []),
+    [loadState, options],
+  );
+  const highlightedIndex = useMemo(() => {
+    if (!visibleOptions.length) {
+      return 0;
     }
 
-    const normalizedValue = deferredValue.trim();
+    const selectedIndex = visibleOptions.findIndex((option) => option.placeId === selectedPlaceId);
+    if (selectedIndex >= 0) {
+      return selectedIndex;
+    }
 
-    if (normalizedValue.length < 2) {
-      setOptions([]);
-      setLoadState("idle");
-      setLoadError(null);
+    return Math.min(highlightedIndexState, visibleOptions.length - 1);
+  }, [highlightedIndexState, selectedPlaceId, visibleOptions]);
+
+  useEffect(() => {
+    if (!isOpen || !isSearchable) {
       return;
     }
 
     const abortController = new AbortController();
-    setLoadState("loading");
-    setLoadError(null);
 
     searchLocationSuggestions(normalizedValue, {
       limit: 8,
@@ -80,7 +95,8 @@ export function LocationCombobox({
         }
 
         setOptions(response.results);
-        setLoadState("ready");
+        setLoadError(null);
+        setLastCompletedQuery(normalizedValue);
       })
       .catch((reason: Error) => {
         if (abortController.signal.aborted) {
@@ -88,31 +104,12 @@ export function LocationCombobox({
         }
 
         setOptions([]);
-        setLoadState("error");
         setLoadError(reason.message);
+        setLastCompletedQuery(normalizedValue);
       });
 
     return () => abortController.abort();
-  }, [deferredValue, isOpen, sessionToken]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const selectedIndex = options.findIndex((option) => option.placeId === selectedPlaceId);
-    setHighlightedIndex((currentIndex) => {
-      if (!options.length) {
-        return 0;
-      }
-
-      if (selectedIndex >= 0) {
-        return selectedIndex;
-      }
-
-      return Math.min(currentIndex, options.length - 1);
-    });
-  }, [isOpen, options, selectedPlaceId]);
+  }, [isOpen, isSearchable, normalizedValue, sessionToken]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -130,16 +127,16 @@ export function LocationCombobox({
   }, [isOpen]);
 
   useEffect(() => {
-    const activeOption = options[highlightedIndex];
+    const activeOption = visibleOptions[highlightedIndex];
     if (!isOpen || !activeOption) {
       return;
     }
 
     const element = document.getElementById(`${listboxId}-${activeOption.placeId}`);
     element?.scrollIntoView({ block: "nearest" });
-  }, [highlightedIndex, isOpen, listboxId, options]);
+  }, [highlightedIndex, isOpen, listboxId, visibleOptions]);
 
-  const activeOption = options[highlightedIndex] || null;
+  const activeOption = visibleOptions[highlightedIndex] || null;
 
   const commitSelection = (option: LocationSuggestion, { submit = false } = {}) => {
     onSelect(option);
@@ -159,15 +156,19 @@ export function LocationCombobox({
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setIsOpen(true);
-      setHighlightedIndex((currentIndex) => (options.length ? (currentIndex + 1) % options.length : 0));
+      setHighlightedIndexState((currentIndex) =>
+        visibleOptions.length ? (currentIndex + 1) % visibleOptions.length : 0,
+      );
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       setIsOpen(true);
-      setHighlightedIndex((currentIndex) =>
-        options.length ? (currentIndex - 1 + options.length) % options.length : 0,
+      setHighlightedIndexState((currentIndex) =>
+        visibleOptions.length
+          ? (currentIndex - 1 + visibleOptions.length) % visibleOptions.length
+          : 0,
       );
       return;
     }
@@ -206,6 +207,7 @@ export function LocationCombobox({
           onChange={(event) => {
             onValueChange(event.target.value);
             setIsOpen(true);
+            setHighlightedIndexState(0);
           }}
           onClick={() => setIsOpen(true)}
           onFocus={() => setIsOpen(true)}
@@ -232,12 +234,12 @@ export function LocationCombobox({
                 <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
                   {EMPTY_HINT}
                 </div>
-              ) : loadState === "loading" && !options.length ? (
+              ) : loadState === "loading" && !visibleOptions.length ? (
                 <div className="rounded-[1rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-4 text-sm leading-6 text-slate-500">
                   Searching Google Places...
                 </div>
-              ) : options.length ? (
-                options.map((option, index) => {
+              ) : visibleOptions.length ? (
+                visibleOptions.map((option, index) => {
                   const isSelected = option.placeId === selectedPlaceId;
                   const isHighlighted = index === highlightedIndex;
 
@@ -256,7 +258,7 @@ export function LocationCombobox({
                         isSelected && !isHighlighted && "bg-slate-100/90",
                       )}
                       onMouseDown={(event) => event.preventDefault()}
-                      onMouseEnter={() => setHighlightedIndex(index)}
+                      onMouseEnter={() => setHighlightedIndexState(index)}
                       onClick={() => commitSelection(option)}
                     >
                       <div className="min-w-0">

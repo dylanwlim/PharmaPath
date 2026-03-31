@@ -39,7 +39,6 @@ export function SiteNavbar() {
   }, []);
 
   useEffect(() => {
-    setIsOpen(false);
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
 

@@ -282,14 +282,13 @@ function ShortageEvidencePanel({
   const tier = severityTier(score);
   const doses = buildDoseAvailability(items);
   const mfgRows = buildManufacturerRows(items);
-
-  const now = Date.now();
+  const [referenceTime] = useState(() => Date.now());
   const earliestActiveMs = activeShortages
     .map((s) => (s.updateDate ? new Date(s.updateDate).getTime() : null))
     .filter((t): t is number => t !== null && !isNaN(t))
     .sort((a, b) => a - b)[0];
   const durationDays = earliestActiveMs
-    ? Math.floor((now - earliestActiveMs) / 86_400_000)
+    ? Math.floor((referenceTime - earliestActiveMs) / 86_400_000)
     : 0;
 
   const lastUpdate = activeShortages.find((s) => s.updateLabel)?.updateLabel ?? "Unknown";
@@ -451,35 +450,35 @@ export function PrescriberClient() {
   const showExampleScenarios = !query;
   const [payload, setPayload] = useState<DrugIntelligenceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [lastCompletedQuery, setLastCompletedQuery] = useState<string | null>(null);
+  const activePayload = query ? payload : null;
+  const activeError = query ? error : null;
+  const isLoading = Boolean(query) && lastCompletedQuery !== query;
 
   const selectedMatch = useMemo(() => {
-    if (!payload?.matches?.length) return null;
+    if (!activePayload?.matches?.length) return null;
 
     if (matchId) {
-      const pinned = payload.matches.find((m) => m.id === matchId);
+      const pinned = activePayload.matches.find((m) => m.id === matchId);
       if (pinned) return pinned;
     }
 
-    if (payload.featured_match_id) {
-      const featured = payload.matches.find((m) => m.id === payload.featured_match_id);
+    if (activePayload.featured_match_id) {
+      const featured = activePayload.matches.find((m) => m.id === activePayload.featured_match_id);
       if (featured) return featured;
     }
 
-    return payload.matches.reduce((best, m) =>
+    return activePayload.matches.reduce((best, m) =>
       (m.active_listing_count ?? 0) > (best.active_listing_count ?? 0) ? m : best,
     );
-  }, [payload, matchId]);
+  }, [activePayload, matchId]);
 
   useEffect(() => {
     if (!query) {
-      setPayload(null);
-      setError(null);
       return;
     }
 
     let cancelled = false;
-    setIsLoading(true);
 
     client
       .getDrugIntelligence(query)
@@ -487,13 +486,13 @@ export function PrescriberClient() {
         if (cancelled) return;
         setPayload(result);
         setError(null);
-        setIsLoading(false);
+        setLastCompletedQuery(query);
       })
       .catch((reason: Error) => {
         if (cancelled) return;
         setPayload(null);
         setError(reason.message);
-        setIsLoading(false);
+        setLastCompletedQuery(query);
       });
 
     return () => {
@@ -553,12 +552,12 @@ export function PrescriberClient() {
                 Loading medication data...
               </div>
             </div>
-          ) : error ? (
+          ) : activeError ? (
             <div className="surface-panel rounded-[2rem] border-rose-200 bg-rose-50 p-6 text-rose-700">
               <div className="text-sm font-medium uppercase tracking-[0.18em]">
                 Unable to load medication data
               </div>
-              <p className="mt-3 text-base leading-7">{error}</p>
+              <p className="mt-3 text-base leading-7">{activeError}</p>
             </div>
           ) : !selectedMatch ? (
             <EmptyState
@@ -679,7 +678,7 @@ export function PrescriberClient() {
 
               {/* ── Right: shortage evidence ── */}
               <div className="space-y-6">
-                <ShortageEvidencePanel match={selectedMatch} drugData={payload!} />
+                <ShortageEvidencePanel match={selectedMatch} drugData={activePayload!} />
               </div>
             </div>
           )}
