@@ -73,12 +73,12 @@ export function MetricPill({
   return (
     <div
       className={cn(
-        "rounded-lg border border-black/5 bg-white/78 px-4 py-3 shadow-[0_1px_1px_rgba(0,0,0,0.04)]",
+        "rounded-[1.15rem] border border-black/5 bg-white/80 px-4 py-3.5 shadow-[0_1px_1px_rgba(0,0,0,0.04)]",
         className,
       )}
     >
-      <div className="text-[0.72rem] uppercase tracking-[0.16em] text-slate-500">{label}</div>
-      <div className="mt-1 text-xl font-medium tracking-tight text-slate-900">{value}</div>
+      <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-500">{label}</div>
+      <div className="mt-1 text-xl font-medium tracking-tight tabular-nums text-slate-900">{value}</div>
     </div>
   );
 }
@@ -136,7 +136,7 @@ export function EmptyState({
   return (
     <div className="surface-panel rounded-[2rem] p-8 text-left">
       <span className="eyebrow-label">{eyebrow}</span>
-      <h2 className="mt-5 text-2xl tracking-tight text-slate-900">{title}</h2>
+      <h2 className="mt-5 text-2xl tracking-tight text-balance text-slate-900">{title}</h2>
       <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">{body}</p>
     </div>
   );

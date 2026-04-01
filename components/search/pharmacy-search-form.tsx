@@ -214,9 +214,9 @@ export function PharmacySearchForm({
   };
 
   return (
-    <div className={cn("surface-panel rounded-[2rem] p-5 sm:p-6", className)}>
+    <div className={cn("surface-panel rounded-[2rem] p-5 sm:p-6 xl:p-7", className)}>
       <form
-        className="space-y-4"
+        className={cn("space-y-5", compact && "space-y-4")}
         onSubmit={async (event) => {
           event.preventDefault();
           setIsResolvingSearch(true);
@@ -309,10 +309,11 @@ export function PharmacySearchForm({
           }
         }}
       >
-        <div className="grid gap-3 lg:grid-cols-[1.15fr_0.8fr_1fr]">
+        <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2 2xl:grid-cols-[minmax(0,1.45fr)_minmax(12rem,0.95fr)_minmax(0,1.15fr)]">
           <MedicationCombobox
+            className="sm:col-span-2 2xl:col-span-1"
             label="Medication"
-            placeholder="Search medication options"
+            placeholder="Search medication…"
             value={medication}
             selectedOptionId={medicationOption?.id || null}
             onValueChange={handleMedicationInputChange}
@@ -325,11 +326,12 @@ export function PharmacySearchForm({
               setMedicationError(null);
               setStrengthError(null);
             }}
-            emptyMessage="No medication options match that search yet."
+            emptyMessage="No medication matches yet. Try a brand, generic, or strength."
             error={medicationError}
           />
 
           <MedicationStrengthField
+            className="sm:col-span-1"
             option={medicationOption}
             value={selectedStrength}
             onChange={(nextValue) => {
@@ -337,11 +339,13 @@ export function PharmacySearchForm({
               setStrengthError(null);
             }}
             error={strengthError}
+            showWhenEmpty
           />
 
           <LocationCombobox
+            className="sm:col-span-1"
             label="Location"
-            placeholder="Search city, ZIP, address, pharmacy, or landmark"
+            placeholder="Search city or ZIP…"
             value={location}
             selectedPlaceId={locationSelection?.placeId || null}
             sessionToken={locationSessionToken}
@@ -359,12 +363,11 @@ export function PharmacySearchForm({
 
         <div
           className={cn(
-            "grid gap-3",
-            compact ? "sm:grid-cols-[1fr_1fr] lg:grid-cols-[1fr_1fr_auto]" : "sm:grid-cols-[1fr_1fr_auto]",
+            "grid gap-x-4 gap-y-4 sm:grid-cols-2 2xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)_minmax(0,0.9fr)]",
           )}
         >
-          <label className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Radius</span>
+          <label className="search-field-stack">
+            <span className="search-field-label">Radius</span>
             <select
               className="search-select-control"
               value={radiusMiles}
@@ -377,8 +380,8 @@ export function PharmacySearchForm({
             </select>
           </label>
 
-          <label className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Sort</span>
+          <label className="search-field-stack">
+            <span className="search-field-label">Sort</span>
             <select
               className="search-select-control"
               value={sortBy}
@@ -392,36 +395,36 @@ export function PharmacySearchForm({
             </select>
           </label>
 
-          <label className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Availability</span>
-            <span className="search-toggle-control">
+          <label className="search-field-stack sm:col-span-2 2xl:col-span-1">
+            <span className="search-field-label">Availability</span>
+            <span className="search-toggle-control cursor-pointer">
               <input
                 type="checkbox"
-                className="h-3.5 w-3.5 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
+                className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
                 checked={onlyOpenNow}
                 onChange={(event) => setOnlyOpenNow(event.target.checked)}
               />
-              Open now only
+              <span className="min-w-0">Open pharmacies only</span>
             </span>
           </label>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-xl text-sm leading-6 text-slate-600">
-            Nearby pharmacies come from a live search. Stock still needs a direct call.
+        <div className="grid gap-4 pt-1 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <p className="max-w-[42rem] text-sm leading-6 text-slate-600">
+            Nearby pharmacies come from a live search. Stock still needs a direct call before pickup or transfer.
           </p>
           <button
             type="submit"
             disabled={isPending || isResolvingSearch}
-            className="action-button-primary relative z-40 whitespace-nowrap px-4 py-3.5 text-sm disabled:cursor-wait disabled:opacity-70 sm:self-start"
+            className="action-button-primary relative z-40 min-h-[3.75rem] whitespace-nowrap px-5 text-sm disabled:cursor-wait disabled:opacity-70 md:justify-self-end"
           >
-            {isPending || isResolvingSearch ? "Loading..." : submitLabel}
+            {isPending || isResolvingSearch ? "Loading…" : submitLabel}
           </button>
         </div>
       </form>
 
       {showSamples ? (
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2.5">
           {featuredSearches.map((search) => (
             <button
               key={search.id}

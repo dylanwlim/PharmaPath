@@ -317,22 +317,22 @@ export function PatientResultsClient({
 
   return (
     <>
-      <section className="px-4 pb-10 pt-28 sm:px-6 lg:px-8">
-        <div className="site-shell grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-          <div>
-            <span className="eyebrow-label">Pharmacy Finder</span>
-            <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.4rem]">
-              Start with the nearby list, then read the medication context
-              beside it.
+      <section className="px-4 pb-10 pt-26 sm:px-6 lg:px-8">
+        <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start xl:gap-12">
+          <div className="max-w-[32rem] pt-2">
+            <span className="eyebrow-label">Pharmacy Results</span>
+            <h1 className="mt-6 text-[2.85rem] leading-[0.96] tracking-tight text-balance text-slate-950 sm:text-[3.2rem] xl:text-[3.55rem]">
+              Nearby pharmacies first. Medication context alongside it.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
               {isDemoMedication
-                ? "This page keeps the live nearby search and a clearly labeled demo medication profile together, while staying explicit that the medication context is simulated."
-                : "This page keeps the live nearby search and medication access context together, while staying explicit that they answer different questions."}
+                ? "This search keeps the live nearby list and the clearly labeled demo medication profile together, while staying explicit that the medication context is simulated."
+                : "This search keeps the live nearby list and medication access context together without blurring them into a claim of verified shelf inventory."}
             </p>
           </div>
 
           <PharmacySearchForm
+            className="justify-self-stretch"
             initialMedication={query}
             initialLocation={location}
             initialLocationPlaceId={locationPlaceId || undefined}
@@ -346,7 +346,7 @@ export function PatientResultsClient({
       </section>
 
       <section className="px-4 pb-24 sm:px-6 lg:px-8">
-        <div className="site-shell space-y-6">
+        <div className="site-shell space-y-8">
           {!query || !location ? (
             <EmptyState
               eyebrow="Ready when you are"
@@ -354,11 +354,11 @@ export function PatientResultsClient({
               body="PharmaPath combines a live nearby pharmacy lookup with medication access context without claiming any pharmacy has the medication confirmed on the shelf."
             />
           ) : isLoading ? (
-            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(20rem,0.98fr)]">
               <div className="surface-panel flex min-h-[28rem] items-center justify-center rounded-[2rem]">
                 <div className="flex items-center gap-3 text-slate-500">
                   <LoaderCircle className="h-5 w-5 animate-spin" />
-                  Loading nearby options and medication context...
+                  Loading nearby options and medication context…
                 </div>
               </div>
               <div className="surface-panel min-h-[28rem] rounded-[2rem] p-6" />
@@ -390,22 +390,22 @@ export function PatientResultsClient({
                 </div>
               ) : null}
 
-              <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.02fr)_minmax(20rem,0.98fr)] xl:items-start">
                 <div className="space-y-6">
-                  <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
+                  <div className="surface-panel rounded-[2.05rem] p-5 sm:p-7">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div>
                         <span className="eyebrow-label">
                           Live nearby pharmacies
                         </span>
-                        <h2 className="mt-4 text-2xl tracking-tight text-slate-950">
+                        <h2 className="mt-4 text-2xl tracking-tight text-balance text-slate-950">
                           {pharmacyData?.location.display_label ||
                             pharmacyData?.location.formatted_address ||
                             location}
                         </h2>
                       </div>
                       {pharmacyData ? (
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:min-w-[22rem]">
                           <MetricPill
                             label="Results"
                             value={String(pharmacyData.counts.total)}
@@ -434,13 +434,13 @@ export function PatientResultsClient({
                       </div>
                     ) : pharmacyData?.recommended ? (
                       <div className="mt-6 space-y-5">
-                        <div className="rounded-[1.8rem] border border-slate-200 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
+                        <div className="rounded-[1.8rem] border border-slate-200/95 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.92)_100%)] p-5 shadow-[0_18px_44px_rgba(15,23,42,0.08)] sm:p-6">
                           <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                               <div className="text-sm uppercase tracking-[0.18em] text-slate-500">
                                 Recommended first call
                               </div>
-                              <h3 className="mt-2 text-2xl tracking-tight text-slate-950">
+                              <h3 className="mt-2 text-[1.75rem] tracking-tight text-slate-950">
                                 {pharmacyData.recommended.name}
                               </h3>
                               <p className="mt-2 text-base leading-7 text-slate-600">
@@ -510,7 +510,7 @@ export function PatientResultsClient({
                         </div>
 
                         {visibleExtras.length ? (
-                          <div className="surface-panel rounded-[1.8rem] p-5">
+                          <div className="surface-panel rounded-[1.8rem] p-5 sm:p-6">
                             <div className="flex items-center justify-between gap-3">
                               <h3 className="text-xl tracking-tight text-slate-950">
                                 Other nearby options
