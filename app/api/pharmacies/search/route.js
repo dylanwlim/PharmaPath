@@ -55,14 +55,16 @@ async function handleSearch(request) {
       );
     }
 
-    const medicationProfile = await resolveMedicationProfile(input.medication);
-    const resolvedLocation = await resolveLocationInput(
-      {
-        query: input.location,
-        placeId: input.locationPlaceId,
-      },
-      apiKey,
-    );
+    const [medicationProfile, resolvedLocation] = await Promise.all([
+      resolveMedicationProfile(input.medication),
+      resolveLocationInput(
+        {
+          query: input.location,
+          placeId: input.locationPlaceId,
+        },
+        apiKey,
+      ),
+    ]);
     const searchResult = await searchNearbyPharmacies({
       medication: medicationProfile.canonicalLabel,
       medicationProfileKey: medicationProfile.workflowCategory,

@@ -7,7 +7,8 @@
     "start": "next start",
     "sync:medications": "node scripts/sync-medication-index.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:burst": "node scripts/burst-traffic-smoke.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

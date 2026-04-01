@@ -1,12 +1,25 @@
 "use strict";
 
+const { createAsyncResultCache } = require("../../lib/server/async-cache");
+const { createConcurrencyLimiter } = require("../../lib/server/concurrency-limiter");
+
 const DEFAULT_RADIUS_MILES = 5;
 const MAX_RADIUS_MILES = 25;
 const MAX_RESULTS = 20;
+const GOOGLE_CACHE_TTL_MS = 2 * 60 * 1000;
+const GOOGLE_CACHE_STALE_TTL_MS = 15 * 60 * 1000;
+const GOOGLE_CACHE_MAX_ENTRIES = 500;
+const PHONE_DETAIL_CONCURRENCY = 6;
 const SEARCH_DISCLAIMER =
   "Showing nearby pharmacies for your medication search. Real-time inventory availability is not yet verified.";
 const REAL_RESULTS_LABEL =
   "Pharmacy names, addresses, ratings, hours, and Maps links come from live Google Places results.";
+const googleRequestCache = createAsyncResultCache({
+  ttlMs: GOOGLE_CACHE_TTL_MS,
+  staleTtlMs: GOOGLE_CACHE_STALE_TTL_MS,
+  maxEntries: GOOGLE_CACHE_MAX_ENTRIES,
+});
+const placePhoneDetailsLimiter = createConcurrencyLimiter(PHONE_DETAIL_CONCURRENCY);
 
 const MEDICATION_PROFILES = {
   controlled_stimulant: {
@@ -703,7 +716,23 @@ function createGoogleApiError(message, statusCode = 502, code = "google_api_erro
   return error;
 }
 
-async function fetchJson(url) {
+function createGooglePayloadError(payload, fallbackMessage, fallbackCode) {
+  if (payload?.status === "OVER_QUERY_LIMIT") {
+    return createGoogleApiError(
+      payload.error_message || "Google pharmacy search is temporarily rate-limited. Please try again soon.",
+      503,
+      "google_api_rate_limited",
+    );
+  }
+
+  return createGoogleApiError(
+    payload?.error_message || fallbackMessage,
+    502,
+    fallbackCode,
+  );
+}
+
+async function fetchGoogleJson(url) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
 
@@ -731,6 +760,25 @@ async function fetchJson(url) {
   }
 }
 
+async function fetchJson(url, { allowStaleOnError = true, shouldThrowForPayload } = {}) {
+  const requestUrl = url instanceof URL ? url : new URL(url);
+  return googleRequestCache.getOrLoad(
+    requestUrl.toString(),
+    async () => {
+      const payload = await fetchGoogleJson(requestUrl);
+      const payloadError =
+        typeof shouldThrowForPayload === "function" ? shouldThrowForPayload(payload) : null;
+
+      if (payloadError) {
+        throw payloadError;
+      }
+
+      return payload;
+    },
+    { allowStaleOnError },
+  );
+}
+
 async function autocompleteLocationSuggestions(query, apiKey, { limit = 8, sessionToken } = {}) {
   const normalizedQuery = sanitizeText(query);
 
@@ -747,18 +795,26 @@ async function autocompleteLocationSuggestions(query, apiKey, { limit = 8, sessi
     url.searchParams.set("sessiontoken", sessionToken);
   }
 
-  const payload = await fetchJson(url);
+  const payload = await fetchJson(url, {
+    shouldThrowForPayload(candidate) {
+      if (candidate.status === "ZERO_RESULTS") {
+        return null;
+      }
+
+      if (candidate.status === "OK" && Array.isArray(candidate.predictions)) {
+        return null;
+      }
+
+      return createGooglePayloadError(
+        candidate,
+        `Places autocomplete failed with status ${candidate.status || "UNKNOWN"}.`,
+        "places_autocomplete_failed",
+      );
+    },
+  });
 
   if (payload.status === "ZERO_RESULTS") {
     return [];
-  }
-
-  if (payload.status !== "OK" || !Array.isArray(payload.predictions)) {
-    throw createGoogleApiError(
-      payload.error_message || `Places autocomplete failed with status ${payload.status || "UNKNOWN"}.`,
-      502,
-      "places_autocomplete_failed",
-    );
   }
 
   return payload.predictions.slice(0, Math.max(1, limit)).map((prediction) => {
@@ -806,15 +862,19 @@ async function requestPlaceDetails(
     url.searchParams.set("sessiontoken", sessionToken);
   }
 
-  const payload = await fetchJson(url);
+  const payload = await fetchJson(url, {
+    shouldThrowForPayload(candidate) {
+      if (candidate.status === "OK" && candidate.result) {
+        return null;
+      }
 
-  if (payload.status !== "OK" || !payload.result) {
-    throw createGoogleApiError(
-      payload.error_message || `${failureLabel} failed with status ${payload.status || "UNKNOWN"}.`,
-      502,
-      failureCode,
-    );
-  }
+      return createGooglePayloadError(
+        candidate,
+        `${failureLabel} failed with status ${candidate.status || "UNKNOWN"}.`,
+        failureCode,
+      );
+    },
+  });
 
   return payload.result;
 }
@@ -846,19 +906,21 @@ async function getPlaceDetails(placeId, apiKey, { displayLabel, rawQuery, sessio
 }
 
 async function getPlacePhoneDetails(placeId, apiKey, { sessionToken } = {}) {
-  const result = await requestPlaceDetails(
-    placeId,
-    apiKey,
-    "formatted_phone_number,international_phone_number,place_id",
-    {
-      sessionToken,
-      missingPlaceMessage: "A Google place ID is required to look up pharmacy contact details.",
-      failureCode: "place_phone_details_failed",
-      failureLabel: "Place phone details",
-    },
-  );
+  return placePhoneDetailsLimiter.run(async () => {
+    const result = await requestPlaceDetails(
+      placeId,
+      apiKey,
+      "formatted_phone_number,international_phone_number,place_id",
+      {
+        sessionToken,
+        missingPlaceMessage: "A Google place ID is required to look up pharmacy contact details.",
+        failureCode: "place_phone_details_failed",
+        failureLabel: "Place phone details",
+      },
+    );
 
-  return extractPlacePhoneDetails(result);
+    return extractPlacePhoneDetails(result);
+  });
 }
 
 async function hydratePlacePhoneDetails(place, apiKey) {
@@ -892,18 +954,26 @@ async function geocodeLocation(location, apiKey, { displayLabel, rawQuery, compo
     }
   }
 
-  const payload = await fetchJson(url);
+  const payload = await fetchJson(url, {
+    shouldThrowForPayload(candidate) {
+      if (candidate.status === "ZERO_RESULTS") {
+        return null;
+      }
+
+      if (candidate.status === "OK" && Array.isArray(candidate.results) && candidate.results.length) {
+        return null;
+      }
+
+      return createGooglePayloadError(
+        candidate,
+        `Geocoding failed with status ${candidate.status || "UNKNOWN"}.`,
+        "geocoding_failed",
+      );
+    },
+  });
 
   if (payload.status === "ZERO_RESULTS") {
     throw createGoogleApiError("No location match was found for that search.", 404, "location_not_found");
-  }
-
-  if (payload.status !== "OK" || !Array.isArray(payload.results) || !payload.results.length) {
-    throw createGoogleApiError(
-      payload.error_message || `Geocoding failed with status ${payload.status || "UNKNOWN"}.`,
-      502,
-      "geocoding_failed",
-    );
   }
 
   const match = payload.results[0];
@@ -933,11 +1003,17 @@ async function resolveLocationInput({ query, placeId, sessionToken } = {}, apiKe
   }
 
   if (normalizedPlaceId) {
-    return getPlaceDetails(normalizedPlaceId, apiKey, {
-      displayLabel: normalizedQuery || undefined,
-      rawQuery: normalizedQuery || undefined,
-      sessionToken,
-    });
+    try {
+      return await getPlaceDetails(normalizedPlaceId, apiKey, {
+        displayLabel: normalizedQuery || undefined,
+        rawQuery: normalizedQuery || undefined,
+        sessionToken,
+      });
+    } catch (error) {
+      if (!normalizedQuery) {
+        throw error;
+      }
+    }
   }
 
   if (isLikelyUsPostalCode(normalizedQuery)) {
@@ -1002,15 +1078,23 @@ async function searchNearbyPharmacies({
     url.searchParams.set("opennow", "true");
   }
 
-  const payload = await fetchJson(url);
+  const payload = await fetchJson(url, {
+    shouldThrowForPayload(candidate) {
+      if (candidate.status === "ZERO_RESULTS") {
+        return null;
+      }
 
-  if (payload.status !== "OK" && payload.status !== "ZERO_RESULTS") {
-    throw createGoogleApiError(
-      payload.error_message || `Places search failed with status ${payload.status || "UNKNOWN"}.`,
-      502,
-      "places_search_failed",
-    );
-  }
+      if (candidate.status === "OK" && Array.isArray(candidate.results)) {
+        return null;
+      }
+
+      return createGooglePayloadError(
+        candidate,
+        `Places search failed with status ${candidate.status || "UNKNOWN"}.`,
+        "places_search_failed",
+      );
+    },
+  });
 
   const normalizedResults = Array.isArray(payload.results)
     ? payload.results

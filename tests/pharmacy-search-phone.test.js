@@ -3,7 +3,10 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { searchNearbyPharmacies } = require("../api/_lib/pharmacy-search");
+function loadPharmacySearch() {
+  delete require.cache[require.resolve("../api/_lib/pharmacy-search")];
+  return require("../api/_lib/pharmacy-search");
+}
 
 function createJsonResponse(payload, status = 200) {
   return {
@@ -27,6 +30,7 @@ async function withMockedFetch(mockFetch, callback) {
 }
 
 test("searchNearbyPharmacies enriches shortlisted results with Google phone details", async () => {
+  const { searchNearbyPharmacies } = loadPharmacySearch();
   const detailRequests = [];
 
   await withMockedFetch(async (url) => {
@@ -135,6 +139,7 @@ test("searchNearbyPharmacies enriches shortlisted results with Google phone deta
 });
 
 test("searchNearbyPharmacies keeps results usable when Google has no phone details", async () => {
+  const { searchNearbyPharmacies } = loadPharmacySearch();
   await withMockedFetch(async (url) => {
     const requestUrl = new URL(url);
 
