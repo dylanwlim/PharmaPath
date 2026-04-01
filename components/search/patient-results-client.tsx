@@ -48,16 +48,33 @@ function ResultDistanceChip({
   );
 }
 
-function RecommendedResultMeta({ result }: { result: PharmacyResult }) {
+function PharmacyAvailabilityMeta({
+  result,
+  compact = false,
+}: {
+  result: PharmacyResult;
+  compact?: boolean;
+}) {
+  const statusLabel =
+    result.hours_status_label ||
+    (result.open_now === true
+      ? "Open now"
+      : result.open_now === false
+        ? "Closed now"
+        : "Hours unavailable");
+
   return (
-    <div className="mt-4 flex flex-wrap gap-2 text-sm text-slate-600">
-      <span className="flat-chip">
-        {result.open_now === true
-          ? "Open now"
-          : result.open_now === false
-            ? "Closed now"
-            : "Hours unavailable"}
-      </span>
+    <div
+      className={`flex flex-wrap items-center gap-2 ${
+        compact ? "text-xs" : "text-sm"
+      } text-slate-600`}
+    >
+      <span className="flat-chip">{statusLabel}</span>
+      {result.hours_detail_label ? (
+        <span className={compact ? "text-xs text-slate-500" : "text-sm text-slate-500"}>
+          {result.hours_detail_label}
+        </span>
+      ) : null}
       {result.rating ? (
         <span className="flat-chip">Rating {result.rating.toFixed(1)}</span>
       ) : null}
@@ -103,6 +120,40 @@ function PrescriberReviewCard({
           Review prescriber view
         </NextLink>
       </div>
+    </div>
+  );
+}
+
+function PharmacyPhoneAction({
+  pharmacy,
+  className,
+}: {
+  pharmacy: PharmacyResult;
+  className: string;
+}) {
+  if (!pharmacy.phone_number) {
+    return null;
+  }
+
+  const label = pharmacy.phone_link ? `Call ${pharmacy.phone_number}` : `Phone ${pharmacy.phone_number}`;
+
+  if (pharmacy.phone_link) {
+    return (
+      <a
+        href={pharmacy.phone_link}
+        aria-label={`Call ${pharmacy.name} at ${pharmacy.phone_number}`}
+        className={className}
+      >
+        <PhoneCall className="h-4 w-4" />
+        <span>{label}</span>
+      </a>
+    );
+  }
+
+  return (
+    <div className={className}>
+      <PhoneCall className="h-4 w-4" />
+      <span>{label}</span>
     </div>
   );
 }
@@ -473,7 +524,7 @@ export function PatientResultsClient({
                             />
                           </div>
 
-                          <RecommendedResultMeta
+                          <PharmacyAvailabilityMeta
                             result={pharmacyData.recommended}
                           />
 
@@ -525,6 +576,10 @@ export function PatientResultsClient({
                               <PhoneCall className="h-4 w-4" />
                               Inventory still needs a direct call.
                             </div>
+                            <PharmacyPhoneAction
+                              pharmacy={pharmacyData.recommended}
+                              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
+                            />
                           </div>
                         </div>
 
@@ -569,6 +624,12 @@ export function PatientResultsClient({
                                     {result.match_reason}
                                   </p>
                                   <div className="mt-2.5">
+                                    <PharmacyAvailabilityMeta
+                                      result={result}
+                                      compact
+                                    />
+                                  </div>
+                                  <div className="mt-2.5">
                                     <CrowdSignalCard
                                       medicationQuery={query}
                                       medicationContext={
@@ -587,16 +648,24 @@ export function PatientResultsClient({
                                       compact
                                     />
                                   </div>
-                                  {result.google_maps_url ? (
-                                    <a
-                                      href={result.google_maps_url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="mt-2.5 inline-flex items-center gap-2 text-sm text-[#156d95]"
-                                    >
-                                      View map
-                                      <ExternalLink className="h-4 w-4" />
-                                    </a>
+                                  {result.phone_number || result.google_maps_url ? (
+                                    <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
+                                      <PharmacyPhoneAction
+                                        pharmacy={result}
+                                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
+                                      />
+                                      {result.google_maps_url ? (
+                                        <a
+                                          href={result.google_maps_url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
+                                        >
+                                          View map
+                                          <ExternalLink className="h-4 w-4" />
+                                        </a>
+                                      ) : null}
+                                    </div>
                                   ) : null}
                                 </div>
                               ))}
