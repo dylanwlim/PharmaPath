@@ -14,7 +14,6 @@ PharmaPath is designed to reduce that friction. It helps users build a better sh
 
 - `Pharmacy Finder`: Search by medication and location, review nearby options, and start with a tighter first-call path.
 - `Medication Lookup`: Review medication-wide access context, manufacturer spread, recall activity, and planning cues without turning that context into a stock claim.
-- `Methodology`: See what PharmaPath can support directly, what is inferred, and what still requires confirmation.
 
 ## Example Use Cases
 
