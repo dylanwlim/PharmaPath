@@ -1,0 +1,233 @@
+name: Vercel Discord deployment notifications
+
+on:
+  deployment:
+
+permissions:
+  contents: read
+  deployments: read
+  pull-requests: read
+
+jobs:
+  notify-discord:
+    if: >
+      github.event.deployment.creator.login == 'vercel[bot]' &&
+      (github.event.deployment.environment == 'Preview' || github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HAS_DISCORD_DEPLOY_WEBHOOK: ${{ secrets.DISCORD_DEPLOY_WEBHOOK_URL != '' }}
+
+    steps:
+      - name: Skip when Discord webhook secret is missing
+        if: env.HAS_DISCORD_DEPLOY_WEBHOOK != 'true'
+        run: echo "DISCORD_DEPLOY_WEBHOOK_URL is not configured; skipping notification."
+
+      - name: Wait for Vercel deployment result
+        if: env.HAS_DISCORD_DEPLOY_WEBHOOK == 'true'
+        id: deployment
+        uses: actions/github-script@v7
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        with:
+          result-encoding: string
+          script: |
+            const deployment = context.payload.deployment;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const githubServerUrl = process.env.GITHUB_SERVER_URL || "https://github.com";
+            const defaultBranch = process.env.DEFAULT_BRANCH || context.payload.repository?.default_branch || "main";
+            const terminalStates = new Set(["success", "failure", "error"]);
+
+            const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+            let finalStatus = null;
+
+            for (let attempt = 1; attempt <= 80; attempt += 1) {
+              const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                owner,
+                repo,
+                deployment_id: deployment.id,
+                per_page: 20,
+              });
+
+              finalStatus = statuses.find((status) => terminalStates.has(status.state)) ?? null;
+
+              if (finalStatus) {
+                break;
+              }
+
+              core.info(`Deployment ${deployment.id} is still pending after poll ${attempt}.`);
+              await sleep(15000);
+            }
+
+            if (!finalStatus) {
+              core.setFailed(`Deployment ${deployment.id} did not reach success, failure, or error within 20 minutes.`);
+              return;
+            }
+
+            const environment = deployment.environment || deployment.original_environment || finalStatus.environment || "unknown";
+            const sha = deployment.sha || deployment.ref || context.sha || "";
+            const shortSha = sha ? sha.slice(0, 7) : "unknown";
+
+            let commitMessage = "";
+            let commitUrl = sha ? `${githubServerUrl}/${owner}/${repo}/commit/${sha}` : `${githubServerUrl}/${owner}/${repo}`;
+
+            if (sha) {
+              try {
+                const { data: commit } = await github.rest.repos.getCommit({
+                  owner,
+                  repo,
+                  ref: sha,
+                });
+
+                commitMessage = commit.commit?.message?.split("\n")[0] || "";
+                commitUrl = commit.html_url || commitUrl;
+              } catch (error) {
+                core.warning(`Unable to load commit metadata for ${sha}: ${error.message}`);
+              }
+            }
+
+            let branch = "";
+
+            if (deployment.ref && !/^[0-9a-f]{40}$/i.test(deployment.ref)) {
+              branch = deployment.ref;
+            }
+
+            if (!branch && environment === "Production") {
+              branch = defaultBranch;
+            }
+
+            if (!branch && sha) {
+              try {
+                const { data: branches } = await github.rest.repos.listBranchesForHeadCommit({
+                  owner,
+                  repo,
+                  commit_sha: sha,
+                });
+
+                const preferredBranch = branches.find((item) => item.name !== defaultBranch) ?? branches[0];
+                branch = preferredBranch?.name || "";
+              } catch (error) {
+                core.info(`Branch lookup did not resolve ${sha}: ${error.message}`);
+              }
+            }
+
+            if (!branch && sha) {
+              try {
+                const { data: pulls } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                  owner,
+                  repo,
+                  commit_sha: sha,
+                });
+
+                if (pulls.length > 0) {
+                  const preferredPullRequest =
+                    environment === "Production"
+                      ? pulls.find((pullRequest) => pullRequest.base.ref === defaultBranch) ?? pulls[0]
+                      : pulls[0];
+
+                  branch = preferredPullRequest?.head?.ref || preferredPullRequest?.base?.ref || "";
+                }
+              } catch (error) {
+                core.info(`PR lookup did not resolve ${sha}: ${error.message}`);
+              }
+            }
+
+            const directUrl = finalStatus.target_url || finalStatus.environment_url || finalStatus.log_url || "";
+            const githubDeploymentUrl = `${githubServerUrl}/${owner}/${repo}/deployments/activity_log?environment=${encodeURIComponent(environment)}`;
+
+            return JSON.stringify({
+              repo: `${owner}/${repo}`,
+              repoUrl: `${githubServerUrl}/${owner}/${repo}`,
+              environment,
+              state: finalStatus.state,
+              branch,
+              ref: deployment.ref || "",
+              sha,
+              shortSha,
+              commitMessage,
+              commitUrl,
+              deploymentId: String(deployment.id),
+              deploymentUrl: directUrl || githubDeploymentUrl,
+              directUrl,
+              githubDeploymentUrl,
+              statusDescription: finalStatus.description || "",
+              timestamp: finalStatus.created_at || new Date().toISOString(),
+            });
+
+      - name: Send Discord notification
+        if: env.HAS_DISCORD_DEPLOY_WEBHOOK == 'true'
+        uses: actions/github-script@v7
+        env:
+          DEPLOYMENT_METADATA: ${{ steps.deployment.outputs.result }}
+          DISCORD_DEPLOY_WEBHOOK_URL: ${{ secrets.DISCORD_DEPLOY_WEBHOOK_URL }}
+        with:
+          script: |
+            const metadata = JSON.parse(process.env.DEPLOYMENT_METADATA);
+
+            const truncate = (value, limit) => {
+              if (!value) {
+                return "";
+              }
+
+              return value.length > limit ? `${value.slice(0, limit - 3)}...` : value;
+            };
+
+            const clean = (value, limit) => {
+              const normalized = truncate(String(value || "").replace(/`/g, "'"), limit);
+              return normalized || "n/a";
+            };
+
+            const state = metadata.state.toLowerCase();
+            const isSuccess = state === "success";
+
+            const embed = {
+              title: `Vercel ${metadata.environment} deployment ${isSuccess ? "succeeded" : state}`,
+              url: metadata.deploymentUrl || metadata.repoUrl,
+              color: isSuccess ? 0x2ecc71 : 0xe74c3c,
+              fields: [
+                { name: "Repo", value: clean(metadata.repo, 100), inline: true },
+                { name: "Environment", value: clean(metadata.environment, 50), inline: true },
+                { name: "Status", value: clean(metadata.state, 50), inline: true },
+                { name: "Branch / Ref", value: `\`${clean(metadata.branch || metadata.ref, 80)}\``, inline: true },
+                { name: "Commit", value: metadata.sha ? `[\`${metadata.shortSha}\`](${metadata.commitUrl})` : "n/a", inline: true },
+                {
+                  name: "Deployment",
+                  value: metadata.directUrl
+                    ? `[Open deployment](${metadata.deploymentUrl})`
+                    : `[View deployment record](${metadata.githubDeploymentUrl})`,
+                  inline: true,
+                },
+                { name: "Message", value: clean(metadata.commitMessage, 300), inline: false },
+              ],
+              timestamp: metadata.timestamp,
+              footer: {
+                text: "Vercel via GitHub Deployments",
+              },
+            };
+
+            if (metadata.statusDescription) {
+              embed.fields.push({
+                name: "Details",
+                value: clean(metadata.statusDescription, 300),
+                inline: false,
+              });
+            }
+
+            const response = await fetch(process.env.DISCORD_DEPLOY_WEBHOOK_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                allowed_mentions: {
+                  parse: [],
+                },
+                embeds: [embed],
+              }),
+            });
+
+            if (!response.ok) {
+              const responseText = await response.text();
+              core.setFailed(`Discord webhook returned ${response.status}${responseText ? `: ${responseText}` : ""}`);
+            }
