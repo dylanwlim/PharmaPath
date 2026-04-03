@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { MedicationCombobox } from "@/components/search/medication-combobox";
 import { MedicationStrengthField } from "@/components/search/medication-strength-field";
 import {
+  getCachedMedicationSelection,
   resolveMedicationOption,
   type MedicationSearchOption,
 } from "@/lib/medications/client";
@@ -23,23 +24,32 @@ export function MedicationQueryForm({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [selectedOption, setSelectedOption] = useState<MedicationSearchOption | null>(null);
-  const [query, setQuery] = useState(initialQuery);
-  const [selectedStrength, setSelectedStrength] = useState("");
+  const [selectedOption, setSelectedOption] = useState<MedicationSearchOption | null>(() =>
+    getCachedMedicationSelection(initialQuery),
+  );
+  const [query, setQuery] = useState(() => {
+    const cachedSelection = getCachedMedicationSelection(initialQuery);
+    return cachedSelection?.label || initialQuery;
+  });
+  const [selectedStrength, setSelectedStrength] = useState(() => {
+    const cachedSelection = getCachedMedicationSelection(initialQuery);
+    return cachedSelection?.matchedStrength || "";
+  });
   const [error, setError] = useState<string | null>(null);
   const [strengthError, setStrengthError] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    const cachedSelection = getCachedMedicationSelection(initialQuery);
 
-    setSelectedOption(null);
-    setSelectedStrength("");
-    setQuery(initialQuery);
+    setSelectedOption(cachedSelection);
+    setSelectedStrength(cachedSelection?.matchedStrength || "");
+    setQuery(cachedSelection?.label || initialQuery);
     setError(null);
     setStrengthError(null);
 
-    if (!initialQuery) {
+    if (!initialQuery || cachedSelection) {
       return () => {
         cancelled = true;
       };

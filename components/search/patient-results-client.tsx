@@ -28,7 +28,8 @@ import {
   formatMiles,
 } from "@/components/search/shared";
 import {
-  ShortageIntelligencePanel,
+  MedicationAccessSnapshotCard,
+  MedicationContextDetails,
   selectMedicationMatch,
 } from "@/components/search/shortage-intelligence-panel";
 
@@ -36,9 +37,9 @@ const client = createPharmaPathClient();
 
 type PharmacyResult = PharmacySearchResponse["results"][number];
 const pharmacyCardShellClass =
-  "rounded-[1.5rem] border border-emerald-200/80 bg-white/96 shadow-[0_18px_38px_rgba(34,197,94,0.06)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-emerald-300/85 hover:shadow-[0_20px_42px_rgba(34,197,94,0.08)]";
+  "rounded-[1.4rem] border border-emerald-200/80 bg-white/96 shadow-[0_14px_32px_rgba(34,197,94,0.06)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-emerald-300/85 hover:shadow-[0_16px_36px_rgba(34,197,94,0.08)]";
 const pharmacyActionButtonClass =
-  "inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]";
+  "inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]";
 
 function ResultDistanceChip({
   distanceMiles,
@@ -72,11 +73,13 @@ function PharmacyMapAction({
 
 function PharmacyActionRow({
   pharmacy,
+  compact = false,
 }: {
   pharmacy: PharmacyResult;
+  compact?: boolean;
 }) {
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2.5">
+    <div className={`flex flex-wrap items-center gap-2.5 ${compact ? "mt-3" : "mt-4"}`}>
       <PharmacyPhoneAction
         pharmacy={pharmacy}
         className={pharmacyActionButtonClass}
@@ -84,7 +87,11 @@ function PharmacyActionRow({
       {pharmacy.google_maps_url ? (
         <PharmacyMapAction href={pharmacy.google_maps_url} />
       ) : null}
-      <div className="inline-flex items-center gap-2 text-sm text-slate-500">
+      <div
+        className={`inline-flex items-center gap-2 text-slate-500 ${
+          compact ? "text-[0.86rem]" : "text-sm"
+        }`}
+      >
         <PhoneCall className="h-4 w-4" />
         Inventory still needs a direct call.
       </div>
@@ -149,7 +156,7 @@ function PrescriberReviewCard({
   matchId: string;
 }) {
   return (
-    <div className="surface-panel rounded-[1.7rem] p-5">
+    <div className="surface-panel h-full rounded-[1.55rem] p-4 sm:p-5">
       <span className="eyebrow-label">Next step</span>
       <p className="mt-3 text-sm leading-6 text-slate-600">
         Move into the prescriber-facing view if you want the same medication
@@ -204,7 +211,7 @@ function PharmacyPhoneAction({
 
 function MedicationContextError({ message }: { message: string }) {
   return (
-    <div className="surface-panel rounded-[1.7rem] border-rose-200 bg-rose-50 p-5 text-rose-700">
+    <div className="surface-panel rounded-[1.55rem] border-rose-200 bg-rose-50 p-4 text-rose-700 sm:p-5">
       <div className="text-sm font-medium uppercase tracking-[0.18em]">
         Medication context unavailable
       </div>
@@ -437,13 +444,12 @@ export function PatientResultsClient({
 
           <PharmacySearchForm
             className="justify-self-stretch"
-            initialMedication={resolvedMedicationLabel}
+            initialMedication={query}
             initialLocation={location}
             initialLocationPlaceId={locationPlaceId || undefined}
             initialRadiusMiles={radiusMiles}
             initialSortBy={sortBy}
             initialOnlyOpenNow={onlyOpenNow}
-            initialSelectedStrength={resolvedMedicationStrength}
             compact
             submitLabel="Refresh nearby search"
           />
@@ -460,16 +466,16 @@ export function PatientResultsClient({
             />
           ) : isLoading ? (
             <div className="space-y-5">
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.94fr)]">
-                <div className="surface-panel flex min-h-[24rem] items-center justify-center rounded-[1.85rem]">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.86fr)]">
+                <div className="surface-panel flex min-h-[22rem] items-center justify-center rounded-[1.85rem]">
                   <div className="flex items-center gap-3 text-slate-500">
                     <LoaderCircle className="h-5 w-5 animate-spin" />
                     Loading nearby options and medication context…
                   </div>
                 </div>
-                <div className="surface-panel min-h-[24rem] rounded-[1.85rem] p-5" />
+                <div className="surface-panel min-h-[22rem] rounded-[1.85rem] p-5" />
               </div>
-              <div className="surface-panel min-h-[14rem] rounded-[1.85rem] p-5" />
+              <div className="surface-panel min-h-[12rem] rounded-[1.85rem] p-5" />
             </div>
           ) : (
             <>
@@ -498,7 +504,7 @@ export function PatientResultsClient({
                 </div>
               ) : null}
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.94fr)] xl:items-start">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.86fr)] xl:items-start">
                 <div className="space-y-5">
                   <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -551,19 +557,19 @@ export function PatientResultsClient({
                         </p>
                       </div>
                     ) : pharmacyData?.recommended ? (
-                      <div className="mt-5 space-y-4">
+                      <div className="mt-5">
                         <div
-                          className={`${pharmacyCardShellClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(244,251,247,0.96)_100%)] p-5`}
+                          className={`${pharmacyCardShellClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(244,251,247,0.96)_100%)] p-4 sm:p-5`}
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <div className="text-sm uppercase tracking-[0.18em] text-slate-500">
                                 Recommended first call
                               </div>
-                              <h3 className="mt-2 text-[1.5rem] tracking-tight text-slate-950 sm:text-[1.65rem]">
+                              <h3 className="mt-2 text-[1.4rem] tracking-tight text-slate-950 sm:text-[1.55rem]">
                                 {pharmacyData.recommended.name}
                               </h3>
-                              <p className="mt-1.5 text-[0.96rem] leading-6 text-slate-600">
+                              <p className="mt-1.5 text-sm leading-6 text-slate-600">
                                 {pharmacyData.recommended.address}
                               </p>
                             </div>
@@ -574,15 +580,17 @@ export function PatientResultsClient({
                             />
                           </div>
 
-                          <PharmacyAvailabilityMeta
-                            result={pharmacyData.recommended}
-                          />
+                          <div className="mt-3">
+                            <PharmacyAvailabilityMeta
+                              result={pharmacyData.recommended}
+                            />
+                          </div>
 
-                          <p className="mt-4 text-sm leading-6 text-slate-700">
+                          <p className="mt-3 line-clamp-2 text-[0.96rem] leading-6 text-slate-700">
                             {pharmacyData.recommended.match_reason}
                           </p>
 
-                          <div className="mt-4">
+                          <div className="mt-3">
                             <CrowdSignalCard
                               medicationQuery={query}
                               medicationContext={
@@ -619,20 +627,13 @@ export function PatientResultsClient({
                   {drugError ? (
                     <MedicationContextError message={drugError} />
                   ) : featuredMatch ? (
-                    <div className="space-y-4">
-                      <ShortageIntelligencePanel
-                        match={featuredMatch}
-                        dataFreshness={drugData!.data_freshness}
-                        variant="patient"
-                        selectedMedicationLabel={resolvedMedicationLabel}
-                        selectedStrength={resolvedMedicationStrength}
-                      />
-                      <PrescriberReviewCard
-                        query={query}
-                        location={location}
-                        matchId={featuredMatch.id}
-                      />
-                    </div>
+                    <MedicationAccessSnapshotCard
+                      match={featuredMatch}
+                      dataFreshness={drugData!.data_freshness}
+                      variant="patient"
+                      selectedMedicationLabel={resolvedMedicationLabel}
+                      selectedStrength={resolvedMedicationStrength}
+                    />
                   ) : (
                     <EmptyState
                       eyebrow="No clear match"
@@ -643,13 +644,41 @@ export function PatientResultsClient({
                 </div>
               </div>
 
+              {featuredMatch && !drugError ? (
+                <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <span className="eyebrow-label">Medication context</span>
+                      <h3 className="mt-3 text-[1.24rem] tracking-tight text-slate-950">
+                        What to carry into the first call.
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 xl:grid-cols-2 xl:items-start">
+                    <MedicationContextDetails
+                      match={featuredMatch}
+                      dataFreshness={drugData!.data_freshness}
+                      variant="patient"
+                      selectedMedicationLabel={resolvedMedicationLabel}
+                      selectedStrength={resolvedMedicationStrength}
+                    />
+                    <PrescriberReviewCard
+                      query={query}
+                      location={location}
+                      matchId={featuredMatch.id}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
               {visibleExtras.length ? (
                 <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <span className="eyebrow-label">Other nearby options</span>
                       <h3 className="mt-3 text-[1.3rem] tracking-tight text-slate-950">
-                        More pharmacies that fit the same search.
+                        More pharmacies worth calling next.
                       </h3>
                     </div>
                     {extraResults.length > 4 ? (
@@ -685,7 +714,7 @@ export function PatientResultsClient({
                           <PharmacyAvailabilityMeta result={result} compact />
                         </div>
 
-                        <p className="mt-3 text-sm leading-6 text-slate-600">
+                        <p className="mt-3 line-clamp-2 text-[0.92rem] leading-6 text-slate-600">
                           {result.match_reason}
                         </p>
 
@@ -704,7 +733,7 @@ export function PatientResultsClient({
                           />
                         </div>
 
-                        <PharmacyActionRow pharmacy={result} />
+                        <PharmacyActionRow pharmacy={result} compact />
                       </div>
                     ))}
                   </div>

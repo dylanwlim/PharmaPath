@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LoaderCircle, MessageSquarePlus, Send } from "lucide-react";
-import { SignedOutContributionPrompt } from "@/components/auth/require-auth";
 import { AuthButton } from "@/components/auth/auth-primitives";
 import {
   computeCrowdSignal,
@@ -30,9 +29,22 @@ function crowdTone(summary: CrowdSignalSummary) {
   }
 }
 
-function MiniMetric({ label, value }: { label: string; value: string }) {
+function MiniMetric({
+  label,
+  value,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+}) {
   return (
-    <div className="rounded-[0.9rem] border border-slate-200 bg-white/90 px-3 py-2">
+    <div
+      className={cn(
+        "rounded-[0.9rem] border border-slate-200 bg-white/90 px-3 py-2",
+        compact && "px-2.5 py-2",
+      )}
+    >
       <div className="text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">{label}</div>
       <div className="mt-1 text-sm font-medium text-slate-900">{value}</div>
     </div>
@@ -85,6 +97,7 @@ export function CrowdSignalCard({
     [pharmacy.address, pharmacy.name, pharmacy.placeId, summary],
   );
   const likelihoodDisplay = resolvedSummary.reportCount ? `${resolvedSummary.likelihood}%` : "No data";
+  const hasCrowdData = resolvedSummary.reportCount > 0;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -158,20 +171,39 @@ export function CrowdSignalCard({
         </div>
       </div>
 
-      <p className={cn("mt-2.5 text-sm leading-6 text-slate-600", compact && "text-[0.9rem]")}>
-        {resolvedSummary.explanation}
-      </p>
+      {!hasCrowdData ? (
+        <>
+          <p className={cn("mt-2.5 text-sm leading-6 text-slate-600", compact && "text-[0.9rem]")}>
+            Not enough contributor reports have been submitted for this pharmacy and medication yet.
+          </p>
+          <p className="mt-1.5 text-[0.78rem] leading-5 text-slate-500">
+            Sparse samples stay conservative. Direct pharmacy confirmation still matters before routing someone to pick up a prescription.
+          </p>
+        </>
+      ) : (
+        <>
+          <p className={cn("mt-2.5 text-sm leading-6 text-slate-600", compact && "text-[0.9rem]")}>
+            {resolvedSummary.explanation}
+          </p>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        <MiniMetric label="Likelihood" value={likelihoodDisplay} />
-        <MiniMetric label={isDemoMedication ? "Live reports" : "Reports"} value={String(resolvedSummary.reportCount)} />
-        <MiniMetric label="Freshness" value={resolvedSummary.freshnessNote} />
-        <MiniMetric label="Consensus" value={resolvedSummary.agreementDisplay} />
-      </div>
+          <div className={cn("mt-3 grid gap-2", compact ? "sm:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4")}>
+            <MiniMetric compact={compact} label="Likelihood" value={likelihoodDisplay} />
+            <MiniMetric
+              compact={compact}
+              label={isDemoMedication ? "Live reports" : "Reports"}
+              value={String(resolvedSummary.reportCount)}
+            />
+            <MiniMetric compact={compact} label="Freshness" value={resolvedSummary.freshnessNote} />
+            {!compact ? (
+              <MiniMetric compact={compact} label="Consensus" value={resolvedSummary.agreementDisplay} />
+            ) : null}
+          </div>
 
-      <p className="mt-2.5 text-[0.74rem] leading-5 text-slate-500">
-        Crowd reports are weighted by contributor history and recency, and sparse samples stay conservative. Direct pharmacy confirmation is still recommended before sending someone to pick up a prescription.
-      </p>
+          <p className="mt-2.5 text-[0.74rem] leading-5 text-slate-500">
+            Crowd reports are weighted by contributor history and recency, and sparse samples stay conservative. Direct pharmacy confirmation is still recommended before sending someone to pick up a prescription.
+          </p>
+        </>
+      )}
 
       {isDemoMedication ? (
         <p className="mt-2 text-[0.74rem] leading-5 text-amber-900/85">
@@ -182,15 +214,9 @@ export function CrowdSignalCard({
       {feedback ? <p className="mt-2.5 text-sm text-emerald-700">{feedback}</p> : null}
       {error ? <p className="mt-2.5 text-sm text-rose-700">{error}</p> : null}
 
-      {status !== "authenticated" && !compact ? (
-        <div className="mt-3">
-          <SignedOutContributionPrompt nextPath={nextPath} />
-        </div>
-      ) : null}
-
-      {status !== "authenticated" && compact ? (
+      {status !== "authenticated" ? (
         <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-          <span>Want to improve this signal?</span>
+          <span>{hasCrowdData ? "Want to improve this signal?" : "Want to improve this signal?"}</span>
           <Link
             href={`/login?next=${encodeURIComponent(nextPath)}`}
             className="text-[#156d95]"

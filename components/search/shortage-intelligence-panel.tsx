@@ -20,6 +20,7 @@ type SeverityBand = {
   textClass: string;
   panelClass: string;
   borderClass: string;
+  badgeClass: string;
 };
 type DoseAvailabilityRow = {
   label: string;
@@ -58,23 +59,23 @@ const STATUS_PRIORITY: Record<string, number> = {
 
 const INSIGHT_TONES: Record<
   string,
-  { panelClass: string; icon: string }
+  { icon: string; iconClass: string }
 > = {
   action: {
-    panelClass: "border-sky-200 bg-sky-50 text-sky-950",
     icon: "→",
+    iconClass: "bg-sky-100 text-sky-700",
   },
   caution: {
-    panelClass: "border-rose-200 bg-rose-50 text-rose-950",
     icon: "!",
+    iconClass: "bg-rose-100 text-rose-700",
   },
   timing: {
-    panelClass: "border-amber-200 bg-amber-50 text-amber-950",
     icon: "◷",
+    iconClass: "bg-amber-100 text-amber-700",
   },
   opportunity: {
-    panelClass: "border-emerald-200 bg-emerald-50 text-emerald-950",
     icon: "✓",
+    iconClass: "bg-emerald-100 text-emerald-700",
   },
 };
 
@@ -120,6 +121,7 @@ function buildSeverityBand(score: number, isDemoMatch: boolean): SeverityBand {
       textClass: "text-amber-900",
       panelClass: "bg-amber-50",
       borderClass: "border-amber-200",
+      badgeClass: "border-amber-200 bg-amber-100 text-amber-900",
     };
   }
 
@@ -130,6 +132,7 @@ function buildSeverityBand(score: number, isDemoMatch: boolean): SeverityBand {
       textClass: "text-emerald-800",
       panelClass: "bg-emerald-50",
       borderClass: "border-emerald-200",
+      badgeClass: "border-emerald-200 bg-white/86 text-emerald-900",
     };
   }
 
@@ -140,6 +143,7 @@ function buildSeverityBand(score: number, isDemoMatch: boolean): SeverityBand {
       textClass: "text-amber-800",
       panelClass: "bg-amber-50",
       borderClass: "border-amber-200",
+      badgeClass: "border-amber-200 bg-white/86 text-amber-900",
     };
   }
 
@@ -150,6 +154,7 @@ function buildSeverityBand(score: number, isDemoMatch: boolean): SeverityBand {
       textClass: "text-orange-800",
       panelClass: "bg-orange-50",
       borderClass: "border-orange-200",
+      badgeClass: "border-orange-200 bg-white/86 text-orange-900",
     };
   }
 
@@ -159,6 +164,7 @@ function buildSeverityBand(score: number, isDemoMatch: boolean): SeverityBand {
     textClass: "text-rose-800",
     panelClass: "bg-rose-50",
     borderClass: "border-rose-200",
+    badgeClass: "border-rose-200 bg-white/86 text-rose-900",
   };
 }
 
@@ -331,20 +337,42 @@ function buildFreshnessLabel(
   return `Shortages refreshed ${shortageDate} · Recalls refreshed ${recallDate}`;
 }
 
+function meterMarkerStyle(score: number) {
+  if (score <= 0) {
+    return {
+      left: "0%",
+      transform: "translate(0, -50%)",
+    };
+  }
+
+  if (score >= 100) {
+    return {
+      left: "100%",
+      transform: "translate(-100%, -50%)",
+    };
+  }
+
+  return {
+    left: `${score}%`,
+    transform: "translate(-50%, -50%)",
+  };
+}
+
 function AccessMeter({ score }: { score: number }) {
-  const clamped = Math.max(4, Math.min(96, score));
+  const markerStyle = meterMarkerStyle(score);
 
   return (
-    <div className="mt-4">
-      <div className="relative h-3.5 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500">
+    <div className="mt-3.5">
+      <div className="relative overflow-visible rounded-full">
+        <div className="h-2.5 rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500" />
         <span
-          className="absolute top-1/2 h-4.5 w-4.5 -translate-y-1/2 rounded-full border-2 border-white bg-slate-950 shadow-md"
-          style={{ left: `calc(${clamped}% - 0.55rem)` }}
+          className="absolute top-1/2 h-4 w-4 rounded-full border-2 border-white bg-slate-950 shadow-[0_6px_14px_rgba(15,23,42,0.18)]"
+          style={markerStyle}
         />
       </div>
-      <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-slate-400">
-        <span>Lower friction</span>
-        <span>Higher friction</span>
+      <div className="mt-2 flex items-center justify-between text-[0.62rem] uppercase tracking-[0.16em] text-slate-500">
+        <span className="pr-3">Lower friction</span>
+        <span className="pl-3 text-right">Higher friction</span>
       </div>
     </div>
   );
@@ -356,10 +384,10 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[1.7rem] p-5">
+    <div className="surface-panel rounded-[1.55rem] p-4 sm:p-5">
       <span className="eyebrow-label">Dose coverage</span>
-      <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-        {rows.map((row) => {
+      <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+        {rows.slice(0, 4).map((row) => {
           const toneClass =
             row.availabilityPercent === 100
               ? "border-emerald-200 bg-emerald-50 text-emerald-900"
@@ -370,7 +398,7 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
           return (
             <div
               key={row.label}
-              className={`rounded-[1.05rem] border p-3.5 ${toneClass}`}
+              className={`rounded-[1rem] border px-3.5 py-3 ${toneClass}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold">{row.label}</span>
@@ -385,6 +413,11 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
           );
         })}
       </div>
+      {rows.length > 4 ? (
+        <p className="mt-3 text-[0.78rem] leading-5 text-slate-500">
+          Showing the strongest four coverage signals for quick scanning.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -400,11 +433,11 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <div className="surface-panel rounded-[1.7rem] p-5">
+    <div className="surface-panel rounded-[1.55rem] p-4 sm:p-5">
       <span className="eyebrow-label">Manufacturer status</span>
-      <div className="mt-4 divide-y divide-slate-100">
+      <div className="mt-3 divide-y divide-slate-100">
         {visibleRows.map((row) => (
-          <div key={row.name} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+          <div key={row.name} className="flex items-start gap-3 py-2.5 first:pt-0 last:pb-0">
             <span className={`mt-1.5 h-2.5 w-2.5 rounded-full ${row.statusDotClass}`} />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -452,45 +485,72 @@ function RecallActivityCard({
 }: {
   items: Match["evidence"]["recalls"]["items"];
 }) {
+  const [showAll, setShowAll] = useState(false);
+
   if (!items.length) {
     return null;
   }
 
   return (
-    <div className="surface-panel rounded-[1.7rem] p-5">
+    <div className="surface-panel rounded-[1.55rem] p-4 sm:p-5">
       <span className="eyebrow-label">Recent recall activity</span>
-      <div className="mt-4 space-y-2.5">
-        {items.slice(0, 4).map((recall, index) => {
+      <div className="mt-3 space-y-2.5">
+        {(showAll ? items : items.slice(0, 3)).map((recall, index) => {
           const classification = formatRecallClassification(recall.classification);
+          const preview = recall.reason?.trim() || "No public recall reason was provided.";
 
           return (
-            <div
+            <details
               key={`${recall.productDescription ?? "recall"}-${index}`}
-              className="rounded-[1.05rem] border border-amber-200 bg-amber-50 p-3.5"
+              className="group rounded-[1rem] border border-amber-200/80 bg-white/92"
             >
-              {recall.productDescription ? (
-                <div className="text-sm font-semibold text-slate-950">
-                  {recall.productDescription}
-                </div>
-              ) : null}
-              {recall.recallingFirm ? (
-                <div className="mt-1 text-xs text-slate-500">{recall.recallingFirm}</div>
-              ) : null}
-              {recall.reason ? (
-                <p className="mt-2 text-sm leading-6 text-slate-700">{recall.reason}</p>
-              ) : null}
-              <div className="mt-2.5 flex flex-wrap gap-2 text-xs text-slate-500">
-                {classification ? (
-                  <span className="rounded-full bg-amber-200 px-2 py-1 font-semibold text-amber-900">
-                    {classification}
+              <summary className="cursor-pointer list-none px-3.5 py-3.5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    {recall.productDescription ? (
+                      <div className="line-clamp-2 text-sm font-semibold leading-6 text-slate-950">
+                        {recall.productDescription}
+                      </div>
+                    ) : null}
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.72rem] uppercase tracking-[0.16em] text-slate-500">
+                      {classification ? (
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-semibold text-amber-900">
+                          {classification}
+                        </span>
+                      ) : null}
+                      {recall.reportDateLabel ? <span>{recall.reportDateLabel}</span> : null}
+                      {recall.recallingFirm ? <span>{recall.recallingFirm}</span> : null}
+                    </div>
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">
+                      {preview}
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-[#156d95]">
+                    Expand
                   </span>
+                </div>
+              </summary>
+              <div className="border-t border-amber-100 px-3.5 py-3 text-sm leading-6 text-slate-700">
+                <p>{preview}</p>
+                {recall.status ? (
+                  <p className="mt-2 text-[0.82rem] text-slate-500">
+                    Status: {recall.status}
+                  </p>
                 ) : null}
-                {recall.reportDateLabel ? <span>{recall.reportDateLabel}</span> : null}
               </div>
-            </div>
+            </details>
           );
         })}
       </div>
+      {items.length > 3 ? (
+        <button
+          type="button"
+          className="mt-3 text-sm font-medium text-[#156d95]"
+          onClick={() => setShowAll((value) => !value)}
+        >
+          {showAll ? "Show fewer" : `Show ${items.length - 3} more`}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -501,18 +561,21 @@ function PatientMeaningCard({ items }: { items: string[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[1.7rem] p-5">
+    <div className="surface-panel rounded-[1.55rem] p-4 sm:p-5">
       <span className="eyebrow-label">What this means for you</span>
-      <div className="mt-4 space-y-2.5">
+      <div className="mt-3 space-y-2.5">
         {items.map((item) => {
           const tone = classifyPatientInsight(item);
 
           return (
             <div
               key={item}
-              className={`flex gap-3 rounded-[1.05rem] border px-3.5 py-3 text-sm leading-6 ${tone.panelClass}`}
+              className="flex gap-3 rounded-[1rem] border border-slate-200/85 bg-white/92 px-3.5 py-3 text-sm leading-6 text-slate-700"
             >
-              <span className="mt-0.5 shrink-0 font-bold" aria-hidden>
+              <span
+                className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[0.72rem] font-semibold ${tone.iconClass}`}
+                aria-hidden
+              >
                 {tone.icon}
               </span>
               <p>{item}</p>
@@ -595,9 +658,224 @@ function SnapshotFooter({
       : "This medication view uses public shortage, recall, and listing records to support planning. Local inventory, wholesaler allocation, and payer constraints still need separate verification.";
 
   return (
-    <div className="rounded-[1.25rem] border border-slate-200 bg-white/70 px-4 py-3.5 text-[0.74rem] leading-5 text-slate-600">
+    <div className="rounded-[1.25rem] border border-slate-200 bg-white/72 px-4 py-3.5 text-[0.8rem] leading-6 text-slate-600">
       {body}
     </div>
+  );
+}
+
+function buildIntelligenceContext({
+  match,
+  dataFreshness,
+  selectedMedicationLabel,
+  selectedStrength,
+  referenceTime,
+}: {
+  match: Match;
+  dataFreshness: DrugIntelligenceResponse["data_freshness"];
+  selectedMedicationLabel?: string | null;
+  selectedStrength?: string | null;
+  referenceTime: number;
+}) {
+  const isDemoMatch = Boolean(match.demo_context?.demo_only);
+  const snapshot = measureShortageSnapshot(
+    match.evidence.shortages.items,
+    isDemoMatch,
+    referenceTime,
+  );
+  const normalizedSelectedLabel = selectedMedicationLabel?.trim().toLowerCase() || "";
+  const selectedContextLabel = [selectedMedicationLabel?.trim(), selectedStrength?.trim()]
+    .filter(Boolean)
+    .join(" • ");
+  const showMatchedFamilyLabel =
+    Boolean(normalizedSelectedLabel) &&
+    normalizedSelectedLabel !== match.display_name.trim().toLowerCase();
+  const familyContextNote = selectedStrength
+    ? "Dose and manufacturer rows summarize the matched product family around the selected presentation. They can include sibling strengths in the same formulation."
+    : "This snapshot reflects the top matched medication family for the current search, not a live local inventory readout.";
+
+  return {
+    isDemoMatch,
+    snapshot,
+    selectedContextLabel,
+    showMatchedFamilyLabel,
+    familyContextNote,
+    freshnessLabel: buildFreshnessLabel(dataFreshness, isDemoMatch),
+  };
+}
+
+function SnapshotMetaChip({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-full border border-white/75 bg-white/76 px-3 py-1.5 text-[0.76rem] leading-5 text-slate-700">
+      <span className="font-semibold text-slate-900">{value}</span>{" "}
+      <span className="text-slate-500">{label}</span>
+    </div>
+  );
+}
+
+export function MedicationAccessSnapshotCard({
+  match,
+  dataFreshness,
+  variant,
+  selectedMedicationLabel,
+  selectedStrength,
+}: {
+  match: Match;
+  dataFreshness: DrugIntelligenceResponse["data_freshness"];
+  variant: Variant;
+  selectedMedicationLabel?: string | null;
+  selectedStrength?: string | null;
+}) {
+  const [referenceTime] = useState(() => Date.now());
+  const context = buildIntelligenceContext({
+    match,
+    dataFreshness,
+    selectedMedicationLabel,
+    selectedStrength,
+    referenceTime,
+  });
+  const metaItems = [
+    {
+      label: "active shortage entries",
+      value: String(context.snapshot.activeItems.length),
+    },
+    context.snapshot.durationDays
+      ? {
+          label: "running duration",
+          value: formatDuration(context.snapshot.durationDays),
+        }
+      : null,
+    context.snapshot.lastUpdateLabel !== "Unavailable"
+      ? {
+          label: "latest update",
+          value: context.snapshot.lastUpdateLabel,
+        }
+      : null,
+  ].filter(Boolean) as Array<{ label: string; value: string }>;
+
+  return (
+    <div
+      className={`surface-panel rounded-[1.6rem] border p-4 sm:p-5 ${context.snapshot.band.panelClass} ${context.snapshot.band.borderClass}`}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="eyebrow-label">
+          {variant === "patient"
+            ? "Medication access snapshot"
+            : "Medication evidence snapshot"}
+        </span>
+        {context.isDemoMatch ? (
+          <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-900">
+            Demo
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-3 rounded-[1rem] border border-white/70 bg-white/72 px-4 py-3">
+        <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
+          Context shown
+        </div>
+        <div className="mt-1 text-[0.98rem] font-semibold tracking-tight text-slate-950">
+          {context.selectedContextLabel || match.display_name}
+        </div>
+        {context.showMatchedFamilyLabel ? (
+          <div className="mt-1 text-[0.72rem] uppercase tracking-[0.16em] text-slate-500">
+            Matched family: {match.display_name}
+          </div>
+        ) : null}
+        <p className="mt-1 text-[0.78rem] leading-5 text-slate-600">
+          {context.familyContextNote}
+        </p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className={`text-[1.45rem] font-bold tracking-tight ${context.snapshot.band.textClass}`}>
+            {context.snapshot.band.label}
+          </div>
+          <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-700">
+            {context.snapshot.band.summary}
+          </p>
+        </div>
+        <div
+          className={`rounded-full border px-3 py-1.5 text-sm font-semibold tabular-nums ${context.snapshot.band.badgeClass}`}
+        >
+          {context.snapshot.score}/100
+        </div>
+      </div>
+
+      <AccessMeter score={context.snapshot.score} />
+
+      {metaItems.length ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {metaItems.map((item) => (
+            <SnapshotMetaChip key={item.label} label={item.label} value={item.value} />
+          ))}
+        </div>
+      ) : null}
+
+      {context.snapshot.primaryReason ? (
+        <div className="mt-3 rounded-[1rem] border border-white/70 bg-white/72 px-3.5 py-3">
+          <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
+            Primary shortage reason
+          </div>
+          <p className="mt-1.5 text-sm font-medium leading-6 text-slate-900">
+            {context.snapshot.primaryReason}
+          </p>
+        </div>
+      ) : null}
+
+      <p className="mt-3 text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">
+        {context.freshnessLabel}
+      </p>
+    </div>
+  );
+}
+
+export function MedicationContextDetails({
+  match,
+  dataFreshness,
+  variant,
+  selectedMedicationLabel,
+  selectedStrength,
+}: {
+  match: Match;
+  dataFreshness: DrugIntelligenceResponse["data_freshness"];
+  variant: Variant;
+  selectedMedicationLabel?: string | null;
+  selectedStrength?: string | null;
+}) {
+  const [referenceTime] = useState(() => Date.now());
+  const context = buildIntelligenceContext({
+    match,
+    dataFreshness,
+    selectedMedicationLabel,
+    selectedStrength,
+    referenceTime,
+  });
+
+  return (
+    <>
+      {variant === "patient" ? (
+        <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
+      ) : (
+        <ActiveShortageEntriesCard items={context.snapshot.activeItems} />
+      )}
+
+      <RecallActivityCard items={match.evidence.recalls.items} />
+      <DoseAvailabilityCard rows={context.snapshot.doseAvailability} />
+      <ManufacturerStatusCard rows={context.snapshot.manufacturerRows} />
+      <SnapshotFooter
+        isDemoMatch={context.isDemoMatch}
+        variant={variant}
+        note={match.demo_context?.note}
+      />
+    </>
   );
 }
 
@@ -653,133 +931,21 @@ export function ShortageIntelligencePanel({
   selectedMedicationLabel?: string | null;
   selectedStrength?: string | null;
 }) {
-  const isDemoMatch = Boolean(match.demo_context?.demo_only);
-  const [referenceTime] = useState(() => Date.now());
-  const snapshot = measureShortageSnapshot(
-    match.evidence.shortages.items,
-    isDemoMatch,
-    referenceTime,
-  );
-  const normalizedSelectedLabel = selectedMedicationLabel?.trim().toLowerCase() || "";
-  const selectedContextLabel = [selectedMedicationLabel?.trim(), selectedStrength?.trim()]
-    .filter(Boolean)
-    .join(" • ");
-  const showMatchedFamilyLabel =
-    Boolean(normalizedSelectedLabel) &&
-    normalizedSelectedLabel !== match.display_name.trim().toLowerCase();
-  const familyContextNote = selectedStrength
-    ? "Dose and manufacturer rows summarize the matched product family around the selected presentation. They can include sibling strengths in the same formulation."
-    : "This snapshot reflects the top matched medication family for the current search, not a live local inventory readout.";
-
   return (
     <>
-      <div
-        className={`surface-panel rounded-[1.75rem] border p-5 sm:p-6 ${snapshot.band.panelClass} ${snapshot.band.borderClass}`}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="eyebrow-label">
-            {variant === "patient" ? "Medication access snapshot" : "Medication evidence snapshot"}
-          </span>
-          {isDemoMatch ? (
-            <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-900">
-              Demo
-            </span>
-          ) : null}
-        </div>
-
-        <div className="mt-3 rounded-[1.1rem] border border-white/70 bg-white/72 px-4 py-3">
-          <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
-            Context shown
-          </div>
-          <div className="mt-1 text-[1rem] font-semibold tracking-tight text-slate-950">
-            {selectedContextLabel || match.display_name}
-          </div>
-          {showMatchedFamilyLabel ? (
-            <div className="mt-1 text-[0.72rem] uppercase tracking-[0.16em] text-slate-500">
-              Matched family: {match.display_name}
-            </div>
-          ) : null}
-          <p className="mt-1 text-[0.8rem] leading-5 text-slate-600">
-            {familyContextNote}
-          </p>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className={`text-[1.65rem] font-bold tracking-tight ${snapshot.band.textClass}`}>
-              {snapshot.band.label}
-            </div>
-            <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-700">
-              {snapshot.band.summary}
-            </p>
-          </div>
-          <div className="text-right">
-            <div className={`text-[2.8rem] font-black tabular-nums ${snapshot.band.textClass}`}>
-              {snapshot.score}
-            </div>
-            <div className="text-xs uppercase tracking-[0.16em] text-slate-500">out of 100</div>
-          </div>
-        </div>
-
-        <AccessMeter score={snapshot.score} />
-
-        <div className="mt-5 grid gap-2.5 sm:grid-cols-3">
-          <div className="rounded-[1.05rem] border border-white/70 bg-white/70 p-3.5">
-            <div className="text-[1.2rem] font-semibold text-slate-950">
-              {snapshot.activeItems.length}
-            </div>
-            <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-500">
-              Active shortage entries
-            </div>
-          </div>
-          <div className="rounded-[1.05rem] border border-white/70 bg-white/70 p-3.5">
-            <div className="text-[1.2rem] font-semibold text-slate-950">
-              {formatDuration(snapshot.durationDays)}
-            </div>
-            <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-500">
-              Running duration
-            </div>
-          </div>
-          <div className="rounded-[1.05rem] border border-white/70 bg-white/70 p-3.5">
-            <div className="text-[1.2rem] font-semibold text-slate-950">
-              {snapshot.lastUpdateLabel}
-            </div>
-            <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-slate-500">
-              Latest update
-            </div>
-          </div>
-        </div>
-
-        {snapshot.primaryReason ? (
-          <div className="mt-2.5 rounded-[1.05rem] border border-white/70 bg-white/70 p-3.5">
-            <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">
-              Primary shortage reason
-            </div>
-            <p className="mt-1.5 text-sm font-medium leading-6 text-slate-900">
-              {snapshot.primaryReason}
-            </p>
-          </div>
-        ) : null}
-
-        <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-slate-400">
-          {buildFreshnessLabel(dataFreshness, isDemoMatch)}
-        </p>
-      </div>
-
-      <DoseAvailabilityCard rows={snapshot.doseAvailability} />
-      <ManufacturerStatusCard rows={snapshot.manufacturerRows} />
-
-      {variant === "patient" ? (
-        <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
-      ) : (
-        <ActiveShortageEntriesCard items={snapshot.activeItems} />
-      )}
-
-      <RecallActivityCard items={match.evidence.recalls.items} />
-      <SnapshotFooter
-        isDemoMatch={isDemoMatch}
+      <MedicationAccessSnapshotCard
+        match={match}
+        dataFreshness={dataFreshness}
         variant={variant}
-        note={match.demo_context?.note}
+        selectedMedicationLabel={selectedMedicationLabel}
+        selectedStrength={selectedStrength}
+      />
+      <MedicationContextDetails
+        match={match}
+        dataFreshness={dataFreshness}
+        variant={variant}
+        selectedMedicationLabel={selectedMedicationLabel}
+        selectedStrength={selectedStrength}
       />
     </>
   );

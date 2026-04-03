@@ -143,6 +143,20 @@ test("exact medication search returns the canonical display label used for selec
   assert.ok(results[0].strengths.some((strength) => strength.value === "54 mg"));
 });
 
+test("exact medication search resolves full query labels that include strength and dosage form", async () => {
+  const { results } = await searchMedicationOptions(
+    "Wegovy 1.7 mg/0.75 ml injection, solution",
+    {
+      exact: true,
+      limit: 1,
+    },
+  );
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].label, "Wegovy Injection, Solution");
+  assert.equal(results[0].matchedStrength, "1.7 mg/0.75 ml");
+});
+
 test("medication search groups real catalog strengths under one selectable option", async () => {
   const { results } = await searchMedicationOptions("Adderall", {
     limit: 5,

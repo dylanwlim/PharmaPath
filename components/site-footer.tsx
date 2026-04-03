@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FooterEntry } from "@/components/route-entry";
 import { SiteBrand } from "@/components/site-brand";
 import { surfaceNames } from "@/lib/surface-labels";
 
@@ -19,10 +20,10 @@ const footerSections = [
     ],
   },
   {
-    title: "Repo",
+    title: "Connect",
     links: [
-      { label: "GitHub", href: "https://github.com/dylanwlim/PharmaPath" },
-      { label: "Live app", href: "https://pharmapath.org/" },
+      { label: "Instagram", href: "https://instagram.com/" },
+      { label: "LinkedIn", href: "https://linkedin.com/" },
     ],
   },
   {
@@ -34,8 +35,8 @@ const footerSections = [
 export function SiteFooter() {
   return (
     <footer className="w-full border-t border-[#e5e5e5] bg-[#fafafa]">
-      <div className="site-shell site-footer-enter py-16">
-        <div className="grid grid-cols-2 gap-8 mb-12 md:grid-cols-5">
+      <FooterEntry className="site-shell py-16">
+        <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2">
             <div className="mb-4">
               <SiteBrand
@@ -57,12 +58,23 @@ export function SiteFooter() {
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-[#666666] transition-colors duration-150 hover:text-[#202020]"
-                    >
-                      {link.label}
-                    </Link>
+                    {section.title === "Connect" ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm text-[#666666] transition-colors duration-150 hover:border-[#156d95]/25 hover:text-[#202020]"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-sm text-[#666666] transition-colors duration-150 hover:text-[#202020]"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -72,18 +84,32 @@ export function SiteFooter() {
 
         <div className="border-t border-[#e5e5e5] pt-8">
           <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-            <p className="text-sm text-[#666666]">© PharmaPath 2026.</p>
+            <p className="text-sm text-[#666666]">
+              © PharmaPath 2026. All rights reserved.
+            </p>
             <div className="flex items-center gap-6">
               <Link
-                href="/pharmacy-finder"
+                href="#"
                 className="text-sm text-[#666666] transition-colors duration-150 hover:text-[#202020]"
               >
-                Start Search
+                Privacy
+              </Link>
+              <Link
+                href="#"
+                className="text-sm text-[#666666] transition-colors duration-150 hover:text-[#202020]"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/contact"
+                className="text-sm text-[#666666] transition-colors duration-150 hover:text-[#202020]"
+              >
+                Support
               </Link>
             </div>
           </div>
         </div>
-      </div>
+      </FooterEntry>
     </footer>
   );
 }

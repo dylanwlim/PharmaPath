@@ -21,11 +21,11 @@ export default function PharmacyFinderPage() {
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-8 pt-24 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] xl:gap-10">
-            <div className="max-w-[29rem] pt-1 sm:max-w-[31rem]">
+        <section className="px-4 pb-6 pt-22 sm:px-6 lg:px-8">
+          <div className="site-shell grid gap-7 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start lg:gap-7 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:gap-9">
+            <div className="max-w-[30rem] pt-1 sm:max-w-[32rem]">
               <span className="eyebrow-label">{surfaceNames.patient}</span>
-              <h1 className="mt-5 max-w-[26rem] text-[2.55rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.95rem] lg:max-w-[27rem] xl:text-[3.25rem]">
+              <h1 className="mt-5 max-w-[27rem] text-[2.4rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.8rem] lg:max-w-[28rem] xl:text-[3.05rem]">
                 Search a medication and location without pretending the stock is
                 guaranteed.
               </h1>
@@ -43,7 +43,7 @@ export default function PharmacyFinderPage() {
           </div>
         </section>
 
-        <section className="px-4 pb-18 sm:px-6 lg:px-8">
+        <section className="px-4 pb-16 sm:px-6 lg:px-8">
           <div className="site-shell">
             <ExampleScenarioGrid
               mode="patient"

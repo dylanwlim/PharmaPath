@@ -12,7 +12,7 @@ import {
   resolveLocationQuery,
 } from "@/lib/locations/client";
 import {
-  searchMedicationIndex,
+  getCachedMedicationSelection,
   resolveMedicationOption,
   type MedicationSearchOption,
 } from "@/lib/medications/client";
@@ -105,9 +105,26 @@ export function PharmacySearchForm({
   const router = useRouter();
   const { profile } = useAuth();
   const [isPending, startTransition] = useTransition();
-  const [medicationOption, setMedicationOption] = useState<MedicationSearchOption | null>(null);
-  const [medication, setMedication] = useState(initialMedication);
-  const [selectedStrength, setSelectedStrength] = useState("");
+  const [medicationOption, setMedicationOption] =
+    useState<MedicationSearchOption | null>(() =>
+      getCachedMedicationSelection(initialMedication, initialSelectedStrength),
+    );
+  const [medication, setMedication] = useState(() => {
+    const cachedSelection = getCachedMedicationSelection(
+      initialMedication,
+      initialSelectedStrength,
+    );
+
+    return cachedSelection?.label || initialMedication;
+  });
+  const [selectedStrength, setSelectedStrength] = useState(() => {
+    const cachedSelection = getCachedMedicationSelection(
+      initialMedication,
+      initialSelectedStrength,
+    );
+
+    return initialSelectedStrength.trim() || cachedSelection?.matchedStrength || "";
+  });
   const [locationSelection, setLocationSelection] = useState<LocationSelection | null>(() =>
     createLocationSelection(initialLocation, initialLocationPlaceId),
   );
@@ -124,29 +141,26 @@ export function PharmacySearchForm({
   useEffect(() => {
     let cancelled = false;
     const resolvedInitialStrength = initialSelectedStrength.trim();
+    const cachedSelection = getCachedMedicationSelection(
+      initialMedication,
+      resolvedInitialStrength,
+    );
 
-    setMedicationOption(null);
-    setMedication(initialMedication);
-    setSelectedStrength(resolvedInitialStrength);
+    setMedicationOption(cachedSelection);
+    setMedication(cachedSelection?.label || initialMedication);
+    setSelectedStrength(
+      resolvedInitialStrength || cachedSelection?.matchedStrength || "",
+    );
     setMedicationError(null);
     setStrengthError(null);
 
-    if (!initialMedication) {
+    if (!initialMedication || cachedSelection) {
       return () => {
         cancelled = true;
       };
     }
 
     void resolveMedicationOption(initialMedication)
-      .then((option) => {
-        if (cancelled || option) {
-          return option;
-        }
-
-        return searchMedicationIndex(initialMedication, { limit: 1 }).then(
-          (response) => response.results[0] || null,
-        );
-      })
       .then((option) => {
         if (cancelled || !option) {
           return;
@@ -254,7 +268,7 @@ export function PharmacySearchForm({
       )}
     >
       <form
-        className={cn("space-y-3.5", compact && "space-y-3")}
+        className={cn("space-y-3", compact && "space-y-2.5")}
         onSubmit={async (event) => {
           event.preventDefault();
           setIsResolvingSearch(true);
@@ -273,15 +287,7 @@ export function PharmacySearchForm({
           const [medicationResult, locationResult] = await Promise.allSettled([
             medicationOption
               ? Promise.resolve(medicationOption)
-              : resolveMedicationOption(normalizedMedication).then((option) => {
-                  if (option) {
-                    return option;
-                  }
-
-                  return searchMedicationIndex(normalizedMedication, { limit: 1 }).then(
-                    (response) => response.results[0] || null,
-                  );
-                }),
+              : resolveMedicationOption(normalizedMedication),
             resolveLocationQuery({
               query: normalizedLocation,
               placeId: locationSelection?.placeId,
@@ -365,7 +371,7 @@ export function PharmacySearchForm({
           }
         }}
       >
-        <div className="grid gap-x-3.5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(10.25rem,0.82fr)_minmax(0,1fr)]">
+        <div className="grid gap-x-3.5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.18fr)_minmax(10.25rem,0.82fr)_minmax(0,1fr)]">
           <MedicationCombobox
             className="sm:col-span-2 lg:col-span-1"
             label="Medication"
@@ -423,7 +429,7 @@ export function PharmacySearchForm({
           />
         </div>
 
-        <div className="grid gap-x-3.5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.76fr)_minmax(0,0.96fr)_minmax(0,1.04fr)_auto] lg:items-end">
+        <div className="grid gap-x-3.5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.74fr)_minmax(0,0.92fr)_minmax(0,1fr)_auto] lg:items-end">
           <label className="search-field-stack">
             <span className="search-field-label">Radius</span>
             <select
@@ -472,14 +478,14 @@ export function PharmacySearchForm({
           >
             {isPending || isResolvingSearch ? "Loading…" : submitLabel}
           </button>
-          <p className="order-5 max-w-[42rem] text-[0.82rem] leading-5 text-slate-500 sm:col-span-2 lg:order-none lg:col-span-3 lg:pr-4">
+          <p className="order-5 max-w-[42rem] text-[0.8rem] leading-5 text-slate-500 sm:col-span-2 lg:order-none lg:col-span-3 lg:pr-4">
             Nearby pharmacies come from a live search. Stock still needs a direct call before pickup or transfer.
           </p>
         </div>
       </form>
 
       {showSamples ? (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-2.5 flex flex-wrap gap-2">
           {featuredSearches.map((search) => (
             <button
               key={search.id}

@@ -11,6 +11,8 @@ import {
   type KeyboardEvent,
 } from "react";
 import {
+  getMedicationSearchPreview,
+  normalizeMedicationSearchQuery,
   searchMedicationIndex,
   type MedicationSearchOption,
 } from "@/lib/medications/client";
@@ -46,23 +48,17 @@ export function MedicationCombobox({
   const errorId = `${inputId}-error`;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [loadState, setLoadState] = useState<LoadState>("idle");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [options, setOptions] = useState<MedicationSearchOption[]>([]);
-  const [lastCompletedQuery, setLastCompletedQuery] = useState<string | null>(null);
   const [highlightedIndexState, setHighlightedIndexState] = useState(0);
-  const normalizedValue = value.trim();
+  const normalizedValue = normalizeMedicationSearchQuery(value);
   const needsMoreCharacters = normalizedValue.length > 0 && normalizedValue.length < 2;
   const isSearchable = !needsMoreCharacters;
-  const loadState: LoadState = !isOpen || !isSearchable
-    ? "idle"
-    : lastCompletedQuery === normalizedValue
-      ? loadError
-        ? "error"
-        : "ready"
-      : "loading";
+  const effectiveLoadState: LoadState = !isOpen || !isSearchable ? "idle" : loadState;
   const visibleOptions = useMemo(
-    () => (loadState === "ready" ? options : []),
-    [loadState, options],
+    () => (isOpen && isSearchable ? options : []),
+    [isOpen, isSearchable, options],
   );
   const highlightedIndex = useMemo(() => {
     if (!visibleOptions.length) {
@@ -78,44 +74,62 @@ export function MedicationCombobox({
   }, [highlightedIndexState, selectedOptionId, visibleOptions]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || !isSearchable) {
       return;
     }
 
-    if (!isSearchable) {
-      return;
-    }
-
-    const abortController = new AbortController();
-
-    searchMedicationIndex(normalizedValue, {
+    const preview = getMedicationSearchPreview(normalizedValue, {
       limit: 8,
-      signal: abortController.signal,
-    })
-      .then((response) => {
-        if (abortController.signal.aborted) {
-          return;
-        }
-
-        startTransition(() => {
-          setOptions(response.results);
-          setLoadError(null);
-          setLastCompletedQuery(normalizedValue);
-        });
+    });
+    const previewQuery =
+      preview ? normalizeMedicationSearchQuery(preview.query) : null;
+    const hasExactPreview = previewQuery === normalizedValue;
+    const abortController = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      searchMedicationIndex(normalizedValue, {
+        limit: 8,
+        signal: abortController.signal,
       })
-      .catch((reason: Error) => {
-        if (abortController.signal.aborted) {
-          return;
-        }
+        .then((response) => {
+          if (abortController.signal.aborted) {
+            return;
+          }
 
-        startTransition(() => {
-          setOptions([]);
-          setLoadError(reason.message);
-          setLastCompletedQuery(normalizedValue);
+          startTransition(() => {
+            setOptions(response.results);
+            setLoadError(null);
+            setLoadState("ready");
+          });
+        })
+        .catch((reason: Error) => {
+          if (abortController.signal.aborted) {
+            return;
+          }
+
+          startTransition(() => {
+            if (!preview?.results.length) {
+              setOptions([]);
+            }
+            setLoadError(reason.message);
+            setLoadState(preview?.results.length ? "ready" : "error");
+          });
         });
-      });
+    }, hasExactPreview ? 0 : preview?.results.length ? 90 : 140);
 
-    return () => abortController.abort();
+    startTransition(() => {
+      if (preview?.results.length) {
+        setOptions(preview.results);
+      } else {
+        setOptions([]);
+      }
+      setLoadError(null);
+      setLoadState(hasExactPreview ? "ready" : "loading");
+    });
+
+    return () => {
+      clearTimeout(timeoutId);
+      abortController.abort();
+    };
   }, [isOpen, isSearchable, normalizedValue]);
 
   useEffect(() => {
@@ -214,7 +228,7 @@ export function MedicationCombobox({
         />
 
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-2 pr-4">
-          {loadState === "loading" ? (
+          {effectiveLoadState === "loading" ? (
             <LoaderCircle className="h-4 w-4 animate-spin text-slate-400" />
           ) : null}
           <ChevronDown
@@ -230,7 +244,7 @@ export function MedicationCombobox({
               className="search-floating-scroll space-y-1"
               style={{ maxHeight: 320 }}
             >
-              {loadState === "error" ? (
+              {effectiveLoadState === "error" ? (
                 <div className="rounded-[1rem] border border-dashed border-rose-200 bg-rose-50/85 px-4 py-4 text-sm leading-6 text-rose-700">
                   {loadError || "Unable to load medication matches right now."}
                 </div>
@@ -238,54 +252,76 @@ export function MedicationCombobox({
                 <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
                   Type at least 2 characters to load medication matches.
                 </div>
-              ) : loadState === "loading" && !visibleOptions.length ? (
-                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
-                  Loading medication matches…
+              ) : effectiveLoadState === "loading" && !visibleOptions.length ? (
+                <div
+                  aria-live="polite"
+                  className="space-y-2 rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 p-3"
+                >
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Matching medications…
+                  </div>
+                  {[0, 1, 2].map((row) => (
+                    <div
+                      key={row}
+                      className="rounded-[0.9rem] border border-slate-200/80 bg-white/90 px-3 py-3"
+                    >
+                      <div className="h-3.5 w-3/4 animate-pulse rounded-full bg-slate-200/80" />
+                      <div className="mt-2 h-3 w-full animate-pulse rounded-full bg-slate-100" />
+                    </div>
+                  ))}
                 </div>
               ) : visibleOptions.length ? (
-                visibleOptions.map((option, index) => {
-                  const isSelected = option.id === selectedOptionId;
-                  const isHighlighted = index === highlightedIndex;
+                <>
+                  {effectiveLoadState === "loading" ? (
+                    <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/80 px-3.5 py-2.5 text-[0.74rem] leading-5 text-slate-500">
+                      Showing cached matches while newer results load.
+                    </div>
+                  ) : null}
+                  {visibleOptions.map((option, index) => {
+                    const isSelected = option.id === selectedOptionId;
+                    const isHighlighted = index === highlightedIndex;
 
-                  return (
-                    <button
-                      key={option.id}
-                      id={`${listboxId}-${option.id}`}
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      className={cn(
-                        "flex w-full items-start justify-between gap-3 rounded-[0.95rem] border px-3 py-3 text-left transition-colors duration-150",
-                        isHighlighted
-                          ? "border-[#156d95]/18 bg-[#156d95]/8"
-                          : "border-transparent hover:bg-slate-100/80",
-                        isSelected && !isHighlighted && "bg-slate-100/90",
-                      )}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onMouseEnter={() => setHighlightedIndexState(index)}
-                      onClick={() => {
-                        onSelect(option);
-                        setIsOpen(false);
-                      }}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-start gap-2">
-                          <span className="min-w-0 flex-1 break-words text-sm font-medium leading-5 text-slate-900">
-                            {option.label}
-                          </span>
-                          {option.badge ? (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                              {option.badge}
+                    return (
+                      <button
+                        key={option.id}
+                        id={`${listboxId}-${option.id}`}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        className={cn(
+                          "flex w-full items-start justify-between gap-3 rounded-[0.95rem] border px-3 py-3 text-left transition-colors duration-150",
+                          isHighlighted
+                            ? "border-[#156d95]/18 bg-[#156d95]/8"
+                            : "border-transparent hover:bg-slate-100/80",
+                          isSelected && !isHighlighted && "bg-slate-100/90",
+                        )}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onMouseEnter={() => setHighlightedIndexState(index)}
+                        onClick={() => {
+                          onSelect(option);
+                          setIsOpen(false);
+                        }}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-start gap-2">
+                            <span className="min-w-0 flex-1 break-words text-sm font-medium leading-5 text-slate-900">
+                              {option.label}
                             </span>
-                          ) : null}
+                            {option.badge ? (
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                {option.badge}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
+                            {option.description}
+                          </p>
                         </div>
-                        <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
-                          {option.description}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })
+                      </button>
+                    );
+                  })}
+                </>
               ) : (
                 <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
                   {emptyMessage}

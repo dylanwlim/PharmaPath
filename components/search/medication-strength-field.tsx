@@ -38,10 +38,24 @@ export function MedicationStrengthField({
       : Array.from(new Set([option.formulation, option.dosageForm].filter(Boolean))).join(" • ")
     : null;
   const helper = helperText ?? defaultHelper;
+  const showInlineHelper = Boolean(helper && !error && (option || displayValue));
 
   return (
     <label className={cn("search-field-stack", className)}>
-      <span className="search-field-label">Strength</span>
+      <div className="flex min-h-5 items-center justify-between gap-3">
+        <span className="search-field-label">Strength</span>
+        {showInlineHelper ? (
+          <span
+            id={helperId}
+            className={cn(
+              "text-right text-[0.72rem] leading-5 text-slate-500",
+              !option && !displayValue && "text-slate-400",
+            )}
+          >
+            {helper}
+          </span>
+        ) : null}
+      </div>
       {option ? (
         <select
           className={cn(
@@ -85,9 +99,9 @@ export function MedicationStrengthField({
           <option value="">Select strength</option>
         </select>
       )}
-      {helper || error ? (
+      {!showInlineHelper || error ? (
         <div className="search-field-helper-slot">
-          {helper ? (
+          {!showInlineHelper && helper ? (
             <p
               id={helperId}
               className={cn(
