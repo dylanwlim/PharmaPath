@@ -8,6 +8,10 @@ const {
   searchNearbyPharmacies,
 } = require("../../../../lib/server/pharmacy-search");
 const { resolveMedicationProfile } = require("../../../../lib/medications/index-store");
+const {
+  buildUnavailableNearbyResponse,
+  shouldDegradeNearbySearch,
+} = require("../../../../lib/server/nearby-search-fallback");
 
 export const dynamic = "force-dynamic";
 
@@ -47,64 +51,80 @@ async function handleSearch(request) {
     }
 
     const apiKey = process.env.GOOGLE_API_KEY;
+    const medicationProfilePromise = resolveMedicationProfile(input.medication, { assetBaseUrl });
 
     if (!apiKey) {
       return NextResponse.json(
-        {
-          error: "Nearby pharmacy search is temporarily unavailable.",
-        },
-        { status: 503 },
+        buildUnavailableNearbyResponse(
+          input,
+          await medicationProfilePromise,
+          "Live nearby pharmacy search is unavailable in this environment.",
+        ),
       );
     }
 
-    const [medicationProfile, resolvedLocation] = await Promise.all([
-      resolveMedicationProfile(input.medication, { assetBaseUrl }),
-      resolveLocationInput(
-        {
-          query: input.location,
-          placeId: input.locationPlaceId,
-        },
-        apiKey,
-      ),
-    ]);
-    const searchResult = await searchNearbyPharmacies({
-      medication: medicationProfile.canonicalLabel,
-      medicationProfileKey: medicationProfile.workflowCategory,
-      center: resolvedLocation.coordinates,
-      radiusMiles: input.radiusMiles,
-      onlyOpenNow: input.onlyOpenNow,
-      apiKey,
-      sortBy: input.sortBy,
-    });
-
-    return NextResponse.json({
-      status: "ok",
-      query: {
+    try {
+      const [medicationProfile, resolvedLocation] = await Promise.all([
+        medicationProfilePromise,
+        resolveLocationInput(
+          {
+            query: input.location,
+            placeId: input.locationPlaceId,
+          },
+          apiKey,
+        ),
+      ]);
+      const searchResult = await searchNearbyPharmacies({
         medication: medicationProfile.canonicalLabel,
-        location: input.location,
-        location_place_id: input.locationPlaceId || resolvedLocation.place_id || null,
-        radius_miles: input.radiusMiles,
-        only_open_now: input.onlyOpenNow,
-        sort_by: input.sortBy,
-      },
-      location: resolvedLocation,
-      disclaimer: searchResult.disclaimer,
-      medication_profile: {
-        ...searchResult.medication_profile,
-        source: medicationProfile.source,
-        demo_only: medicationProfile.demoOnly,
-        demo_note: medicationProfile.demoNote,
-        simulated_user_count: medicationProfile.simulatedUserCount,
-        medication_label: medicationProfile.medicationLabel,
-        selected_strength: medicationProfile.selectedStrength,
-        dosage_form: medicationProfile.dosageForm,
-        formulation: medicationProfile.formulation,
-      },
-      guidance: searchResult.guidance,
-      results: searchResult.results,
-      recommended: searchResult.recommended,
-      counts: searchResult.counts,
-    });
+        medicationProfileKey: medicationProfile.workflowCategory,
+        center: resolvedLocation.coordinates,
+        radiusMiles: input.radiusMiles,
+        onlyOpenNow: input.onlyOpenNow,
+        apiKey,
+        sortBy: input.sortBy,
+      });
+
+      return NextResponse.json({
+        status: "ok",
+        query: {
+          medication: medicationProfile.canonicalLabel,
+          location: input.location,
+          location_place_id: input.locationPlaceId || resolvedLocation.place_id || null,
+          radius_miles: input.radiusMiles,
+          only_open_now: input.onlyOpenNow,
+          sort_by: input.sortBy,
+        },
+        location: resolvedLocation,
+        disclaimer: searchResult.disclaimer,
+        medication_profile: {
+          ...searchResult.medication_profile,
+          source: medicationProfile.source,
+          demo_only: medicationProfile.demoOnly,
+          demo_note: medicationProfile.demoNote,
+          simulated_user_count: medicationProfile.simulatedUserCount,
+          medication_label: medicationProfile.medicationLabel,
+          selected_strength: medicationProfile.selectedStrength,
+          dosage_form: medicationProfile.dosageForm,
+          formulation: medicationProfile.formulation,
+        },
+        guidance: searchResult.guidance,
+        results: searchResult.results,
+        recommended: searchResult.recommended,
+        counts: searchResult.counts,
+      });
+    } catch (error) {
+      if (!shouldDegradeNearbySearch(error)) {
+        throw error;
+      }
+
+      return NextResponse.json(
+        buildUnavailableNearbyResponse(
+          input,
+          await medicationProfilePromise,
+          "Live nearby pharmacy search is temporarily unavailable.",
+        ),
+      );
+    }
   } catch (error) {
     return NextResponse.json(
       {

@@ -2,6 +2,8 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs/promises");
+const path = require("node:path");
 
 const {
   buildMedicationSnapshotFromOpenFdaRecords,
@@ -168,4 +170,35 @@ test("demo medications stay searchable and isolated from the FDA-backed catalog"
   assert.equal(results[0].demoOnly, true);
   assert.equal(results[0].simulatedUserCount, 100);
   assert.equal(results[0].matchedStrength, "20 mg");
+});
+
+test("medication search falls back to the snapshot when generated search assets are unavailable", async () => {
+  const originalReadFile = fs.readFile;
+  const indexStorePath = require.resolve("../lib/medications/index-store");
+
+  delete require.cache[indexStorePath];
+  fs.readFile = async (filePath, ...args) => {
+    const normalizedPath = path.normalize(String(filePath));
+
+    if (normalizedPath.includes(path.normalize(path.join("public", "medication-search")))) {
+      const error = new Error(`ENOENT: no such file or directory, open '${normalizedPath}'`);
+      error.code = "ENOENT";
+      throw error;
+    }
+
+    return originalReadFile.call(fs, filePath, ...args);
+  };
+
+  try {
+    const fallbackIndexStore = require("../lib/medications/index-store");
+    const { results } = await fallbackIndexStore.searchMedicationOptions("Adderall", {
+      limit: 2,
+    });
+
+    assert.ok(results.length > 0);
+    assert.ok(results.some((result) => result.label === "Adderall IR"));
+  } finally {
+    fs.readFile = originalReadFile;
+    delete require.cache[indexStorePath];
+  }
 });

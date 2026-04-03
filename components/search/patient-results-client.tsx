@@ -441,6 +441,16 @@ export function PatientResultsClient({
                           {pharmacyError}
                         </p>
                       </div>
+                    ) : pharmacyData?.degraded_reason ? (
+                      <div className="mt-5 rounded-[1.3rem] border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                        <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em]">
+                          <AlertCircle className="h-4 w-4" />
+                          Live nearby search limited
+                        </div>
+                        <p className="mt-2 text-[0.98rem] leading-7">
+                          {pharmacyData.degraded_reason}
+                        </p>
+                      </div>
                     ) : pharmacyData?.recommended ? (
                       <div className="mt-5 space-y-4">
                         <div className="rounded-[1.6rem] border border-slate-200/95 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.92)_100%)] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] sm:p-5">
@@ -618,8 +628,9 @@ export function PatientResultsClient({
                       </div>
                     ) : (
                       <div className="mt-5 rounded-[1.3rem] border border-slate-200 bg-white p-4 text-slate-600">
-                        No nearby pharmacy results surfaced for this search. Try
-                        a broader location or a larger radius.
+                        {pharmacyData?.degraded_reason
+                          ? "Live nearby pharmacy results are unavailable right now. Medication context is still available below."
+                          : "No nearby pharmacy results surfaced for this search. Try a broader location or a larger radius."}
                       </div>
                     )}
                   </div>

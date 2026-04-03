@@ -11,6 +11,7 @@ export type PharmacySearchFilters = {
 
 export type PharmacySearchResponse = {
   status: string;
+  degraded_reason?: string;
   query: {
     medication: string;
     location: string;
