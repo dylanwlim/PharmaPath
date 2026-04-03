@@ -182,6 +182,7 @@ test("buildDrugIntelligencePayload labels shortage-driven cases as higher fricti
 
   assert.equal(payload.matches[0].access_signal.level, "higher-friction");
   assert.equal(payload.featured_match_id, payload.matches[0].id);
+  assert.equal("questions_to_ask" in payload.matches[0].patient_view, false);
 });
 
 test("pickFeaturedMatch keeps the highest query-relevance match first", () => {

@@ -236,8 +236,8 @@ export function PrescriberClient({
   }, [query]);
 
   const patientFinderHref = location
-    ? `/patient/results?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}&radiusMiles=5&sortBy=best_match&onlyOpenNow=false`
-    : "/patient";
+    ? `/pharmacy-finder/results?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}&radiusMiles=5&sortBy=best_match&onlyOpenNow=false`
+    : "/pharmacy-finder";
   const overviewMetrics: OverviewMetric[] = selectedMatch
     ? [
         {

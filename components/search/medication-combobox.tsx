@@ -2,18 +2,14 @@
 
 import { ChevronDown, LoaderCircle } from "lucide-react";
 import {
-  useDeferredValue,
   useEffect,
   useId,
   useMemo,
   useRef,
+  startTransition,
   useState,
   type KeyboardEvent,
 } from "react";
-import {
-  getComboboxPanelPositionClasses,
-  useComboboxPanelLayout,
-} from "@/components/search/combobox-shared";
 import {
   searchMedicationIndex,
   type MedicationSearchOption,
@@ -49,14 +45,15 @@ export function MedicationCombobox({
   const listboxId = `${inputId}-listbox`;
   const errorId = `${inputId}-error`;
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const deferredValue = useDeferredValue(value);
   const [isOpen, setIsOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [options, setOptions] = useState<MedicationSearchOption[]>([]);
   const [lastCompletedQuery, setLastCompletedQuery] = useState<string | null>(null);
   const [highlightedIndexState, setHighlightedIndexState] = useState(0);
-  const normalizedValue = deferredValue.trim();
-  const loadState: LoadState = !isOpen
+  const normalizedValue = value.trim();
+  const needsMoreCharacters = normalizedValue.length > 0 && normalizedValue.length < 2;
+  const isSearchable = !needsMoreCharacters;
+  const loadState: LoadState = !isOpen || !isSearchable
     ? "idle"
     : lastCompletedQuery === normalizedValue
       ? loadError
@@ -79,10 +76,13 @@ export function MedicationCombobox({
 
       return Math.min(highlightedIndexState, visibleOptions.length - 1);
   }, [highlightedIndexState, selectedOptionId, visibleOptions]);
-  const { placement, maxHeight } = useComboboxPanelLayout(wrapperRef, isOpen);
 
   useEffect(() => {
     if (!isOpen) {
+      return;
+    }
+
+    if (!isSearchable) {
       return;
     }
 
@@ -97,22 +97,26 @@ export function MedicationCombobox({
           return;
         }
 
-        setOptions(response.results);
-        setLoadError(null);
-        setLastCompletedQuery(normalizedValue);
+        startTransition(() => {
+          setOptions(response.results);
+          setLoadError(null);
+          setLastCompletedQuery(normalizedValue);
+        });
       })
       .catch((reason: Error) => {
         if (abortController.signal.aborted) {
           return;
         }
 
-        setOptions([]);
-        setLoadError(reason.message);
-        setLastCompletedQuery(normalizedValue);
+        startTransition(() => {
+          setOptions([]);
+          setLoadError(reason.message);
+          setLastCompletedQuery(normalizedValue);
+        });
       });
 
     return () => abortController.abort();
-  }, [isOpen, normalizedValue]);
+  }, [isOpen, isSearchable, normalizedValue]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -219,21 +223,20 @@ export function MedicationCombobox({
         </div>
 
         {isOpen ? (
-          <div
-            className={cn(
-              "search-floating-panel",
-              getComboboxPanelPositionClasses(placement),
-            )}
-          >
+          <div className="search-inline-panel mt-2">
             <div
               id={listboxId}
               role="listbox"
               className="search-floating-scroll space-y-1"
-              style={{ maxHeight }}
+              style={{ maxHeight: 320 }}
             >
               {loadState === "error" ? (
                 <div className="rounded-[1rem] border border-dashed border-rose-200 bg-rose-50/85 px-4 py-4 text-sm leading-6 text-rose-700">
                   {loadError || "Unable to load medication matches right now."}
+                </div>
+              ) : needsMoreCharacters ? (
+                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
+                  Type at least 2 characters to load medication matches.
                 </div>
               ) : loadState === "loading" && !visibleOptions.length ? (
                 <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">

@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Overview", href: "/" },
-  { label: surfaceNames.patient, href: "/patient" },
+  { label: surfaceNames.patient, href: "/pharmacy-finder" },
   { label: surfaceNames.prescriber, href: "/prescriber" },
   { label: "Methodology", href: "/methodology" },
   { label: "Contact", href: "/contact" },
@@ -111,7 +111,7 @@ export function SiteNavbar() {
                 </Link>
               </>
             )}
-            <Link href="/patient" className="action-button-primary ml-1">
+            <Link href="/pharmacy-finder" className="action-button-primary ml-1">
               Start Search
             </Link>
           </div>
@@ -192,7 +192,7 @@ export function SiteNavbar() {
             </>
           )}
           <Link
-            href="/patient"
+            href="/pharmacy-finder"
             className="action-button-primary mt-2"
             onClick={() => setIsOpen(false)}
           >

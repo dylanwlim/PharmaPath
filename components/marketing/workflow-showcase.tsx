@@ -37,13 +37,13 @@ const routeVisualMeta: Record<
         title: "Access info",
         value: "Medication-wide estimate",
         detail:
-          "Medication context helps frame the right question without implying that a store already has the medication.",
+          "Medication context helps frame the call order without implying that a store already has the medication.",
       },
       {
-        title: "Next question",
+        title: "Call boundary",
         value: "Call before assuming",
         detail:
-          "Kept short so the user can move from search to a confirmation call quickly.",
+          "Keeps the routing boundary explicit so the user moves from search to direct confirmation quickly.",
       },
     ],
     footer: "",

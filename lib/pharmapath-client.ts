@@ -61,7 +61,6 @@ export type PharmacySearchResponse = {
     ranking_focus: string;
     ranking_focus_label: string;
     recommended_action: string;
-    questions_to_ask: string[];
     tags: string[];
     real_signal: string;
     demo_boundary: string;
@@ -84,7 +83,6 @@ export type PharmacySearchResponse = {
     review_label: string;
     workflow_label: string;
     match_reason: string;
-    next_step: string;
     inventory_note: string;
   }>;
   recommended: PharmacySearchResponse["results"][number] | null;
@@ -147,7 +145,6 @@ export type DrugIntelligenceResponse = {
       summary: string;
       what_we_know: string[];
       what_may_make_it_harder: string[];
-      questions_to_ask: string[];
       unavailable: string[];
     };
     prescriber_view: {
@@ -306,7 +303,7 @@ export function createPharmaPathClient({
 
     async getDrugIntelligence(
       query: string,
-      { force = false }: { force?: boolean } = {},
+      { force = false, signal }: { force?: boolean; signal?: AbortSignal } = {},
     ) {
       const normalizedQuery = sanitizeText(query);
 
@@ -329,6 +326,7 @@ export function createPharmaPathClient({
           headers: {
             Accept: "application/json",
           },
+          signal,
         },
       );
 
@@ -349,7 +347,7 @@ export function createPharmaPathClient({
 
     async searchPharmacies(
       filters: PharmacySearchFilters,
-      { force = false }: { force?: boolean } = {},
+      { force = false, signal }: { force?: boolean; signal?: AbortSignal } = {},
     ) {
       const normalizedPayload = buildPharmacyPayload(filters);
 
@@ -377,6 +375,7 @@ export function createPharmaPathClient({
           Accept: "application/json",
         },
         body: JSON.stringify(normalizedPayload),
+        signal,
       });
 
       const payload = await response.json().catch(() => null);

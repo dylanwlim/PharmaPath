@@ -182,11 +182,13 @@ test("searchNearbyPharmacies enriches shortlisted results with Google phone deta
       assert.equal(result.recommended?.phone_link, "tel:+12125550100");
       assert.equal(result.recommended?.hours_status_label, "Open now");
       assert.equal(result.recommended?.hours_detail_label, "Closes 9 PM");
+      assert.equal("next_step" in result.recommended, false);
       assert.equal(result.results[1].phone_number, "+1 212-555-0199");
       assert.equal(result.results[1].international_phone_number, "+1 212-555-0199");
       assert.equal(result.results[1].phone_link, "tel:+12125550199");
       assert.equal(result.results[1].hours_status_label, "Closed now");
       assert.equal(result.results[1].hours_detail_label, "Opens tomorrow 9 AM");
+      assert.equal("next_step" in result.results[1], false);
     });
   });
 

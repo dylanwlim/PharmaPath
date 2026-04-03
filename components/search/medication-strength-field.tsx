@@ -85,20 +85,22 @@ export function MedicationStrengthField({
           <option value="">Select strength</option>
         </select>
       )}
-      <div className="search-field-helper-slot">
-        {helper ? (
-          <p
-            id={helperId}
-            className={cn(
-              "search-field-helper",
-              !option && !displayValue && "text-slate-400",
-            )}
-          >
-            {helper}
-          </p>
-        ) : null}
-        {error ? <p className="search-field-error">{error}</p> : null}
-      </div>
+      {helper || error ? (
+        <div className="search-field-helper-slot">
+          {helper ? (
+            <p
+              id={helperId}
+              className={cn(
+                "search-field-helper",
+                !option && !displayValue && "text-slate-400",
+              )}
+            >
+              {helper}
+            </p>
+          ) : null}
+          {error ? <p className="search-field-error">{error}</p> : null}
+        </div>
+      ) : null}
     </label>
   );
 }

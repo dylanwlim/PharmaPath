@@ -5,5 +5,5 @@ export function PageTransitionShell({
 }: {
   children: ReactNode;
 }) {
-  return <main>{children}</main>;
+  return <main className="page-shell-enter">{children}</main>;
 }

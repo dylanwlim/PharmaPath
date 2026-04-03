@@ -278,7 +278,10 @@ export function ProfilePageClient() {
             <div className="surface-panel rounded-[2rem] p-6">
               <div className="flex items-center justify-between gap-3">
                 <span className="eyebrow-label">Contribution history</span>
-                <Link href="/patient" className="text-sm text-[#156d95]">
+                <Link
+                  href="/pharmacy-finder"
+                  className="text-sm text-[#156d95]"
+                >
                   Search and report
                 </Link>
               </div>

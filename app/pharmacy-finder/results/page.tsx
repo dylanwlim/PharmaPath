@@ -1,8 +1,19 @@
+import type { Metadata } from "next";
+import { PageTransitionShell } from "@/components/page-transition-shell";
 import { PatientResultsClient } from "@/components/search/patient-results-client";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
 
-type PatientResultsPageProps = {
+export const metadata: Metadata = {
+  title: "Pharmacy Results | PharmaPath",
+  description:
+    "Review nearby pharmacy results and medication access context together without implying verified shelf inventory.",
+  alternates: {
+    canonical: "https://pharmapath.org/pharmacy-finder/results",
+  },
+};
+
+type PharmacyFinderResultsPageProps = {
   searchParams: Promise<{
     query?: string;
     location?: string;
@@ -13,13 +24,15 @@ type PatientResultsPageProps = {
   }>;
 };
 
-export default async function PatientResultsPage({ searchParams }: PatientResultsPageProps) {
+export default async function PharmacyFinderResultsPage({
+  searchParams,
+}: PharmacyFinderResultsPageProps) {
   const params = await searchParams;
 
   return (
     <>
       <SiteNavbar />
-      <main>
+      <PageTransitionShell>
         <PatientResultsClient
           initialQuery={params.query}
           initialLocation={params.location}
@@ -28,7 +41,7 @@ export default async function PatientResultsPage({ searchParams }: PatientResult
           initialSortBy={params.sortBy}
           initialOnlyOpenNow={params.onlyOpenNow}
         />
-      </main>
+      </PageTransitionShell>
       <SiteFooter />
     </>
   );

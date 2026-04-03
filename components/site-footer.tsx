@@ -6,8 +6,8 @@ const footerSections = [
   {
     title: "Product",
     links: [
-      { label: surfaceNames.patient, href: "/patient" },
-      { label: "Pharmacy Results", href: "/patient/results" },
+      { label: surfaceNames.patient, href: "/pharmacy-finder" },
+      { label: "Pharmacy Results", href: "/pharmacy-finder/results" },
       { label: surfaceNames.prescriber, href: "/prescriber" },
     ],
   },
@@ -34,7 +34,7 @@ const footerSections = [
 export function SiteFooter() {
   return (
     <footer className="w-full border-t border-[#e5e5e5] bg-[#fafafa]">
-      <div className="site-shell py-16">
+      <div className="site-shell site-footer-enter py-16">
         <div className="grid grid-cols-2 gap-8 mb-12 md:grid-cols-5">
           <div className="col-span-2">
             <div className="mb-4">
@@ -75,7 +75,7 @@ export function SiteFooter() {
             <p className="text-sm text-[#666666]">© PharmaPath 2026.</p>
             <div className="flex items-center gap-6">
               <Link
-                href="/patient"
+                href="/pharmacy-finder"
                 className="text-sm text-[#666666] transition-colors duration-150 hover:text-[#202020]"
               >
                 Start Search

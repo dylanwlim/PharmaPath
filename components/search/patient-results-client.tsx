@@ -35,6 +35,10 @@ import {
 const client = createPharmaPathClient();
 
 type PharmacyResult = PharmacySearchResponse["results"][number];
+const pharmacyCardShellClass =
+  "rounded-[1.5rem] border border-emerald-200/80 bg-white/96 shadow-[0_18px_38px_rgba(34,197,94,0.06)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-emerald-300/85 hover:shadow-[0_20px_42px_rgba(34,197,94,0.08)]";
+const pharmacyActionButtonClass =
+  "inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]";
 
 function ResultDistanceChip({
   distanceMiles,
@@ -45,6 +49,46 @@ function ResultDistanceChip({
     <span className="flat-chip whitespace-nowrap">
       {formatMiles(distanceMiles)}
     </span>
+  );
+}
+
+function PharmacyMapAction({
+  href,
+}: {
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={pharmacyActionButtonClass}
+    >
+      <ExternalLink className="h-4 w-4" />
+      <span>View map</span>
+    </a>
+  );
+}
+
+function PharmacyActionRow({
+  pharmacy,
+}: {
+  pharmacy: PharmacyResult;
+}) {
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2.5">
+      <PharmacyPhoneAction
+        pharmacy={pharmacy}
+        className={pharmacyActionButtonClass}
+      />
+      {pharmacy.google_maps_url ? (
+        <PharmacyMapAction href={pharmacy.google_maps_url} />
+      ) : null}
+      <div className="inline-flex items-center gap-2 text-sm text-slate-500">
+        <PhoneCall className="h-4 w-4" />
+        Inventory still needs a direct call.
+      </div>
+    </div>
   );
 }
 
@@ -224,10 +268,11 @@ export function PatientResultsClient({
       setDrugData(null);
       setPharmacyError(null);
       setDrugError(null);
+      setIsLoading(false);
       return;
     }
 
-    let cancelled = false;
+    const abortController = new AbortController();
     setIsLoading(true);
 
     Promise.allSettled([
@@ -238,10 +283,10 @@ export function PatientResultsClient({
         radiusMiles,
         sortBy,
         onlyOpenNow,
-      }),
-      client.getDrugIntelligence(query),
+      }, { signal: abortController.signal }),
+      client.getDrugIntelligence(query, { signal: abortController.signal }),
     ]).then(([pharmacyResult, drugResult]) => {
-      if (cancelled) {
+      if (abortController.signal.aborted) {
         return;
       }
 
@@ -270,7 +315,7 @@ export function PatientResultsClient({
     });
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
   }, [query, location, locationPlaceId, radiusMiles, sortBy, onlyOpenNow]);
 
@@ -414,14 +459,17 @@ export function PatientResultsClient({
               body="PharmaPath combines a live nearby pharmacy lookup with medication access context without claiming any pharmacy has the medication confirmed on the shelf."
             />
           ) : isLoading ? (
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.02fr)_minmax(20rem,0.98fr)]">
-              <div className="surface-panel flex min-h-[24rem] items-center justify-center rounded-[1.85rem]">
-                <div className="flex items-center gap-3 text-slate-500">
-                  <LoaderCircle className="h-5 w-5 animate-spin" />
-                  Loading nearby options and medication context…
+            <div className="space-y-5">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.94fr)]">
+                <div className="surface-panel flex min-h-[24rem] items-center justify-center rounded-[1.85rem]">
+                  <div className="flex items-center gap-3 text-slate-500">
+                    <LoaderCircle className="h-5 w-5 animate-spin" />
+                    Loading nearby options and medication context…
+                  </div>
                 </div>
+                <div className="surface-panel min-h-[24rem] rounded-[1.85rem] p-5" />
               </div>
-              <div className="surface-panel min-h-[24rem] rounded-[1.85rem] p-5" />
+              <div className="surface-panel min-h-[14rem] rounded-[1.85rem] p-5" />
             </div>
           ) : (
             <>
@@ -450,7 +498,7 @@ export function PatientResultsClient({
                 </div>
               ) : null}
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.02fr)_minmax(20rem,0.98fr)] xl:items-start">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.94fr)] xl:items-start">
                 <div className="space-y-5">
                   <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -504,7 +552,9 @@ export function PatientResultsClient({
                       </div>
                     ) : pharmacyData?.recommended ? (
                       <div className="mt-5 space-y-4">
-                        <div className="rounded-[1.6rem] border border-slate-200/95 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.92)_100%)] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.06)] sm:p-5">
+                        <div
+                          className={`${pharmacyCardShellClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(244,251,247,0.96)_100%)] p-5`}
+                        >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <div className="text-sm uppercase tracking-[0.18em] text-slate-500">
@@ -532,15 +582,6 @@ export function PatientResultsClient({
                             {pharmacyData.recommended.match_reason}
                           </p>
 
-                          <div className="mt-4 rounded-[1.2rem] border border-sky-100 bg-sky-50 px-4 py-3.5 text-sm leading-6 text-sky-900">
-                            <div className="font-medium">
-                              Suggested question
-                            </div>
-                            <p className="mt-1.5">
-                              {pharmacyData.recommended.next_step}
-                            </p>
-                          </div>
-
                           <div className="mt-4">
                             <CrowdSignalCard
                               medicationQuery={query}
@@ -561,138 +602,7 @@ export function PatientResultsClient({
                             />
                           </div>
 
-                          <div className="mt-4 flex flex-wrap items-center gap-3">
-                            {pharmacyData.recommended.google_maps_url ? (
-                              <a
-                                href={pharmacyData.recommended.google_maps_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="action-button-dark text-sm"
-                              >
-                                Open map
-                              </a>
-                            ) : null}
-                            <div className="inline-flex items-center gap-2 text-sm text-slate-500">
-                              <PhoneCall className="h-4 w-4" />
-                              Inventory still needs a direct call.
-                            </div>
-                            <PharmacyPhoneAction
-                              pharmacy={pharmacyData.recommended}
-                              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5 text-sm font-semibold text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
-                            />
-                          </div>
-                        </div>
-
-                        {visibleExtras.length ? (
-                          <div className="surface-panel rounded-[1.6rem] p-4 sm:p-5">
-                            <div className="flex items-center justify-between gap-3">
-                              <h3 className="text-[1.18rem] tracking-tight text-slate-950">
-                                Other nearby options
-                              </h3>
-                              {extraResults.length > 4 ? (
-                                <button
-                                  type="button"
-                                  className="text-sm text-[#156d95]"
-                                  onClick={() => setShowAll((value) => !value)}
-                                >
-                                  {showAll
-                                    ? "Show fewer"
-                                    : `Show ${extraResults.length - 4} more`}
-                                </button>
-                              ) : null}
-                            </div>
-                            <div className="mt-3 space-y-2.5">
-                              {visibleExtras.map((result, resultIndex) => (
-                                <div
-                                  key={`${result.name}-${result.address}`}
-                                  className="rounded-[1.2rem] border border-slate-200 bg-white p-3.5"
-                                >
-                                  <div className="flex flex-wrap items-start justify-between gap-3">
-                                    <div>
-                                      <div className="text-[1.05rem] tracking-tight text-slate-900">
-                                        {result.name}
-                                      </div>
-                                      <div className="mt-1 text-sm leading-5 text-slate-500">
-                                        {result.address}
-                                      </div>
-                                    </div>
-                                    <ResultDistanceChip
-                                      distanceMiles={result.distance_miles}
-                                    />
-                                  </div>
-                                  <p className="mt-2.5 text-sm leading-6 text-slate-600">
-                                    {result.match_reason}
-                                  </p>
-                                  <div className="mt-2.5">
-                                    <PharmacyAvailabilityMeta
-                                      result={result}
-                                      compact
-                                    />
-                                  </div>
-                                  <div className="mt-2.5">
-                                    <CrowdSignalCard
-                                      medicationQuery={query}
-                                      medicationContext={
-                                        pharmacyData?.medication_profile
-                                      }
-                                      pharmacy={{
-                                        name: result.name,
-                                        address: result.address,
-                                        placeId: result.place_id,
-                                        googleMapsUrl: result.google_maps_url,
-                                      }}
-                                      summary={resolveCrowdSignalSummary(
-                                        result,
-                                        resultIndex + 1,
-                                      )}
-                                      compact
-                                    />
-                                  </div>
-                                  {result.phone_number || result.google_maps_url ? (
-                                    <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
-                                      <PharmacyPhoneAction
-                                        pharmacy={result}
-                                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
-                                      />
-                                      {result.google_maps_url ? (
-                                        <a
-                                          href={result.google_maps_url}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]"
-                                        >
-                                          View map
-                                          <ExternalLink className="h-4 w-4" />
-                                        </a>
-                                      ) : null}
-                                    </div>
-                                  ) : null}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-
-                        <div className="rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3.5 text-sm leading-6 text-slate-600">
-                          <div className="flex items-center gap-2 font-medium text-slate-900">
-                            <MapPin className="h-4 w-4 text-[#156d95]" />
-                            {pharmacyData.disclaimer}
-                          </div>
-                          <p className="mt-1.5 text-[0.92rem] leading-6">
-                            {pharmacyData.guidance.demo_boundary} Community
-                            reports sit on top of the live nearby list as a
-                            separate, weighted layer rather than as a claim of
-                            verified shelf inventory.
-                            {pharmacyData.medication_profile.demo_only
-                              ? " This medication profile is simulated for the demo and is intentionally separated from the main medication reference flow."
-                              : ""}
-                          </p>
-                          {!crowdReady ? (
-                            <div className="mt-2.5 flex items-center gap-2 text-slate-500">
-                              <LoaderCircle className="h-4 w-4 animate-spin" />
-                              Loading crowd signal...
-                            </div>
-                          ) : null}
+                          <PharmacyActionRow pharmacy={pharmacyData.recommended} />
                         </div>
                       </div>
                     ) : (
@@ -732,6 +642,97 @@ export function PatientResultsClient({
                   )}
                 </div>
               </div>
+
+              {visibleExtras.length ? (
+                <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <span className="eyebrow-label">Other nearby options</span>
+                      <h3 className="mt-3 text-[1.3rem] tracking-tight text-slate-950">
+                        More pharmacies that fit the same search.
+                      </h3>
+                    </div>
+                    {extraResults.length > 4 ? (
+                      <button
+                        type="button"
+                        className="text-sm text-[#156d95]"
+                        onClick={() => setShowAll((value) => !value)}
+                      >
+                        {showAll ? "Show fewer" : `Show ${extraResults.length - 4} more`}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                    {visibleExtras.map((result, resultIndex) => (
+                      <div
+                        key={`${result.name}-${result.address}`}
+                        className={`${pharmacyCardShellClass} p-4`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="text-[1.12rem] tracking-tight text-slate-900">
+                              {result.name}
+                            </div>
+                            <div className="mt-1 text-sm leading-5 text-slate-500">
+                              {result.address}
+                            </div>
+                          </div>
+                          <ResultDistanceChip distanceMiles={result.distance_miles} />
+                        </div>
+
+                        <div className="mt-3">
+                          <PharmacyAvailabilityMeta result={result} compact />
+                        </div>
+
+                        <p className="mt-3 text-sm leading-6 text-slate-600">
+                          {result.match_reason}
+                        </p>
+
+                        <div className="mt-3">
+                          <CrowdSignalCard
+                            medicationQuery={query}
+                            medicationContext={pharmacyData?.medication_profile}
+                            pharmacy={{
+                              name: result.name,
+                              address: result.address,
+                              placeId: result.place_id,
+                              googleMapsUrl: result.google_maps_url,
+                            }}
+                            summary={resolveCrowdSignalSummary(result, resultIndex + 1)}
+                            compact
+                          />
+                        </div>
+
+                        <PharmacyActionRow pharmacy={result} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {pharmacyData ? (
+                <div className="rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3.5 text-sm leading-6 text-slate-600">
+                  <div className="flex items-center gap-2 font-medium text-slate-900">
+                    <MapPin className="h-4 w-4 text-[#156d95]" />
+                    {pharmacyData.disclaimer}
+                  </div>
+                  <p className="mt-1.5 text-[0.92rem] leading-6">
+                    {pharmacyData.guidance.demo_boundary} Community reports sit
+                    on top of the live nearby list as a separate, weighted layer
+                    rather than as a claim of verified shelf inventory.
+                    {pharmacyData.medication_profile.demo_only
+                      ? " This medication profile is simulated for the demo and is intentionally separated from the main medication reference flow."
+                      : ""}
+                  </p>
+                  {!crowdReady ? (
+                    <div className="mt-2.5 flex items-center gap-2 text-slate-500">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      Loading crowd signal...
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </>
           )}
         </div>

@@ -24,13 +24,13 @@ export const workflowShowcase = [
     id: "patient",
     title: `${surfaceNames.patient} keeps the first call path tight.`,
     summary:
-      "Search a medication and location to load the nearby list, one access read, and the next question to ask.",
+      "Search a medication and location to load the nearby list and one access read without overstating certainty.",
     bullets: [
       "Live nearby search",
       "Medication-wide access context, not store inventory",
-      "Call-ready questions without fake certainty",
+      "Clear routing without fake certainty",
     ],
-    href: "/patient",
+    href: "/pharmacy-finder",
     accent: "from-sky-100 via-white to-cyan-50",
   },
   {

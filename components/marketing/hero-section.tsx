@@ -64,7 +64,7 @@ function buildSearchHref(medication: string, location: string) {
     onlyOpenNow: "false",
   });
 
-  return `/patient/results?${params.toString()}`;
+  return `/pharmacy-finder/results?${params.toString()}`;
 }
 
 export function HeroSection() {
@@ -93,7 +93,7 @@ export function HeroSection() {
                   }}
                 >
                   <Link
-                    href="/patient"
+                    href="/pharmacy-finder"
                     className="eyebrow-label eyebrow-link gap-1 text-slate-500"
                   >
                     Nearby search + medication context
@@ -112,7 +112,7 @@ export function HeroSection() {
 
               <div className="mt-auto flex flex-col gap-4">
                 <div className="flex flex-wrap gap-3">
-                  <Link href="/patient" className="action-button-primary">
+                  <Link href="/pharmacy-finder" className="action-button-primary">
                     {openSurfaceLabels.patient}
                   </Link>
                   <Link href="/prescriber" className="action-button-secondary">

@@ -31,16 +31,23 @@ export async function GET(request: Request) {
       assetBaseUrl,
     });
 
-    return NextResponse.json({
-      status: "ok",
-      query,
-      exact,
-      results,
-      dataFreshness: {
-        generatedAt: snapshot.generatedAt,
-        datasetLastUpdated: snapshot.source.datasetLastUpdated,
+    return NextResponse.json(
+      {
+        status: "ok",
+        query,
+        exact,
+        results,
+        dataFreshness: {
+          generatedAt: snapshot.generatedAt,
+          datasetLastUpdated: snapshot.source.datasetLastUpdated,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, max-age=60, s-maxage=600, stale-while-revalidate=86400",
+        },
+      },
+    );
   } catch (error) {
     return NextResponse.json(
       {

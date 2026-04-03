@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageTransitionShell } from "@/components/page-transition-shell";
 import { ExampleScenarioGrid } from "@/components/search/example-scenario-grid";
@@ -6,12 +7,21 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
 import { openSurfaceLabels, surfaceNames } from "@/lib/surface-labels";
 
-export default function PatientPage() {
+export const metadata: Metadata = {
+  title: "Pharmacy Finder | PharmaPath",
+  description:
+    "Search a medication and location to find nearby pharmacies with medication access context, without overstating stock certainty.",
+  alternates: {
+    canonical: "https://pharmapath.org/pharmacy-finder",
+  },
+};
+
+export default function PharmacyFinderPage() {
   return (
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-14 pt-24 sm:px-6 lg:px-8">
+        <section className="px-4 pb-8 pt-24 sm:px-6 lg:px-8">
           <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] xl:gap-10">
             <div className="max-w-[29rem] pt-1 sm:max-w-[31rem]">
               <span className="eyebrow-label">{surfaceNames.patient}</span>
@@ -20,8 +30,8 @@ export default function PatientPage() {
                 guaranteed.
               </h1>
               <p className="mt-4 max-w-[28rem] text-[1.02rem] leading-7 text-slate-600 sm:text-[1.08rem]">
-                Pharmacy Finder keeps the live nearby list, medication context,
-                and next question separate so the first call stays clear.
+                Pharmacy Finder keeps the live nearby list and medication
+                context separate so the first call stays clear.
               </p>
             </div>
 
@@ -33,7 +43,7 @@ export default function PatientPage() {
           </div>
         </section>
 
-        <section className="px-4 pb-20 sm:px-6 lg:px-8">
+        <section className="px-4 pb-18 sm:px-6 lg:px-8">
           <div className="site-shell">
             <ExampleScenarioGrid
               mode="patient"

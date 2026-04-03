@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  CalloutList,
   formatDisplayDate,
   formatRecallClassification,
 } from "@/components/search/shared";
@@ -771,13 +770,7 @@ export function ShortageIntelligencePanel({
       <ManufacturerStatusCard rows={snapshot.manufacturerRows} />
 
       {variant === "patient" ? (
-        <>
-          <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
-          <div className="surface-panel rounded-[1.7rem] p-5">
-            <span className="eyebrow-label">Questions to ask your pharmacist</span>
-            <CalloutList className="mt-4" items={match.patient_view.questions_to_ask} />
-          </div>
-        </>
+        <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
       ) : (
         <ActiveShortageEntriesCard items={snapshot.activeItems} />
       )}

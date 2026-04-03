@@ -18,7 +18,7 @@ function buildScenarioHref(
     return `/prescriber?query=${encodeURIComponent(search.medication)}`;
   }
 
-  return `/patient/results?query=${encodeURIComponent(search.medication)}&location=${encodeURIComponent(search.location)}&radiusMiles=5&sortBy=best_match&onlyOpenNow=false`;
+  return `/pharmacy-finder/results?query=${encodeURIComponent(search.medication)}&location=${encodeURIComponent(search.location)}&radiusMiles=5&sortBy=best_match&onlyOpenNow=false`;
 }
 
 export function ExampleScenarioGrid({

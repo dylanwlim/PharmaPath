@@ -45,7 +45,7 @@ function buildResultsHref({
   radiusMiles,
   sortBy,
   onlyOpenNow,
-  action = "/patient/results",
+  action = "/pharmacy-finder/results",
 }: {
   medication: string;
   location: string;
@@ -96,7 +96,7 @@ export function PharmacySearchForm({
   initialSortBy = "best_match",
   initialOnlyOpenNow = false,
   initialSelectedStrength = "",
-  action = "/patient/results",
+  action = "/pharmacy-finder/results",
   compact = false,
   submitLabel = "Search live nearby pharmacies",
   showSamples = false,
@@ -254,7 +254,7 @@ export function PharmacySearchForm({
       )}
     >
       <form
-        className={cn("space-y-4", compact && "space-y-3.5")}
+        className={cn("space-y-3.5", compact && "space-y-3")}
         onSubmit={async (event) => {
           event.preventDefault();
           setIsResolvingSearch(true);
@@ -365,7 +365,7 @@ export function PharmacySearchForm({
           }
         }}
       >
-        <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(10.25rem,0.82fr)_minmax(0,1fr)]">
+        <div className="grid gap-x-3.5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(10.25rem,0.82fr)_minmax(0,1fr)]">
           <MedicationCombobox
             className="sm:col-span-2 lg:col-span-1"
             label="Medication"
@@ -423,7 +423,7 @@ export function PharmacySearchForm({
           />
         </div>
 
-        <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.76fr)_minmax(0,0.96fr)_minmax(0,1.04fr)_auto] lg:items-end">
+        <div className="grid gap-x-3.5 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.76fr)_minmax(0,0.96fr)_minmax(0,1.04fr)_auto] lg:items-end">
           <label className="search-field-stack">
             <span className="search-field-label">Radius</span>
             <select
@@ -479,7 +479,7 @@ export function PharmacySearchForm({
       </form>
 
       {showSamples ? (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {featuredSearches.map((search) => (
             <button
               key={search.id}
