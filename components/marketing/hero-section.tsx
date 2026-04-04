@@ -1,10 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight, MapPin, ShieldCheck, Stethoscope } from "lucide-react";
 import { featuredSearches } from "@/lib/content";
-import { motionEase, motionTiming } from "@/lib/motion";
 import { openSurfaceLabels } from "@/lib/surface-labels";
 
 const workflowBubbles = [
@@ -72,26 +68,10 @@ export function HeroSection() {
     <section className="w-full px-4 pb-10 pt-[calc(var(--navbar-height)+1.5rem)] sm:px-6 lg:px-8 lg:pb-12 lg:pt-[calc(var(--navbar-height)+1.5rem)]">
       <div className="site-shell">
         <div className="grid grid-cols-12 gap-3 lg:gap-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: motionTiming.hero,
-              ease: motionEase.emphasis,
-            }}
-            className="surface-panel col-span-12 rounded-[2.5rem] bg-[#e9e9e9] px-8 py-8 sm:px-10 sm:py-9 lg:col-span-6 lg:px-10 lg:py-8 xl:px-11 xl:py-9"
-          >
+          <div className="surface-panel col-span-12 rounded-[2.5rem] bg-[#e9e9e9] px-8 py-8 sm:px-10 sm:py-9 lg:col-span-6 lg:px-10 lg:py-8 xl:px-11 xl:py-9">
             <div className="flex h-full min-h-[28rem] flex-col gap-6 lg:min-h-[29rem] lg:gap-6">
               <div className="max-w-[31rem]">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.4,
-                    ease: motionEase.emphasis,
-                    delay: 0.6,
-                  }}
-                >
+                <div>
                   <Link
                     href="/pharmacy-finder"
                     className="eyebrow-label eyebrow-link gap-1 text-slate-500"
@@ -99,7 +79,7 @@ export function HeroSection() {
                     Nearby search + medication context
                     <ArrowRight className="h-[0.72em] w-[0.72em]" />
                   </Link>
-                </motion.div>
+                </div>
                 <h1 className="mt-4 max-w-[11.35ch] text-balance text-[2.95rem] leading-[0.97] tracking-tight text-[#202020] sm:text-[3.25rem] sm:leading-[0.98] lg:text-[3.45rem] xl:text-[3.65rem]">
                   Find the closest pharmacy worth calling first.
                 </h1>
@@ -133,18 +113,9 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: motionTiming.hero,
-              ease: motionEase.emphasis,
-              delay: 0.2,
-            }}
-            className="surface-panel relative col-span-12 overflow-hidden rounded-[2.5rem] bg-[radial-gradient(circle_at_top_left,_rgba(57,150,211,0.28),_transparent_32%),linear-gradient(180deg,#ffffff_0%,#f4f8fb_100%)] px-8 py-8 sm:px-10 sm:py-9 lg:col-span-6 lg:px-10 lg:py-8 xl:px-11 xl:py-9"
-          >
+          <div className="surface-panel relative col-span-12 overflow-hidden rounded-[2.5rem] bg-[radial-gradient(circle_at_top_left,_rgba(57,150,211,0.28),_transparent_32%),linear-gradient(180deg,#ffffff_0%,#f4f8fb_100%)] px-8 py-8 sm:px-10 sm:py-9 lg:col-span-6 lg:px-10 lg:py-8 xl:px-11 xl:py-9">
             <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(111,196,185,0.25),_transparent_58%)]" />
             <div className="relative flex h-full min-h-[28rem] flex-col gap-6 lg:min-h-[29rem] lg:gap-6">
               <div className="max-w-[22rem]">
@@ -158,19 +129,12 @@ export function HeroSection() {
               </div>
 
               <div className="mt-auto flex flex-col gap-3 sm:gap-3.5">
-                {workflowBubbles.map((bubble, index) => {
+                {workflowBubbles.map((bubble) => {
                   const Icon = bubble.icon;
 
                   return (
-                    <motion.div
+                    <div
                       key={bubble.id}
-                      initial={{ opacity: 0, y: 20, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{
-                        duration: motionTiming.reveal,
-                        ease: motionEase.card,
-                        delay: 0.15 + index * 0.1,
-                      }}
                       className={`w-full max-w-[21rem] rounded-[1.5rem] px-5 py-[0.9rem] sm:px-5 sm:py-[0.95rem] lg:min-h-[8.65rem] ${bubble.alignmentClassName} ${bubble.surfaceClassName}`}
                     >
                       <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2.5">
@@ -195,12 +159,12 @@ export function HeroSection() {
                           {bubble.description}
                         </p>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
