@@ -295,4 +295,10 @@
   html {
     scroll-behavior: auto;
   }
+
+  .site-footer-static {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }

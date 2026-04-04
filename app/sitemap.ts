@@ -5,6 +5,10 @@ const siteUrl = "https://pharmapath.org";
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     "",
+    "/privacy",
+    "/terms",
+    "/connect/instagram",
+    "/connect/linkedin",
     "/pharmacy-finder",
     "/pharmacy-finder/results",
     "/prescriber",
