@@ -18,6 +18,15 @@ const {
   logGoogleApiConfigurationError,
   logGoogleApiRequestError,
 } = require("../../../../lib/server/google-api-config");
+const apiSecurity = require("../../../../lib/server/api-security");
+
+const {
+  buildRateLimitHeaders: buildApiRateLimitHeaders,
+  consumeRateLimitByIp: consumeApiRateLimitByIp,
+  logApiFailure: logSecurityFailure,
+  toPublicError: toPublicApiError,
+  validatePublicJsonPostRequest: validateApiJsonPostRequest,
+} = apiSecurity;
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +45,20 @@ async function readRequestBody(request) {
 }
 
 async function handleSearch(request) {
+  let rateLimit = null;
+
   try {
+    const requestPolicyError = validateApiJsonPostRequest(request);
+
+    if (requestPolicyError) {
+      return NextResponse.json(
+        {
+          error: requestPolicyError.message,
+        },
+        { status: requestPolicyError.statusCode },
+      );
+    }
+
     const body = await readRequestBody(request);
     const searchParams = request.nextUrl.searchParams;
     const assetBaseUrl = new URL(request.url).origin;
@@ -54,6 +76,27 @@ async function handleSearch(request) {
 
     if (!input.location) {
       return NextResponse.json({ error: "Location is required." }, { status: 400 });
+    }
+
+    rateLimit = consumeApiRateLimitByIp(request, {
+      bucket: "pharmacies-search",
+      limit: 24,
+      windowMs: 5 * 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: "Too many pharmacy searches. Please wait a moment and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            ...buildApiRateLimitHeaders(rateLimit),
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
     }
 
     const apiKey = getGoogleApiKey();
@@ -76,6 +119,9 @@ async function handleSearch(request) {
           "Live nearby pharmacy search is unavailable in this environment.",
           MISSING_GOOGLE_API_KEY_CODE,
         ),
+        {
+          headers: buildApiRateLimitHeaders(rateLimit),
+        },
       );
     }
 
@@ -127,6 +173,8 @@ async function handleSearch(request) {
         results: searchResult.results,
         recommended: searchResult.recommended,
         counts: searchResult.counts,
+      }, {
+        headers: buildApiRateLimitHeaders(rateLimit),
       });
     } catch (error) {
       if (!shouldDegradeNearbySearch(error)) {
@@ -149,14 +197,27 @@ async function handleSearch(request) {
           "Live nearby pharmacy search is temporarily unavailable.",
           error.code || null,
         ),
+        {
+          headers: buildApiRateLimitHeaders(rateLimit),
+        },
       );
     }
   } catch (error) {
+    logSecurityFailure("pharmacies/search", error, {
+      method: request.method,
+    });
+    const publicError = toPublicApiError(error, "Unable to search nearby pharmacies right now.");
+
     return NextResponse.json(
       {
-        error: error.message || "Unexpected search failure.",
+        error: publicError.message,
       },
-      { status: error.statusCode || 500 },
+      rateLimit
+        ? {
+            status: publicError.statusCode,
+            headers: buildApiRateLimitHeaders(rateLimit),
+          }
+        : { status: publicError.statusCode },
     );
   }
 }

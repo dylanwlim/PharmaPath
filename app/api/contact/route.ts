@@ -1,11 +1,18 @@
+import { createRequire } from "node:module";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+
+const require = createRequire(import.meta.url);
+const {
+  buildRateLimitHeaders,
+  consumeRateLimitByIp,
+  summarizeError,
+  validatePublicJsonPostRequest,
+} = require("../../../lib/server/api-security");
 
 const deliveryInbox = process.env.CONTACT_EMAIL?.trim() || "contact@pharmapath.org";
 const deliveryFromAddress =
   process.env.CONTACT_FROM_EMAIL?.trim() || "PharmaPath Contact <onboarding@resend.dev>";
-const rateWindowMs = 10 * 60 * 1000;
-const rateWindowCap = 5;
 
 const fieldLimits = {
   name: 80,
@@ -13,8 +20,6 @@ const fieldLimits = {
   subject: 140,
   message: 4000,
 } as const;
-
-const submissionWindows = new Map<string, { attempts: number; resetsAt: number }>();
 
 type RawContactBody = {
   name: string;
@@ -50,81 +55,6 @@ function escapeForHtml(value: string) {
 
 function looksLikeEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function originMatchesRequest(request: Request) {
-  const originHeader = request.headers.get("origin");
-
-  if (!originHeader) {
-    return true;
-  }
-
-  try {
-    const originUrl = new URL(originHeader);
-    const requestUrl = new URL(request.url);
-    const protocol =
-      request.headers.get("x-forwarded-proto")?.trim() ||
-      requestUrl.protocol.replace(/:$/, "");
-    const host =
-      request.headers.get("x-forwarded-host")?.trim() ||
-      request.headers.get("host")?.trim() ||
-      requestUrl.host;
-
-    return originUrl.protocol === `${protocol}:` && originUrl.host === host;
-  } catch {
-    return false;
-  }
-}
-
-function readClientAddress(request: Request) {
-  const forwarded =
-    request.headers
-      .get("x-forwarded-for")
-      ?.split(",")
-      .map((part) => part.trim())
-      .find(Boolean) || null;
-
-  return (
-    request.headers.get("cf-connecting-ip")?.trim() ||
-    forwarded ||
-    request.headers.get("x-real-ip")?.trim() ||
-    null
-  );
-}
-
-function cleanupExpiredWindows(now: number) {
-  for (const [key, bucket] of submissionWindows.entries()) {
-    if (bucket.resetsAt <= now) {
-      submissionWindows.delete(key);
-    }
-  }
-}
-
-function consumeSubmissionSlot(clientAddress: string | null) {
-  if (!clientAddress) {
-    return null;
-  }
-
-  const now = Date.now();
-  cleanupExpiredWindows(now);
-
-  const activeWindow = submissionWindows.get(clientAddress);
-
-  if (!activeWindow) {
-    submissionWindows.set(clientAddress, {
-      attempts: 1,
-      resetsAt: now + rateWindowMs,
-    });
-    return null;
-  }
-
-  if (activeWindow.attempts >= rateWindowCap) {
-    return Math.max(1, Math.ceil((activeWindow.resetsAt - now) / 1000));
-  }
-
-  activeWindow.attempts += 1;
-  submissionWindows.set(clientAddress, activeWindow);
-  return null;
 }
 
 function asRawContactBody(value: unknown): RawContactBody | null {
@@ -199,24 +129,6 @@ function renderHtmlEmail(submission: ContactSubmission) {
   `;
 }
 
-function summarizeError(error: unknown) {
-  if (!error || typeof error !== "object") {
-    return { message: "Unknown error", statusCode: null, name: null };
-  }
-
-  const details = error as {
-    message?: unknown;
-    statusCode?: unknown;
-    name?: unknown;
-  };
-
-  return {
-    message: typeof details.message === "string" ? details.message : "Unknown error",
-    statusCode: typeof details.statusCode === "number" ? details.statusCode : null,
-    name: typeof details.name === "string" ? details.name : null,
-  };
-}
-
 async function deliverSubmission(submission: ContactSubmission) {
   const resend = new Resend(process.env.RESEND_API_KEY);
   const result = await resend.emails.send({
@@ -235,22 +147,29 @@ async function deliverSubmission(submission: ContactSubmission) {
 
 export async function POST(request: Request) {
   try {
-    if (!originMatchesRequest(request)) {
+    const requestPolicyError = validatePublicJsonPostRequest(request);
+
+    if (requestPolicyError) {
       return NextResponse.json(
-        { error: "Cross-site form posts are not allowed." },
-        { status: 403 },
+        { error: requestPolicyError.message },
+        { status: requestPolicyError.statusCode },
       );
     }
 
-    const retryAfter = consumeSubmissionSlot(readClientAddress(request));
+    const rateLimit = consumeRateLimitByIp(request, {
+      bucket: "contact-submit",
+      limit: 5,
+      windowMs: 10 * 60 * 1000,
+    });
 
-    if (retryAfter) {
+    if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many contact submissions. Please try again shortly." },
         {
           status: 429,
           headers: {
-            "Retry-After": String(retryAfter),
+            ...buildRateLimitHeaders(rateLimit),
+            "Retry-After": String(rateLimit.retryAfterSeconds),
           },
         },
       );
@@ -283,12 +202,20 @@ export async function POST(request: Request) {
           fallbackEmail: deliveryInbox,
           fallbackMode: "mailto",
         },
-        { status: 503 },
+        {
+          status: 503,
+          headers: buildRateLimitHeaders(rateLimit),
+        },
       );
     }
 
     await deliverSubmission(submission);
-    return NextResponse.json({ status: "ok" });
+    return NextResponse.json(
+      { status: "ok" },
+      {
+        headers: buildRateLimitHeaders(rateLimit),
+      },
+    );
   } catch (error) {
     console.error("[contact] send error", summarizeError(error));
     return NextResponse.json(

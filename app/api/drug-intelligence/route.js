@@ -16,6 +16,12 @@ const {
   buildSearchPhrases,
 } = require("../../../lib/server/openfda-normalize");
 const { buildDemoDrugIntelligencePayload } = require("../../../lib/medications/demo");
+const {
+  buildRateLimitHeaders,
+  consumeRateLimitByIp,
+  logApiFailure,
+  toPublicError,
+} = require("../../../lib/server/api-security");
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +78,8 @@ async function buildDrugIntelligenceResponse(query) {
 }
 
 export async function GET(request) {
+  let rateLimit = null;
+
   try {
     const input = getQueryInput({
       query: Object.fromEntries(request.nextUrl.searchParams.entries()),
@@ -86,6 +94,25 @@ export async function GET(request) {
       );
     }
 
+    rateLimit = consumeRateLimitByIp(request, {
+      bucket: "drug-intelligence",
+      limit: 20,
+      windowMs: 5 * 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many medication intelligence requests. Please try again shortly." },
+        {
+          status: 429,
+          headers: {
+            ...buildRateLimitHeaders(rateLimit),
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const payload = await unstable_cache(
       async () => buildDrugIntelligenceResponse(input.query),
       ["drug-intelligence", input.query.trim().toLowerCase()],
@@ -95,14 +122,25 @@ export async function GET(request) {
     return NextResponse.json(payload, {
       headers: {
         "Cache-Control": `public, max-age=0, s-maxage=${DRUG_INTELLIGENCE_REVALIDATE_SECONDS}, stale-while-revalidate=86400`,
+        ...buildRateLimitHeaders(rateLimit),
       },
     });
   } catch (error) {
+    logApiFailure("drug-intelligence", error, {
+      method: request.method,
+    });
+    const publicError = toPublicError(error, "Unable to load medication intelligence right now.");
+
     return NextResponse.json(
       {
-        error: error.message || "Unable to load medication intelligence right now.",
+        error: publicError.message,
       },
-      { status: error.statusCode || 500 },
+      rateLimit
+        ? {
+            status: publicError.statusCode,
+            headers: buildRateLimitHeaders(rateLimit),
+          }
+        : { status: publicError.statusCode },
     );
   }
 }

@@ -9,6 +9,11 @@ const {
   logGoogleApiConfigurationError,
   logGoogleApiRequestError,
 } = require("../../../../lib/server/google-api-config");
+const {
+  buildRateLimitHeaders,
+  consumeRateLimitByIp,
+  toPublicError,
+} = require("../../../../lib/server/api-security");
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +31,7 @@ export async function GET(request) {
   const query = request.nextUrl.searchParams.get("q")?.trim() || "";
   const sessionToken = request.nextUrl.searchParams.get("sessionToken")?.trim() || "";
   const limit = parseLimit(request.nextUrl.searchParams.get("limit"));
+  let rateLimit = null;
 
   try {
     if (!query) {
@@ -33,6 +39,25 @@ export async function GET(request) {
         status: "ok",
         results: [],
       });
+    }
+
+    rateLimit = consumeRateLimitByIp(request, {
+      bucket: "locations-autocomplete",
+      limit: 50,
+      windowMs: 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many location suggestion requests. Please slow down." },
+        {
+          status: 429,
+          headers: {
+            ...buildRateLimitHeaders(rateLimit),
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
     }
 
     const apiKey = getGoogleApiKey();
@@ -45,7 +70,10 @@ export async function GET(request) {
 
       return NextResponse.json(
         createGoogleApiUnavailablePayload("Location suggestions are temporarily unavailable."),
-        { status: 503 },
+        {
+          status: 503,
+          headers: buildRateLimitHeaders(rateLimit),
+        },
       );
     }
 
@@ -57,6 +85,8 @@ export async function GET(request) {
     return NextResponse.json({
       status: "ok",
       results,
+    }, {
+      headers: buildRateLimitHeaders(rateLimit),
     });
   } catch (error) {
     logGoogleApiRequestError("locations/autocomplete", error, {
@@ -64,13 +94,21 @@ export async function GET(request) {
       hasSessionToken: Boolean(sessionToken),
       limit,
     });
+    const publicError = toPublicError(
+      error,
+      "Unable to load location suggestions right now.",
+    );
 
     return NextResponse.json(
       {
-        error: error.message || "Unable to load location suggestions right now.",
-        code: error.code || undefined,
+        error: publicError.message,
       },
-      { status: error.statusCode || 500 },
+      rateLimit
+        ? {
+            status: publicError.statusCode,
+            headers: buildRateLimitHeaders(rateLimit),
+          }
+        : { status: publicError.statusCode },
     );
   }
 }
