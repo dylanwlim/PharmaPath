@@ -1,0 +1,18 @@
+[shell_environment_policy]
+inherit = "all"
+ignore_default_excludes = true
+include_only = [
+  "PATH",
+  "HOME",
+  "SHELL",
+  "TMPDIR",
+  "TERM",
+  "LANG",
+  "USER",
+  "LOGNAME",
+  "GOOGLE_API_KEY",
+  "OPENFDA_API_KEY",
+  "RESEND_API_KEY",
+  "CONTACT_EMAIL",
+  "CONTACT_FROM_EMAIL",
+]

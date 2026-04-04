@@ -8,13 +8,10 @@ const config = [
   {
     ignores: [
       ".next/**",
-      ".open-next/**",
       ".playwright-cli/**",
-      ".wrangler/**",
       "node_modules/**",
       "public/medication-search/**",
       "next-env.d.ts",
-      "types/cloudflare-env.d.ts",
     ],
   },
   js.configs.recommended,

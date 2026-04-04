@@ -151,14 +151,8 @@ const sections: LegalDocumentSection[] = [
       <>
         <ul className="space-y-3 pl-5 text-[0.98rem] leading-7 text-slate-600 marker:text-slate-400">
           <li>
-            <span className="font-medium text-slate-900">
-              Cloudflare and OpenNext:
-            </span>{" "}
-            site hosting and runtime delivery.
-          </li>
-          <li>
-            <span className="font-medium text-slate-900">Vercel Analytics:</span>{" "}
-            high-level site analytics.
+            <span className="font-medium text-slate-900">Vercel:</span> site
+            hosting, deployment delivery, and web analytics.
           </li>
           <li>
             <span className="font-medium text-slate-900">
