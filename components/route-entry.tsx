@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motionEase, motionTiming } from "@/lib/motion";
 
+let hasCompletedInitialPageHydration = false;
+
 export function PageEntry({
   children,
   className,
@@ -15,14 +17,20 @@ export function PageEntry({
 }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
+  const shouldAnimateOnMount =
+    !reduceMotion && hasCompletedInitialPageHydration;
+
+  useEffect(() => {
+    hasCompletedInitialPageHydration = true;
+  }, []);
 
   return (
     <motion.main
       key={`page:${pathname}`}
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-      animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      initial={shouldAnimateOnMount ? { opacity: 0, y: 10 } : false}
+      animate={shouldAnimateOnMount ? { opacity: 1, y: 0 } : undefined}
       transition={
-        reduceMotion
+        !shouldAnimateOnMount
           ? undefined
           : { duration: 0.46, ease: [0.22, 1, 0.36, 1] }
       }
