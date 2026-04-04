@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   formatDisplayDate,
   formatRecallClassification,
@@ -481,6 +481,37 @@ function RecallActivityCard({
   items: Match["evidence"]["recalls"]["items"];
 }) {
   const [showAll, setShowAll] = useState(false);
+  const sortedItems = useMemo(() => {
+    function getRecallTimestamp(value: Match["evidence"]["recalls"]["items"][number]) {
+      const timestamp = value.reportDate ? Date.parse(value.reportDate) : Number.NaN;
+      return Number.isFinite(timestamp) ? timestamp : null;
+    }
+
+    return [...items].sort((left, right) => {
+      const leftTimestamp = getRecallTimestamp(left);
+      const rightTimestamp = getRecallTimestamp(right);
+
+      if (leftTimestamp !== null || rightTimestamp !== null) {
+        if (leftTimestamp === null) {
+          return 1;
+        }
+
+        if (rightTimestamp === null) {
+          return -1;
+        }
+
+        if (rightTimestamp !== leftTimestamp) {
+          return rightTimestamp - leftTimestamp;
+        }
+      }
+
+      return (
+        (right.reportDate ?? "").localeCompare(left.reportDate ?? "") ||
+        (right.recallNumber ?? "").localeCompare(left.recallNumber ?? "") ||
+        (left.productDescription ?? "").localeCompare(right.productDescription ?? "")
+      );
+    });
+  }, [items]);
 
   if (!items.length) {
     return null;
@@ -490,7 +521,7 @@ function RecallActivityCard({
     <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Recent recall activity</span>
       <div className="mt-3 space-y-2.5">
-        {(showAll ? items : items.slice(0, 3)).map((recall, index) => {
+        {(showAll ? sortedItems : sortedItems.slice(0, 3)).map((recall, index) => {
           const classification = formatRecallClassification(recall.classification);
           const preview = recall.reason?.trim() || "No public recall reason was provided.";
 
@@ -537,13 +568,13 @@ function RecallActivityCard({
           );
         })}
       </div>
-      {items.length > 3 ? (
+      {sortedItems.length > 3 ? (
         <button
           type="button"
           className="mt-3 text-sm font-medium text-[#156d95]"
           onClick={() => setShowAll((value) => !value)}
         >
-          {showAll ? "Show fewer" : `Show ${items.length - 3} more`}
+          {showAll ? "Show fewer" : `Show ${sortedItems.length - 3} more`}
         </button>
       ) : null}
     </div>

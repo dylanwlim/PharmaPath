@@ -191,10 +191,12 @@ type DrugShortageItem = {
 };
 
 type DrugRecallItem = {
+  recallNumber?: string;
   classification?: string;
   status?: string;
   reason?: string;
   productDescription?: string;
+  reportDate?: string | null;
   reportDateLabel?: string;
   recallingFirm?: string;
 };

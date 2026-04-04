@@ -263,7 +263,7 @@ export function PrescriberClient({
     ? ""
     : selectedMatch.prescriber_view.should_consider_alternatives
       ? selectedMatch.demo_context?.demo_only
-        ? "The simulated demo signal supports lining up backup formulations earlier so the prescriber flow shows formulation-aware decision making."
+        ? "The simulated demo signal supports lining up backup formulations earlier so Medication Lookup shows formulation-aware decision making."
         : "Current shortage pressure supports discussing backup formulations or therapeutic substitutes earlier in the conversation."
       : selectedMatch.demo_context?.demo_only
         ? "The simulated demo signal does not force an immediate switch, but it still keeps alternate strengths and release types visible."
@@ -274,7 +274,7 @@ export function PrescriberClient({
       <section className="px-4 pb-10 pt-28 sm:px-6 lg:px-8">
         <div className="site-shell grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div>
-            <span className="eyebrow-label">Prescriber view</span>
+            <span className="eyebrow-label">{surfaceNames.prescriber}</span>
             <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.4rem]">
               Trace the evidence before you route the prescription.
             </h1>
@@ -333,7 +333,7 @@ export function PrescriberClient({
             <EmptyState
               eyebrow="No clear match"
               title={`No clear medication family surfaced for "${query}".`}
-              body="Try a cleaner brand or generic name so the prescriber view can attach to a more specific match."
+              body="Try a cleaner brand or generic name so Medication Lookup can attach to a more specific match."
             />
           ) : (
             <PrescriberResultsLayout

@@ -18,8 +18,8 @@ const sections: LegalDocumentSection[] = [
         <p>
           PharmaPath is a medication-access product built to help people make
           better pharmacy calls and medication-planning decisions. The current
-          experience includes nearby pharmacy search, medication context, a
-          prescriber-facing review surface, optional user accounts, contributor
+          experience includes nearby pharmacy search, medication context,
+          Medication Lookup, optional user accounts, contributor
           reports, and a contact form.
         </p>
         <p>

@@ -36,8 +36,12 @@ import {
 const client = createPharmaPathClient();
 
 type PharmacyResult = PharmacySearchResponse["results"][number];
-const pharmacyCardShellClass =
-  "rounded-[1.4rem] border border-emerald-200/80 bg-white/96 shadow-[0_14px_32px_rgba(34,197,94,0.06)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-emerald-300/85 hover:shadow-[0_16px_36px_rgba(34,197,94,0.08)]";
+const pharmacyCardBaseClass =
+  "rounded-[1.4rem] bg-white/96 transform-gpu transition-[background-color,border-color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transform-none motion-reduce:transition-none";
+const recommendedPharmacyCardClass =
+  `${pharmacyCardBaseClass} border border-emerald-200/85 shadow-[0_14px_32px_rgba(34,197,94,0.05)] hover:-translate-y-[1px] hover:border-emerald-300/90 hover:bg-emerald-50/[0.26] hover:shadow-[0_18px_40px_rgba(34,197,94,0.08)]`;
+const standardPharmacyCardClass =
+  `${pharmacyCardBaseClass} border border-slate-200/90 shadow-[0_12px_28px_rgba(15,23,42,0.05)] hover:-translate-y-[1px] hover:border-slate-300/90 hover:shadow-[0_16px_34px_rgba(15,23,42,0.08)]`;
 const pharmacyActionButtonClass =
   "inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-[#156d95] transition hover:border-[#156d95]/30 hover:text-[#0f5d7d]";
 const pharmacyActionButtonCompactClass =
@@ -171,7 +175,7 @@ function PharmacyAvailabilityMeta({
   );
 }
 
-function buildPrescriberReviewHref(
+function buildMedicationLookupHref(
   query: string,
   location: string,
   matchId: string,
@@ -183,7 +187,7 @@ function buildPrescriberReviewHref(
   }).toString()}`;
 }
 
-function PrescriberReviewCard({
+function MedicationLookupCard({
   query,
   location,
   matchId,
@@ -196,16 +200,16 @@ function PrescriberReviewCard({
     <div className="surface-panel h-full rounded-[1.55rem] p-4 sm:p-5">
       <span className="eyebrow-label">Next step</span>
       <p className="mt-3 text-sm leading-6 text-slate-600">
-        Move into the prescriber-facing view if you want the same medication
-        family framed around shortage planning, formulation spread, and
-        manufacturer coverage.
+        Open Medication Lookup if you want the same medication family framed
+        around shortage planning, formulation spread, and manufacturer
+        coverage.
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
         <NextLink
-          href={buildPrescriberReviewHref(query, location, matchId)}
+          href={buildMedicationLookupHref(query, location, matchId)}
           className="action-button-dark text-sm"
         >
-          Review prescriber view
+          Open Medication Lookup
         </NextLink>
       </div>
     </div>
@@ -597,7 +601,7 @@ export function PatientResultsClient({
                     ) : pharmacyData?.recommended ? (
                       <div className="mt-5">
                         <div
-                          className={`${pharmacyCardShellClass} bg-[linear-gradient(180deg,rgba(255,255,255,0.99)_0%,rgba(244,251,247,0.96)_100%)] p-4 sm:p-5`}
+                          className={`${recommendedPharmacyCardClass} p-4 sm:p-5`}
                         >
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
@@ -701,7 +705,7 @@ export function PatientResultsClient({
                       selectedMedicationLabel={resolvedMedicationLabel}
                       selectedStrength={resolvedMedicationStrength}
                     />
-                    <PrescriberReviewCard
+                    <MedicationLookupCard
                       query={query}
                       location={location}
                       matchId={featuredMatch.id}
@@ -734,7 +738,7 @@ export function PatientResultsClient({
                     {visibleExtras.map((result, resultIndex) => (
                       <div
                         key={`${result.name}-${result.address}`}
-                        className={`${pharmacyCardShellClass} p-3.5`}
+                        className={`${standardPharmacyCardClass} p-3.5`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
