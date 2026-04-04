@@ -106,25 +106,11 @@ export function PharmacySearchForm({
   const { profile } = useAuth();
   const [isPending, startTransition] = useTransition();
   const [medicationOption, setMedicationOption] =
-    useState<MedicationSearchOption | null>(() =>
-      getCachedMedicationSelection(initialMedication, initialSelectedStrength),
-    );
-  const [medication, setMedication] = useState(() => {
-    const cachedSelection = getCachedMedicationSelection(
-      initialMedication,
-      initialSelectedStrength,
-    );
-
-    return cachedSelection?.label || initialMedication;
-  });
-  const [selectedStrength, setSelectedStrength] = useState(() => {
-    const cachedSelection = getCachedMedicationSelection(
-      initialMedication,
-      initialSelectedStrength,
-    );
-
-    return initialSelectedStrength.trim() || cachedSelection?.matchedStrength || "";
-  });
+    useState<MedicationSearchOption | null>(null);
+  const [medication, setMedication] = useState(initialMedication);
+  const [selectedStrength, setSelectedStrength] = useState(
+    initialSelectedStrength.trim(),
+  );
   const [locationSelection, setLocationSelection] = useState<LocationSelection | null>(() =>
     createLocationSelection(initialLocation, initialLocationPlaceId),
   );
