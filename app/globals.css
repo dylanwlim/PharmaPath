@@ -282,6 +282,21 @@
     color: #202020;
   }
 
+  .footer-link {
+    @apply inline-flex w-fit rounded-[0.45rem] text-[0.95rem] leading-6 text-slate-600 transition-[color,text-decoration-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+  }
+
+  .footer-link:hover,
+  .footer-link:focus-visible,
+  .footer-link[data-active="true"] {
+    color: #202020;
+    text-decoration-color: rgba(32, 32, 32, 0.34);
+  }
+
   .page-shell-enter {
     @apply motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500;
   }

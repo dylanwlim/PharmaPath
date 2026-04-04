@@ -86,8 +86,8 @@ export function FooterEntry({
           observer?.disconnect();
         },
         {
-          threshold: 0.18,
-          rootMargin: "0px 0px -6% 0px",
+          threshold: 0.14,
+          rootMargin: "0px 0px -8% 0px",
         },
       );
 
@@ -107,11 +107,11 @@ export function FooterEntry({
       ref={footerRef}
       key={`footer:${pathname}`}
       initial={false}
-      animate={animateFooterIn ? { opacity: 0, y: 12 } : { opacity: 1, y: 0 }}
+      animate={animateFooterIn ? { opacity: 0, y: 8 } : { opacity: 1, y: 0 }}
       transition={
         shouldAnimateOnScroll
           ? {
-              duration: motionTiming.reveal * 0.82,
+              duration: motionTiming.reveal * 0.72,
               ease: motionEase.reveal,
             }
           : undefined

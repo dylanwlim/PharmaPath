@@ -18,7 +18,7 @@ export function ConnectComingSoonPage({
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-20 pt-28 sm:px-6 lg:px-8">
+        <section className="px-4 pb-14 pt-28 sm:px-6 sm:pb-16 lg:px-8">
           <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,0.96fr)_minmax(18rem,0.64fr)] lg:items-start">
             <div className="max-w-[38rem]">
               <span className="eyebrow-label">Connect</span>
@@ -29,8 +29,8 @@ export function ConnectComingSoonPage({
                 {description}
               </p>
               <p className="mt-4 max-w-xl text-sm leading-7 text-slate-500">
-                This route is intentionally in place so the footer stays complete
-                while the public social surface is still being prepared.
+                This route is reserved so PharmaPath can launch a consistent
+                public profile when the channel is ready.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">

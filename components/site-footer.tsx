@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { FooterEntry } from "@/components/route-entry";
 import { SiteBrand } from "@/components/site-brand";
 import { surfaceNames } from "@/lib/surface-labels";
@@ -16,7 +19,7 @@ const footerSections = [
     title: "Evidence",
     links: [
       { label: "Methodology", href: "/methodology" },
-      { label: "Health status", href: "/methodology#health" },
+      { label: "Claim Boundary", href: "/methodology#claim-boundary" },
     ],
   },
   {
@@ -26,86 +29,92 @@ const footerSections = [
       { label: "LinkedIn", href: "/connect/linkedin" },
     ],
   },
-  {
-    title: "Support",
-    links: [{ label: "Contact Us", href: "/contact" }],
-  },
 ];
 
-const footerTextLinkClassName =
-  "text-sm text-[#666666] transition-colors duration-150 hover:text-[#202020]";
-const footerNavLinkClassName = "nav-link-underline inline-flex w-fit";
+const footerMetaLinks = [
+  { label: "Contact", href: "/contact" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Use", href: "/terms" },
+];
+
+function FooterLink({
+  href,
+  label,
+  pathname,
+}: {
+  href: string;
+  label: string;
+  pathname: string;
+}) {
+  const isActive = !href.includes("#") && pathname === href;
+
+  return (
+    <Link
+      href={href}
+      data-active={isActive ? "true" : "false"}
+      className="footer-link"
+    >
+      {label}
+    </Link>
+  );
+}
 
 export function SiteFooter() {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className="w-full border-t border-[#e5e5e5] bg-[#fafafa]">
-      <FooterEntry className="site-shell py-16">
-        <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-5">
-          <div className="col-span-2">
-            <div className="mb-4">
-              <SiteBrand
-                className="mb-2"
-                wordmarkClassName="text-2xl font-medium"
-              />
-              <p className="max-w-xs text-sm leading-5 text-[#666666]">
-                Live nearby pharmacy search with medication access context.
-                Guidance is meant to support better pharmacy calls, not
-                guarantee stock.
-              </p>
-            </div>
+      <FooterEntry className="site-shell py-12 sm:py-14">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-start lg:gap-12">
+          <div className="max-w-[26rem]">
+            <SiteBrand
+              className="mb-3"
+              wordmarkClassName="text-[1.72rem] font-medium tracking-tight"
+            />
+            <p className="max-w-[24.5rem] text-sm leading-6 text-[#666666]">
+              Live nearby pharmacy search with medication access context.
+              Guidance is meant to support better pharmacy calls, not guarantee
+              stock.
+            </p>
           </div>
 
-          {footerSections.map((section) => (
-            <div key={section.title} className="col-span-1">
-              <h3 className="mb-4 text-sm font-medium uppercase tracking-[0.18em] text-[#202020]">
-                {section.title}
-              </h3>
-              <ul className="space-y-3">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className={
-                        section.title === "Connect"
-                          ? footerNavLinkClassName
-                          : footerTextLinkClassName
-                      }
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <div className="grid gap-8 sm:grid-cols-3 sm:gap-6 lg:gap-10">
+            {footerSections.map((section) => (
+              <div key={section.title} className="min-w-0">
+                <h2 className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#202020]">
+                  {section.title}
+                </h2>
+                <ul className="mt-4 space-y-2.5">
+                  {section.links.map((link) => (
+                    <li key={link.label}>
+                      <FooterLink
+                        href={link.href}
+                        label={link.label}
+                        pathname={pathname}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="border-t border-[#e5e5e5] pt-8">
-          <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+        <div className="mt-9 border-t border-[#e5e5e5] pt-5 sm:mt-10 sm:pt-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-[#666666]">
               © PharmaPath {currentYear}. All rights reserved.
             </p>
-            <div className="flex items-center gap-6">
-              <Link
-                href="/privacy"
-                className={footerTextLinkClassName}
-              >
-                Privacy
-              </Link>
-              <Link
-                href="/terms"
-                className={footerTextLinkClassName}
-              >
-                Terms
-              </Link>
-              <Link
-                href="/contact"
-                className={footerTextLinkClassName}
-              >
-                Support
-              </Link>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              {footerMetaLinks.map((link) => (
+                <FooterLink
+                  key={link.label}
+                  href={link.href}
+                  label={link.label}
+                  pathname={pathname}
+                />
+              ))}
             </div>
           </div>
         </div>

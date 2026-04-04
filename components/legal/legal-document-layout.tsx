@@ -60,7 +60,7 @@ export function LegalDocumentLayout({
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-12 pt-28 sm:px-6 lg:px-8">
+        <section className="px-4 pb-10 pt-28 sm:px-6 lg:px-8">
           <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
             <div className="max-w-[44rem]">
               <span className="eyebrow-label">{eyebrow}</span>
@@ -89,7 +89,7 @@ export function LegalDocumentLayout({
           </div>
         </section>
 
-        <section className="px-4 pb-24 sm:px-6 lg:px-8">
+        <section className="px-4 pb-16 sm:px-6 lg:px-8">
           <div className="site-shell grid gap-8 lg:grid-cols-[15.5rem_minmax(0,1fr)] lg:items-start">
             <aside className="lg:sticky lg:top-[calc(var(--navbar-height)+1.5rem)]">
               <div className="surface-panel rounded-[1.85rem] p-5">

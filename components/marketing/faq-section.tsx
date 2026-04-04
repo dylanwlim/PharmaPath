@@ -20,9 +20,12 @@ export function FAQSection({
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="section-space bg-white/60">
+    <section
+      id="faq"
+      className="bg-white/60 pb-12 pt-20 sm:pb-14 sm:pt-24 lg:pb-12"
+    >
       <div className="site-shell">
-        <div className="grid gap-14 lg:grid-cols-12">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-4">
             <h2 className="text-[2.5rem] leading-tight tracking-tight text-slate-950 lg:sticky lg:top-24">
               {title}
@@ -34,7 +37,7 @@ export function FAQSection({
               <div key={faq.question} className="border-b border-slate-200 last:border-b-0">
                 <button
                   type="button"
-                  className="group flex w-full items-center justify-between gap-6 py-6 text-left transition-opacity duration-150 hover:opacity-70"
+                  className="group flex w-full items-center justify-between gap-6 py-5 text-left transition-opacity duration-150 hover:opacity-70"
                   onClick={() => setOpenIndex((value) => (value === index ? null : index))}
                 >
                   <span className="text-lg leading-7 text-slate-900">{faq.question}</span>
@@ -56,7 +59,7 @@ export function FAQSection({
                       transition={{ duration: motionTiming.base, ease: motionEase.standard }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-6 pr-0 text-lg leading-6 text-[#666666] sm:pr-12">
+                      <p className="pb-5 pr-0 text-lg leading-6 text-[#666666] sm:pr-12">
                         {faq.answer}
                       </p>
                     </motion.div>

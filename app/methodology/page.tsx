@@ -177,7 +177,7 @@ function SignalLayersSection() {
 
 function MethodologyBoundarySection() {
   return (
-    <section className="px-4 pb-16 sm:px-6 lg:px-8">
+    <section id="claim-boundary" className="px-4 pb-16 sm:px-6 lg:px-8">
       <div className="site-shell grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
           <span className="eyebrow-label">Claim boundary</span>
