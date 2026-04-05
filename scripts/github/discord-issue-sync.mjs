@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 const DEFAULT_STATE_BRANCH = "discord-issue-sync-state";
 const DEFAULT_STATE_PATH = ".github/discord-issue-sync/issues.json";
 const STATE_VERSION = 1;
+const DISCORD_EMBED_DESCRIPTION_LIMIT = 4096;
 const ISSUE_ACTIONS_TO_UPSERT = new Set([
   "assigned",
   "edited",
@@ -44,120 +45,195 @@ function safeJson(value) {
   }
 }
 
-export function truncate(value, limit) {
-  const normalized = String(value ?? "").trim();
-
-  if (!normalized) {
-    return "";
-  }
-
-  if (normalized.length <= limit) {
-    return normalized;
-  }
-
-  if (limit <= 3) {
-    return normalized.slice(0, limit);
-  }
-
-  return `${normalized.slice(0, limit - 3)}...`;
+function sanitizeDiscordText(value) {
+  return String(value ?? "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/@/g, "@\u200b");
 }
 
-function cleanInlineText(value) {
-  return truncate(String(value ?? "").replace(/`/g, "'").replace(/@/g, "@\u200b").trim(), 1000);
+function normalizeInlineText(value, fallback = "none") {
+  const normalized = sanitizeDiscordText(value).replace(/\n+/g, " ").trim();
+  return normalized || fallback;
 }
 
-export function buildBodyPreview(body, limit = 320) {
-  const normalized = String(body ?? "")
-    .replace(/\r/g, "\n")
-    .replace(/\n{2,}/g, "\n")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (!normalized) {
-    return "No description provided.";
-  }
-
-  return truncate(cleanInlineText(normalized), limit);
+function normalizeIssueTitle(issue) {
+  return normalizeInlineText(issue?.title, "Untitled issue");
 }
 
-function formatList(items, { emptyLabel = "none", wrap = false, limit = 1024 } = {}) {
+export function normalizeIssueBody(body) {
+  const normalized = sanitizeDiscordText(body);
+  return normalized.trim() ? normalized : "No description provided.";
+}
+
+function formatList(items, { emptyLabel = "none" } = {}) {
   if (!Array.isArray(items) || items.length === 0) {
     return emptyLabel;
   }
 
   const rendered = items
     .filter(Boolean)
-    .map((item) => cleanInlineText(item))
+    .map((item) => normalizeInlineText(item, ""))
     .filter(Boolean)
     .sort((left, right) => left.localeCompare(right))
-    .map((item) => (wrap ? `\`${item}\`` : item))
     .join(", ");
 
-  return truncate(rendered || emptyLabel, limit);
+  return rendered || emptyLabel;
 }
 
-export function buildDiscordMessagePayload(issue, repositoryFullName) {
-  const labels = Array.isArray(issue.labels)
-    ? issue.labels
-        .map((label) => {
-          if (!label) {
-            return "";
-          }
+function extractLabelNames(issue) {
+  if (!Array.isArray(issue?.labels)) {
+    return [];
+  }
 
-          if (typeof label === "string") {
-            return label;
-          }
+  return issue.labels
+    .map((label) => {
+      if (!label) {
+        return "";
+      }
 
-          return label.name || "";
-        })
-        .filter(Boolean)
-    : [];
-  const assignees = Array.isArray(issue.assignees)
-    ? issue.assignees.map((assignee) => (assignee?.login ? `@${assignee.login}` : "")).filter(Boolean)
-    : [];
-  const bodyPreview = buildBodyPreview(issue.body);
+      if (typeof label === "string") {
+        return label;
+      }
 
+      return label.name || "";
+    })
+    .filter(Boolean);
+}
+
+function extractAssigneeNames(issue) {
+  if (!Array.isArray(issue?.assignees)) {
+    return [];
+  }
+
+  return issue.assignees.map((assignee) => (assignee?.login ? `@${assignee.login}` : "")).filter(Boolean);
+}
+
+function buildIssueHeading(issue, suffix = "") {
+  return `#${issue.number} ${normalizeIssueTitle(issue)}${suffix ? ` (${suffix})` : ""}`;
+}
+
+export function buildIssueDetailsBlock(issue) {
+  return [
+    `State: ${normalizeInlineText(String(issue?.state || "unknown").toUpperCase())}`,
+    `Labels: ${formatList(extractLabelNames(issue))}`,
+    `Assignees: ${formatList(extractAssigneeNames(issue))}`,
+    `GitHub: <${issue?.html_url || ""}>`,
+  ].join("\n");
+}
+
+function createEmbedPayload(issue, description) {
   return {
     allowed_mentions: {
       parse: [],
     },
     embeds: [
       {
-        title: truncate(`#${issue.number} ${cleanInlineText(issue.title || "Untitled issue")}`, 256),
-        url: issue.html_url,
         color: DISCORD_OPEN_COLOR,
-        description: truncate(bodyPreview, 4096),
-        fields: [
-          {
-            name: "State",
-            value: cleanInlineText((issue.state || "unknown").toUpperCase()),
-            inline: true,
-          },
-          {
-            name: "Labels",
-            value: formatList(labels, { emptyLabel: "none", wrap: true }),
-            inline: true,
-          },
-          {
-            name: "Assignees",
-            value: formatList(assignees, { emptyLabel: "none", wrap: true }),
-            inline: true,
-          },
-          {
-            name: "GitHub",
-            value: `[Open issue](${issue.html_url})`,
-            inline: true,
-          },
-        ],
-        footer: {
-          text: cleanInlineText(repositoryFullName),
-        },
+        description,
         timestamp: issue.updated_at || issue.created_at || new Date().toISOString(),
       },
     ],
   };
+}
+
+export function takeDiscordChunkPrefix(text, maxLength) {
+  if (maxLength <= 0) {
+    throw new Error(`Discord chunk length must be positive; received ${maxLength}.`);
+  }
+
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  const candidate = text.slice(0, maxLength);
+  const preferredBoundaryFloor = Math.floor(maxLength * 0.5);
+  const boundaryCandidates = [
+    { marker: "\n\n", width: 2 },
+    { marker: "\n", width: 1 },
+    { marker: " ", width: 1 },
+  ];
+
+  for (const boundary of boundaryCandidates) {
+    const boundaryIndex = candidate.lastIndexOf(boundary.marker);
+
+    if (boundaryIndex >= preferredBoundaryFloor) {
+      return candidate.slice(0, boundaryIndex + boundary.width);
+    }
+  }
+
+  for (const boundary of boundaryCandidates) {
+    const boundaryIndex = candidate.lastIndexOf(boundary.marker);
+
+    if (boundaryIndex > 0) {
+      return candidate.slice(0, boundaryIndex + boundary.width);
+    }
+  }
+
+  return candidate;
+}
+
+function splitBodyIntoDescriptions(issue, body) {
+  const descriptions = [];
+  let remainingBody = body;
+  let chunkIndex = 1;
+
+  while (remainingBody.length > 0) {
+    const heading = buildIssueHeading(issue, chunkIndex === 1 ? "" : `continued ${chunkIndex}`);
+    const prefix = `${heading}\n\n`;
+    const maxChunkLength = DISCORD_EMBED_DESCRIPTION_LIMIT - prefix.length;
+    const chunk = takeDiscordChunkPrefix(remainingBody, maxChunkLength);
+
+    descriptions.push(`${prefix}${chunk}`);
+    remainingBody = remainingBody.slice(chunk.length);
+    chunkIndex += 1;
+  }
+
+  return descriptions;
+}
+
+function splitDetailsIntoDescriptions(issue, details) {
+  const descriptions = [];
+  let remainingDetails = details;
+  let chunkIndex = 1;
+
+  while (remainingDetails.length > 0) {
+    const heading = buildIssueHeading(issue, chunkIndex === 1 ? "details" : `details ${chunkIndex}`);
+    const prefix = `${heading}\n\n`;
+    const maxChunkLength = DISCORD_EMBED_DESCRIPTION_LIMIT - prefix.length;
+    const chunk = takeDiscordChunkPrefix(remainingDetails, maxChunkLength);
+
+    descriptions.push(`${prefix}${chunk}`);
+    remainingDetails = remainingDetails.slice(chunk.length);
+    chunkIndex += 1;
+  }
+
+  return descriptions;
+}
+
+export function buildDiscordMessagePayloads(issue) {
+  const body = normalizeIssueBody(issue?.body);
+  const details = buildIssueDetailsBlock(issue);
+  const descriptions = splitBodyIntoDescriptions(issue, body);
+  const detailsSuffix = `\n\n${details}`;
+  const lastBodyIndex = descriptions.length - 1;
+
+  if (descriptions[lastBodyIndex].length + detailsSuffix.length <= DISCORD_EMBED_DESCRIPTION_LIMIT) {
+    descriptions[lastBodyIndex] = `${descriptions[lastBodyIndex]}${detailsSuffix}`;
+  } else {
+    descriptions.push(...splitDetailsIntoDescriptions(issue, details));
+  }
+
+  return descriptions.map((description) => createEmbedPayload(issue, description));
+}
+
+export function normalizeMessageIds(value) {
+  const rawMessageIds = Array.isArray(value?.messageIds)
+    ? value.messageIds
+    : value?.messageId
+      ? [value.messageId]
+      : [];
+
+  return rawMessageIds.filter(Boolean).map((messageId) => String(messageId));
 }
 
 export function normalizeState(rawState = {}) {
@@ -174,7 +250,7 @@ export function normalizeState(rawState = {}) {
           issueNumber: Number(issueNumber),
           issueUrl: value?.issueUrl || "",
           issueUpdatedAt: value?.issueUpdatedAt || null,
-          messageId: value?.messageId ? String(value.messageId) : "",
+          messageIds: normalizeMessageIds(value),
           state: value?.state || "",
           syncedAt: value?.syncedAt || null,
           title: value?.title || "",
@@ -189,12 +265,12 @@ export function normalizeState(rawState = {}) {
   };
 }
 
-function buildStateEntry(issue, messageId, syncedAt) {
+function buildStateEntry(issue, messageIds, syncedAt) {
   return {
     issueNumber: issue.number,
     issueUrl: issue.html_url || "",
     issueUpdatedAt: issue.updated_at || null,
-    messageId: String(messageId),
+    messageIds: normalizeMessageIds({ messageIds }),
     state: issue.state || "",
     syncedAt,
     title: issue.title || "",
@@ -488,51 +564,130 @@ function isPullRequestIssue(issue) {
   return Boolean(issue?.pull_request);
 }
 
-async function upsertIssueMessage({ issue, logger, repositoryFullName, stateEntry, webhookUrl }) {
-  const payload = buildDiscordMessagePayload(issue, repositoryFullName);
-  const existingMessageId = stateEntry?.messageId ? String(stateEntry.messageId) : "";
-
-  if (existingMessageId) {
-    logger.info("Updating Discord issue message", {
-      issueNumber: issue.number,
-      messageId: existingMessageId,
-    });
-
-    const updatedMessage = await updateDiscordMessage(webhookUrl, existingMessageId, payload);
-
-    if (updatedMessage) {
-      return {
-        messageId: String(updatedMessage.id || existingMessageId),
-        operation: "updated",
-      };
-    }
-
-    logger.warn("Mapped Discord message was missing; creating a replacement", {
-      issueNumber: issue.number,
-      messageId: existingMessageId,
-    });
+function summarizeSyncOperation({ createdCount, deletedCount, recreatedCount, updatedCount }) {
+  if (recreatedCount > 0) {
+    return "recreated";
   }
 
-  logger.info("Creating Discord issue message", {
-    issueNumber: issue.number,
-  });
+  if (createdCount > 0 && updatedCount === 0 && deletedCount === 0) {
+    return "created";
+  }
 
-  const createdMessage = await createDiscordMessage(webhookUrl, payload);
+  if (createdCount === 0 && updatedCount > 0 && deletedCount === 0) {
+    return "updated";
+  }
 
-  if (!createdMessage?.id) {
-    throw new Error(`Discord create response did not include a message id for issue #${issue.number}`);
+  if (deletedCount > 0 && createdCount === 0 && updatedCount > 0) {
+    return "trimmed";
+  }
+
+  if (createdCount > 0 || deletedCount > 0 || updatedCount > 0) {
+    return "reconciled";
+  }
+
+  return "noop";
+}
+
+export async function syncDiscordIssueMessages({
+  createMessage,
+  deleteMessage,
+  issue,
+  logger = createLogger(),
+  stateEntry,
+  updateMessage,
+}) {
+  const payloads = buildDiscordMessagePayloads(issue);
+  const existingMessageIds = normalizeMessageIds(stateEntry);
+  const nextMessageIds = [];
+  let createdCount = 0;
+  let deletedCount = 0;
+  let recreatedCount = 0;
+  let updatedCount = 0;
+
+  for (const [index, payload] of payloads.entries()) {
+    const existingMessageId = existingMessageIds[index];
+
+    if (existingMessageId) {
+      logger.info("Updating Discord issue message chunk", {
+        issueNumber: issue.number,
+        messageId: existingMessageId,
+        chunk: index + 1,
+        chunks: payloads.length,
+      });
+
+      const updatedMessage = await updateMessage(existingMessageId, payload);
+
+      if (updatedMessage) {
+        nextMessageIds.push(String(updatedMessage.id || existingMessageId));
+        updatedCount += 1;
+        continue;
+      }
+
+      logger.warn("Mapped Discord issue message chunk was missing; creating a replacement", {
+        issueNumber: issue.number,
+        messageId: existingMessageId,
+        chunk: index + 1,
+        chunks: payloads.length,
+      });
+      recreatedCount += 1;
+    } else {
+      createdCount += 1;
+    }
+
+    logger.info("Creating Discord issue message chunk", {
+      issueNumber: issue.number,
+      chunk: index + 1,
+      chunks: payloads.length,
+    });
+
+    const createdMessage = await createMessage(payload);
+
+    if (!createdMessage?.id) {
+      throw new Error(`Discord create response did not include a message id for issue #${issue.number}`);
+    }
+
+    nextMessageIds.push(String(createdMessage.id));
+  }
+
+  for (const [extraIndex, staleMessageId] of existingMessageIds.slice(payloads.length).entries()) {
+    logger.info("Deleting stale Discord issue message chunk", {
+      issueNumber: issue.number,
+      messageId: staleMessageId,
+      chunk: payloads.length + extraIndex + 1,
+    });
+
+    const deletedMessage = await deleteMessage(staleMessageId);
+
+    if (deletedMessage === null) {
+      logger.warn("Discord issue message chunk already missing during cleanup", {
+        issueNumber: issue.number,
+        messageId: staleMessageId,
+      });
+    }
+
+    deletedCount += 1;
   }
 
   return {
-    messageId: String(createdMessage.id),
-    operation: existingMessageId ? "recreated" : "created",
+    messageIds: nextMessageIds,
+    operation: summarizeSyncOperation({
+      createdCount,
+      deletedCount,
+      recreatedCount,
+      updatedCount,
+    }),
   };
 }
 
-async function removeIssueMessage({ issueNumber, logger, stateEntry, webhookUrl }) {
-  const messageId = stateEntry?.messageId ? String(stateEntry.messageId) : "";
+export async function deleteDiscordIssueMessages({
+  deleteMessage,
+  issueNumber,
+  logger = createLogger(),
+  stateEntry,
+}) {
+  const messageIds = normalizeMessageIds(stateEntry);
 
-  if (!messageId) {
+  if (messageIds.length === 0) {
     logger.warn("No Discord mapping found for issue delete", {
       issueNumber,
     });
@@ -541,29 +696,55 @@ async function removeIssueMessage({ issueNumber, logger, stateEntry, webhookUrl 
     };
   }
 
-  logger.info("Deleting Discord issue message", {
-    issueNumber,
-    messageId,
-  });
+  let deletedCount = 0;
 
-  const deletedMessage = await deleteDiscordMessage(webhookUrl, messageId);
-
-  if (deletedMessage === null) {
-    logger.warn("Discord message already missing during delete", {
+  for (const [index, messageId] of messageIds.entries()) {
+    logger.info("Deleting Discord issue message chunk", {
       issueNumber,
       messageId,
+      chunk: index + 1,
+      chunks: messageIds.length,
     });
-    return {
-      operation: "missing-message",
-    };
+
+    const deletedMessage = await deleteMessage(messageId);
+
+    if (deletedMessage === null) {
+      logger.warn("Discord issue message chunk already missing during delete", {
+        issueNumber,
+        messageId,
+      });
+      continue;
+    }
+
+    deletedCount += 1;
   }
 
   return {
-    operation: "deleted",
+    operation: deletedCount > 0 ? "deleted" : "missing-message",
   };
 }
 
-async function runEventSync({ eventPayload, logger, repositoryFullName, state, webhookUrl }) {
+async function upsertIssueMessage({ issue, logger, stateEntry, webhookUrl }) {
+  return syncDiscordIssueMessages({
+    issue,
+    logger,
+    stateEntry,
+    createMessage: (payload) => createDiscordMessage(webhookUrl, payload),
+    updateMessage: (messageId, payload) => updateDiscordMessage(webhookUrl, messageId, payload),
+    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId),
+  });
+}
+
+async function removeIssueMessage({ issueNumber, logger, stateEntry, webhookUrl }) {
+  return deleteDiscordIssueMessages({
+    issueNumber,
+    logger,
+    stateEntry,
+    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId),
+  });
+}
+
+async function runEventSync({ eventPayload, logger, state, webhookUrl }) {
   const action = String(eventPayload?.action || "");
   const issue = eventPayload?.issue;
 
@@ -621,12 +802,11 @@ async function runEventSync({ eventPayload, logger, repositoryFullName, state, w
   const result = await upsertIssueMessage({
     issue,
     logger,
-    repositoryFullName,
     stateEntry: existingEntry,
     webhookUrl,
   });
 
-  nextState.issues[issueKey] = buildStateEntry(issue, result.messageId, new Date().toISOString());
+  nextState.issues[issueKey] = buildStateEntry(issue, result.messageIds, new Date().toISOString());
 
   return {
     dirty: true,
@@ -635,7 +815,7 @@ async function runEventSync({ eventPayload, logger, repositoryFullName, state, w
   };
 }
 
-async function runFullResync({ client, logger, repositoryFullName, state, webhookUrl }) {
+async function runFullResync({ client, logger, state, webhookUrl }) {
   logger.info("Starting full Discord issue resync");
 
   const openIssues = await client.listOpenIssues();
@@ -648,12 +828,11 @@ async function runFullResync({ client, logger, repositoryFullName, state, webhoo
     const result = await upsertIssueMessage({
       issue,
       logger,
-      repositoryFullName,
       stateEntry: state.issues[String(issue.number)],
       webhookUrl,
     });
 
-    nextState.issues[String(issue.number)] = buildStateEntry(issue, result.messageId, new Date().toISOString());
+    nextState.issues[String(issue.number)] = buildStateEntry(issue, result.messageIds, new Date().toISOString());
   }
 
   for (const [issueKey, stateEntry] of Object.entries(state.issues)) {
@@ -740,14 +919,12 @@ export async function runSync({ env = process.env, logger = createLogger(), mode
       ? await runFullResync({
           client,
           logger,
-          repositoryFullName,
           state,
           webhookUrl,
         })
       : await runEventSync({
           eventPayload,
           logger,
-          repositoryFullName,
           state,
           webhookUrl,
         });

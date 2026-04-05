@@ -1,6 +1,6 @@
 # GitHub issues to Discord sync
 
-This repo includes a GitHub Actions workflow that mirrors open GitHub issues into one Discord channel. Each open issue is kept to one Discord webhook message, and the workflow updates or deletes that message as the issue changes.
+This repo includes a GitHub Actions workflow that mirrors open GitHub issues into one Discord channel. Each open issue is mirrored into one or more Discord webhook messages, and the workflow reconciles those messages as the issue changes.
 
 ## Files
 
@@ -29,23 +29,25 @@ Pull requests are excluded during resync and ignored on event handling.
 
 ## Message format
 
-Each Discord message includes:
+The Discord rendering uses the full issue body, not a clipped preview. The layout is:
 
 - issue number and title
+- full issue body
 - issue state
 - labels
 - assignees
-- short body preview
 - direct GitHub link
 
-The title links to the issue, and the message uses Discord webhook create, edit, and delete endpoints so updates stay tied to the same message id.
+Multiline paragraphs, bullets, and spacing are preserved. If the rendered issue exceeds Discord embed limits, the workflow creates deterministic continuation messages and updates or deletes those extra messages on later edits.
 
 ## Durable mapping
 
-The sync keeps a JSON mapping from issue number to Discord message id in a dedicated branch:
+The sync keeps a JSON mapping from issue number to Discord message ids in a dedicated branch:
 
 - Branch: `discord-issue-sync-state`
 - File: `.github/discord-issue-sync/issues.json`
+
+Each state entry stores a `messageIds` array. Older single-message entries with `messageId` are read and upgraded automatically on the next sync.
 
 Why this approach:
 
@@ -69,6 +71,7 @@ The resync job will:
 - exclude pull requests
 - update existing mapped Discord messages
 - recreate messages whose stored Discord message id is gone
+- create or delete continuation messages when the full rendered body grows or shrinks
 - delete mapped Discord messages for issues that are no longer open
 - rewrite the mapping file with the latest open-issue state
 
@@ -78,7 +81,7 @@ The resync job will:
 - Missing mapping entries are handled without crashing:
   an open issue gets a new Discord message, and a closed/deleted issue is logged and skipped.
 - Discord 404s on edit/delete are treated as recoverable:
-  the workflow recreates missing open-issue messages and drops stale closed-issue mappings.
+  the workflow recreates missing open-issue messages, trims stale continuation messages, and drops stale closed-issue mappings.
 
 Webhook-only Discord access cannot list channel history. That means a fully orphaned message that no longer has any saved mapping cannot be auto-discovered during recovery. In normal operation the state branch prevents duplicates; if the state branch is manually deleted or a run fails after Discord create but before state persistence, do a one-time manual cleanup of the orphaned message, then rerun the full resync.
 
