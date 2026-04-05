@@ -311,24 +311,24 @@ export function MedicationCombobox({
                     Start typing a brand, generic, or strength to load medication matches.
                   </div>
                 ) : needsMoreCharacters ? (
-                  <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                  <div className="rounded-[0.9rem] border border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
                     Type at least 2 characters to load medication matches.
                   </div>
                 ) : effectiveLoadState === "loading" && !visibleOptions.length ? (
                   <div
                     aria-live="polite"
-                    className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500"
+                    className="rounded-[0.9rem] border border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-600"
                   >
-                    <span className="inline-flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 font-medium">
                       <LoaderCircle className="h-4 w-4 animate-spin" />
-                      Matching medications...
+                      Searching medications…
                     </span>
                   </div>
                 ) : visibleOptions.length ? (
                   <>
                     {effectiveLoadState === "loading" ? (
-                      <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2 text-[0.73rem] leading-5 text-slate-500">
-                        Showing cached matches while newer results load.
+                      <div className="rounded-[0.9rem] border border-slate-200 bg-slate-50/80 px-3 py-2 text-[0.73rem] leading-5 text-slate-500">
+                        Showing current matches while fresher results load.
                       </div>
                     ) : null}
                     {visibleOptions.map((option, index) => {
@@ -378,7 +378,7 @@ export function MedicationCombobox({
                     })}
                   </>
                 ) : (
-                  <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                  <div className="rounded-[0.9rem] border border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
                     {emptyMessage}
                   </div>
                 )}

@@ -61,7 +61,7 @@ const guidedSteps: Array<{
   { id: "medication", label: "Medication" },
   { id: "strength", label: "Strength", helper: "If needed" },
   { id: "location", label: "Location" },
-  { id: "review", label: "Search setup" },
+  { id: "review", label: "Filters" },
 ];
 
 function buildResultsHref({
@@ -180,6 +180,56 @@ function resolvePreviousStep(step: SearchStep, hasStrengthStep: boolean) {
   return "medication" satisfies SearchStep;
 }
 
+function getFormHeading(compact: boolean) {
+  return compact
+    ? "Update the search, then refresh the nearby list."
+    : "Search by medication, then narrow the details.";
+}
+
+function getFormDescription(compact: boolean) {
+  return compact
+    ? "Change the medication, strength, or location first. Use filters only when you need to reorder or widen the shortlist."
+    : "Choose the medication first. If there are multiple strengths, we’ll ask for the one you need before you set the search area.";
+}
+
+function getStepCopy(step: SearchStep, compact: boolean) {
+  if (step === "medication") {
+    return {
+      eyebrow: "Medication",
+      title: "Search for your medication.",
+      description:
+        "Choose the best match so the nearby search stays precise from the start.",
+    };
+  }
+
+  if (step === "strength") {
+    return {
+      eyebrow: "Strength",
+      title: "Choose the strength you need.",
+      description:
+        "We only stop here when this medication can map to more than one usable strength.",
+    };
+  }
+
+  if (step === "location") {
+    return {
+      eyebrow: "Location",
+      title: "Enter where to search nearby.",
+      description:
+        "Use a city, ZIP code, or address. Pick a live suggestion if it looks right, or keep the typed text for direct resolution when you search.",
+    };
+  }
+
+  return {
+    eyebrow: compact ? "Refresh nearby search" : "Search options",
+    title: compact
+      ? "Adjust search options, then refresh the nearby list."
+      : "Adjust search options, then see nearby pharmacies worth calling.",
+    description:
+      "Use radius, sort, and open-now only when you want to reshape the shortlist.",
+  };
+}
+
 function FocusStepIndicator({
   activeStep,
   showStrengthStep,
@@ -190,7 +240,7 @@ function FocusStepIndicator({
   const activeIndex = getStepIndex(activeStep);
 
   return (
-    <ol className="mt-4 flex flex-wrap gap-2">
+    <ol className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
       {guidedSteps.map((item, index) => {
         const isOptionalStrength = item.id === "strength" && !showStrengthStep;
         const state =
@@ -204,7 +254,7 @@ function FocusStepIndicator({
           <li
             key={item.id}
             className={cn(
-              "inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-colors",
+              "flex min-w-0 items-center gap-2 rounded-[1rem] border px-3 py-2 text-left transition-colors lg:min-h-[3.25rem]",
               state === "active" &&
                 "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d]",
               state === "complete" &&
@@ -212,27 +262,29 @@ function FocusStepIndicator({
               state === "upcoming" &&
                 "border-transparent bg-slate-100/80 text-slate-500",
             )}
-          >
-            <span
-              className={cn(
-                "inline-flex h-5.5 w-5.5 items-center justify-center rounded-full border text-[0.66rem] font-semibold",
-                state === "active" &&
-                  "border-[#156d95]/26 bg-white text-[#0f5d7d]",
-                state === "complete" && "border-slate-200 bg-white text-slate-700",
-                state === "upcoming" &&
-                  "border-slate-200/80 bg-white/70 text-slate-400",
-              )}
             >
-              {state === "complete" ? <Check className="h-3.5 w-3.5" /> : index + 1}
-            </span>
-            <span className="min-w-0 text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
-              {item.label}
-            </span>
-            {item.helper ? (
-              <span className="text-[0.65rem] uppercase tracking-[0.16em] text-current/65">
-                {showStrengthStep ? item.helper : "Skipped"}
+              <span
+                className={cn(
+                  "inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full border text-[0.66rem] font-semibold",
+                  state === "active" &&
+                    "border-[#156d95]/26 bg-white text-[#0f5d7d]",
+                  state === "complete" && "border-slate-200 bg-white text-slate-700",
+                  state === "upcoming" &&
+                    "border-slate-200/80 bg-white/70 text-slate-400",
+                )}
+              >
+                {state === "complete" ? <Check className="h-3.5 w-3.5" /> : index + 1}
               </span>
-            ) : null}
+              <span className="min-w-0">
+                <span className="block truncate whitespace-nowrap text-[0.7rem] font-semibold uppercase tracking-[0.15em]">
+                  {item.label}
+                </span>
+                {item.helper ? (
+                  <span className="mt-0.5 block truncate text-[0.63rem] uppercase tracking-[0.14em] text-current/65">
+                    {showStrengthStep ? item.helper : "Skipped"}
+                  </span>
+                ) : null}
+              </span>
           </li>
         );
       })}
@@ -300,7 +352,7 @@ function SelectionSummaryChip({
           state === "active" &&
             "border-[#156d95]/22 bg-[#156d95]/8",
           state === "complete" && "border-slate-200/90 bg-white/92",
-          state === "pending" && "border-dashed border-slate-200 bg-slate-50/82",
+          state === "pending" && "border-slate-200 bg-slate-50/92 text-slate-500",
         )}
       >
         {content}
@@ -318,7 +370,7 @@ function SelectionSummaryChip({
         state === "complete" &&
           "border-slate-200/90 bg-white/92 hover:border-[#156d95]/22 hover:bg-white",
         state === "pending" &&
-          "border-dashed border-slate-200 bg-slate-50/82 hover:border-slate-300",
+          "border-slate-200 bg-slate-50/92 hover:border-slate-300",
       )}
       onClick={onClick}
     >
@@ -349,7 +401,7 @@ export function PharmacySearchForm({
   initialSelectedStrength = "",
   action = "/pharmacy-finder/results",
   compact = false,
-  submitLabel = "Search live nearby pharmacies",
+  submitLabel = "Find nearby pharmacies",
   showSamples = false,
   className,
 }: PharmacySearchFormProps) {
@@ -420,10 +472,11 @@ export function PharmacySearchForm({
           ),
         ).join(" · ") || null;
   const summaryMedication =
-    medicationOption?.label || medication.trim() || "Choose a medication";
+    medicationOption?.label || medication.trim() || "Search for a medication";
   const summaryStrength = selectedStrength.trim();
   const summaryLocation =
-    locationSelection?.label || location.trim() || "Set the search area";
+    locationSelection?.label || location.trim() || "Add a location";
+  const stepCopy = getStepCopy(activeStep, compact);
 
   useEffect(() => {
     let cancelled = false;
@@ -787,19 +840,18 @@ export function PharmacySearchForm({
         duration: compact ? motionTiming.base * 0.76 : motionTiming.base * 0.84,
         ease: motionEase.reveal,
       };
-  const selectionSummaryItems = [
-    activeStep !== "medication" || medication.trim()
+  const selectionSummaryItems = activeStep === "medication"
+    ? []
+    : [
+    medication.trim()
       ? {
           key: "medication",
           label: "Medication",
           value: medication.trim() ? summaryMedication : null,
           placeholder: "Choose a medication",
           icon: <Pill className="h-4 w-4" />,
-          state: activeStep === "medication" ? "active" : "complete",
-          onClick:
-            activeStep === "medication"
-              ? undefined
-              : () => goToStep("medication", "medication"),
+          state: "complete",
+          onClick: () => goToStep("medication", "medication"),
         }
       : null,
     showsStrengthCheckpoint || summaryStrength || activeStep === "strength"
@@ -820,24 +872,22 @@ export function PharmacySearchForm({
               : () => goToStep("strength", "strength"),
         }
       : null,
-    activeStep !== "medication" || location.trim()
-      ? {
-          key: "location",
-          label: "Location",
-          value: location.trim() ? summaryLocation : null,
-          placeholder: "Choose a location",
-          icon: <MapPin className="h-4 w-4" />,
-          state: activeStep === "location"
-            ? "active"
-            : location.trim()
-              ? "complete"
-              : "pending",
-          onClick:
-            activeStep === "location" || !location.trim()
-              ? undefined
-              : () => goToStep("location", "location"),
-        }
-      : null,
+    {
+      key: "location",
+      label: "Location",
+      value: location.trim() ? summaryLocation : null,
+      placeholder: "Choose a location",
+      icon: <MapPin className="h-4 w-4" />,
+      state: activeStep === "location"
+        ? "active"
+        : location.trim()
+          ? "complete"
+          : "pending",
+      onClick:
+        activeStep === "location" || !location.trim()
+          ? undefined
+          : () => goToStep("location", "location"),
+    },
   ].filter(Boolean) as Array<{
     key: string;
     label: string;
@@ -865,7 +915,7 @@ export function PharmacySearchForm({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-[34rem]">
             <span className="eyebrow-label">
-              {compact ? "Refine nearby search" : "Guided nearby search"}
+              {compact ? "Refine nearby search" : "Nearby pharmacy search"}
             </span>
             <h2
               className={cn(
@@ -873,9 +923,7 @@ export function PharmacySearchForm({
                 compact ? "text-[1.22rem]" : "text-[1.5rem] sm:text-[1.68rem]",
               )}
             >
-              {compact
-                ? "Edit the core inputs first, then reopen the secondary controls."
-                : "Start with the medication. We’ll reveal the rest only when it matters."}
+              {getFormHeading(compact)}
             </h2>
             <p
               className={cn(
@@ -883,9 +931,7 @@ export function PharmacySearchForm({
                 compact ? "text-[0.88rem] leading-6" : "text-[0.93rem] leading-6",
               )}
             >
-              Nearby pharmacies come from a live search. Stock is never
-              guaranteed, so the last step stays explicit about calling to
-              confirm before pickup or transfer.
+              {getFormDescription(compact)}
             </p>
           </div>
 
@@ -1045,10 +1091,7 @@ export function PharmacySearchForm({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="max-w-[34rem]">
                 <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
-                  {activeStep === "medication" && "Start here"}
-                  {activeStep === "strength" && "Choose the exact presentation"}
-                  {activeStep === "location" && "Set the search area"}
-                  {activeStep === "review" && "Ready to search"}
+                  {stepCopy.eyebrow}
                 </div>
                 <h3
                   className={cn(
@@ -1056,24 +1099,10 @@ export function PharmacySearchForm({
                     compact ? "text-[1.08rem]" : "text-[1.22rem] sm:text-[1.32rem]",
                   )}
                 >
-                  {activeStep === "medication" &&
-                    "Pick the medication family before we show anything else."}
-                  {activeStep === "strength" &&
-                    "Only the remaining meaningful strength choices stay here."}
-                  {activeStep === "location" &&
-                    "Set the nearby search area before the secondary controls appear."}
-                  {activeStep === "review" &&
-                    "Review the search, then adjust the secondary controls if you need to."}
+                  {stepCopy.title}
                 </h3>
                 <p className="mt-1.5 max-w-[32rem] text-[0.86rem] leading-6 text-slate-600">
-                  {activeStep === "medication" &&
-                    "Start calm and choose the medication first. We’ll keep everything else out of the way until the core match is set."}
-                  {activeStep === "strength" &&
-                    "Only the remaining meaningful strength options stay visible here, so the next decision is obvious."}
-                  {activeStep === "location" &&
-                    "Set the nearby search area, then we’ll expose the final live-search controls without reopening the full form."}
-                  {activeStep === "review" &&
-                    "Secondary controls stay compact here. The nearby list remains live, and the stock boundary stays explicit."}
+                  {stepCopy.description}
                 </p>
               </div>
 
@@ -1132,13 +1161,14 @@ export function PharmacySearchForm({
                         selectedOptionId={medicationOption?.id || null}
                         helperText={
                           medicationSupportText ||
-                          "Search by brand, generic, or a precise presentation."
+                          "Search by brand, generic, or exact presentation."
                         }
                         onValueChange={handleMedicationInputChange}
                         onSelect={handleMedicationSelection}
                         emptyMessage="No medication matches yet. Try a brand, generic, or strength."
                         error={medicationError}
                         inputRef={medicationInputRef}
+                        panelMode="inline"
                         inputClassName={
                           !medication.trim()
                             ? "border-[#156d95]/24 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_1px_1px_rgba(15,23,42,0.03),0_12px_24px_rgba(21,109,149,0.08)]"
@@ -1146,17 +1176,14 @@ export function PharmacySearchForm({
                         }
                       />
 
-                      <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-[0.82rem] leading-6 text-slate-600">
-                        Medication search stays immediate. Nearby pharmacies,
-                        radius, and other secondary choices stay hidden until the
-                        core path is complete.
-                      </div>
-
                       {showSamples && !compact ? (
                         <div className="rounded-[1.08rem] border border-slate-200/80 bg-white/72 px-4 py-3.5">
                           <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
-                            Quick starts
+                            Common starting points
                           </div>
+                          <p className="mt-1.5 text-[0.82rem] leading-6 text-slate-600">
+                            Use one if it matches what you need.
+                          </p>
                           <div className="mt-2.5 flex flex-wrap gap-2.5">
                             {featuredSearches.map((search) => (
                               <button
@@ -1180,11 +1207,10 @@ export function PharmacySearchForm({
                   {activeStep === "strength" ? (
                     <div className="space-y-3.5">
                       <p className="max-w-2xl text-[0.88rem] leading-6 text-slate-600">
-                        We only stop here when the selected medication still
-                        covers multiple usable presentations. Pick the exact
-                        strength you want the nearby search to carry forward.
+                        Pick the exact strength you want the nearby search to
+                        carry forward.
                       </p>
-                      <div className="grid gap-2.5 sm:grid-cols-2">
+                      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                         {medicationOption?.strengths.map((strength, index) => {
                           const isSelected = strength.value === selectedStrength;
 
@@ -1198,15 +1224,22 @@ export function PharmacySearchForm({
                               className={cn(
                                 "flex min-h-[3.2rem] items-center justify-between rounded-[1rem] border px-4 py-2.5 text-left transition-[border-color,background-color,transform,box-shadow] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
                                 isSelected
-                                  ? "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d]"
+                                  ? "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d] shadow-[0_8px_20px_rgba(21,109,149,0.08)]"
                                   : "border-slate-200 bg-white text-slate-700 hover:border-[#156d95]/18",
                               )}
                               onClick={() => handleStrengthSelection(strength.value)}
                             >
-                              <span className="text-sm font-semibold">
-                                {strength.label}
+                              <span className="text-sm font-semibold">{strength.label}</span>
+                              <span className="inline-flex items-center gap-1 text-[0.7rem] font-semibold uppercase tracking-[0.14em]">
+                                {isSelected ? (
+                                  <>
+                                    <Check className="h-4 w-4" />
+                                    Selected
+                                  </>
+                                ) : (
+                                  "Select"
+                                )}
                               </span>
-                              {isSelected ? <Check className="h-4 w-4" /> : null}
                             </button>
                           );
                         })}
@@ -1244,10 +1277,15 @@ export function PharmacySearchForm({
                       />
 
                       <div className="flex flex-col gap-3 rounded-[1rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="max-w-[34rem] text-[0.82rem] leading-6 text-slate-600">
-                          Nearby pharmacies come from live search. Stock is not
-                          guaranteed. Call to confirm before pickup or transfer.
-                        </p>
+                        <div className="max-w-[34rem]">
+                          <p className="text-sm font-medium text-slate-900">
+                            Continue when the search area looks right.
+                          </p>
+                          <p className="mt-1 text-[0.82rem] leading-6 text-slate-600">
+                            You can still adjust radius, sort, and open-now on
+                            the next step.
+                          </p>
+                        </div>
                         <button
                           type="button"
                           className="action-button-primary min-h-[3.05rem] px-5 text-sm"
@@ -1261,7 +1299,7 @@ export function PharmacySearchForm({
 
                   {activeStep === "review" ? (
                     <div className="space-y-4">
-                      <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1fr)]">
+                      <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2">
                         <label className="search-field-stack">
                           <span className="search-field-label">Radius</span>
                           <select
@@ -1298,7 +1336,7 @@ export function PharmacySearchForm({
                           </select>
                         </label>
 
-                        <label className="search-field-stack sm:col-span-2 xl:col-span-1">
+                        <label className="search-field-stack sm:col-span-2">
                           <span className="search-field-label">Availability</span>
                           <span className="search-toggle-control cursor-pointer">
                             <input
@@ -1315,11 +1353,15 @@ export function PharmacySearchForm({
                       </div>
 
                       <div className="flex flex-col gap-3 rounded-[1rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="max-w-[34rem] text-[0.82rem] leading-6 text-slate-600">
-                          Radius, sort, and open-now filters only shape the
-                          nearby list. Inventory still needs a direct call before
-                          pickup or transfer.
-                        </p>
+                        <div className="max-w-[34rem]">
+                          <p className="text-sm font-medium text-slate-900">
+                            Use filters to reshape the nearby shortlist.
+                          </p>
+                          <p className="mt-1 text-[0.82rem] leading-6 text-slate-600">
+                            Availability still needs a direct call before pickup
+                            or transfer.
+                          </p>
+                        </div>
                         <button
                           ref={submitButtonRef}
                           type="submit"
@@ -1336,11 +1378,6 @@ export function PharmacySearchForm({
                 </motion.div>
               </AnimatePresence>
             </div>
-          </div>
-
-          <div className="mt-3.5 rounded-[1.08rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3 text-[0.8rem] leading-6 text-slate-600">
-            Nearby pharmacies come from a live search. Stock is not guaranteed.
-            Call to confirm before pickup or transfer.
           </div>
         </form>
       </div>

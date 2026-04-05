@@ -150,13 +150,13 @@ export function CrowdSignalCard({
     <div
       className={cn(
         "rounded-[1.25rem] border border-slate-200 bg-white/92 p-3.5",
-        compact && "rounded-[1.15rem] px-3 py-2.5",
+        compact && "rounded-[1.05rem] border-slate-200/85 bg-slate-50/78 px-3 py-2.5",
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-[0.68rem] uppercase tracking-[0.18em] text-slate-500">
-            Crowd availability signal
+            {compact ? "Crowd signal" : "Crowd availability signal"}
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             <span className={cn("rounded-full border px-3 py-1 text-[0.9rem] font-medium", crowdTone(resolvedSummary))}>
@@ -188,7 +188,9 @@ export function CrowdSignalCard({
       {!hasCrowdData ? (
         <div className="mt-2.5 space-y-1.5">
           <p className={cn("text-slate-600", compactSummaryClass)}>
-            No contributor reports have surfaced for this pharmacy and medication yet.
+            {compact
+              ? "No contributor reports yet. Use this pharmacy as a lead, then call to confirm availability."
+              : "No contributor reports have surfaced for this pharmacy and medication yet."}
           </p>
           {!compact ? (
             <p className="text-[0.78rem] leading-5 text-slate-500">
@@ -202,21 +204,29 @@ export function CrowdSignalCard({
             {resolvedSummary.explanation}
           </p>
 
-          <div
-            className={cn(
-              "mt-2.5 grid gap-2",
-              compact ? "grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-3",
-            )}
-          >
-            <MiniMetric compact={compact} label="Likelihood" value={likelihoodDisplay} />
-            <MiniMetric
-              compact={compact}
-              label={isDemoMedication ? "Live reports" : "Reports"}
-              value={String(resolvedSummary.reportCount)}
-            />
-            <MiniMetric compact={compact} label="Freshness" value={resolvedSummary.freshnessNote} />
-            {!compact ? <MiniMetric compact={compact} label="Consensus" value={resolvedSummary.agreementDisplay} /> : null}
-          </div>
+          {compact ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.78rem] text-slate-500">
+              <span>{likelihoodDisplay} likelihood</span>
+              <span aria-hidden>•</span>
+              <span>
+                {resolvedSummary.reportCount}{" "}
+                {resolvedSummary.reportCount === 1 ? "report" : "reports"}
+              </span>
+              <span aria-hidden>•</span>
+              <span>{resolvedSummary.freshnessNote}</span>
+            </div>
+          ) : (
+            <div className="mt-2.5 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <MiniMetric compact={compact} label="Likelihood" value={likelihoodDisplay} />
+              <MiniMetric
+                compact={compact}
+                label={isDemoMedication ? "Live reports" : "Reports"}
+                value={String(resolvedSummary.reportCount)}
+              />
+              <MiniMetric compact={compact} label="Freshness" value={resolvedSummary.freshnessNote} />
+              <MiniMetric compact={compact} label="Consensus" value={resolvedSummary.agreementDisplay} />
+            </div>
+          )}
 
           {!compact ? (
             <p className="mt-2.5 text-[0.74rem] leading-5 text-slate-500">

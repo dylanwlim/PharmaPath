@@ -6,6 +6,7 @@ import {
   formatRecallClassification,
 } from "@/components/search/shared";
 import type { DrugIntelligenceResponse } from "@/lib/pharmapath-client";
+import { cn } from "@/lib/utils";
 
 type Match = DrugIntelligenceResponse["matches"][number];
 type ShortageItem = Match["evidence"]["shortages"]["items"][number];
@@ -358,19 +359,38 @@ function meterMarkerStyle(score: number) {
   };
 }
 
-function AccessMeter({ score }: { score: number }) {
+function AccessMeter({
+  score,
+  compact = false,
+}: {
+  score: number;
+  compact?: boolean;
+}) {
   const markerStyle = meterMarkerStyle(score);
 
   return (
-    <div className="mt-3">
+    <div className={compact ? "mt-2.5" : "mt-3"}>
       <div className="relative overflow-visible rounded-full">
-        <div className="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500" />
+        <div
+          className={cn(
+            "rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-rose-500",
+            compact ? "h-1.5" : "h-2",
+          )}
+        />
         <span
-          className="absolute top-1/2 h-3.5 w-3.5 rounded-full border-2 border-white bg-slate-950 shadow-[0_6px_14px_rgba(15,23,42,0.18)]"
+          className={cn(
+            "absolute top-1/2 rounded-full border-2 border-white bg-slate-950 shadow-[0_6px_14px_rgba(15,23,42,0.18)]",
+            compact ? "h-3 w-3" : "h-3.5 w-3.5",
+          )}
           style={markerStyle}
         />
       </div>
-      <div className="mt-1.5 flex items-center justify-between text-[0.6rem] uppercase tracking-[0.16em] text-slate-500">
+      <div
+        className={cn(
+          "mt-1.5 flex items-center justify-between uppercase tracking-[0.16em] text-slate-500",
+          compact ? "text-[0.55rem]" : "text-[0.6rem]",
+        )}
+      >
         <span className="pr-3">Lower friction</span>
         <span className="pl-3 text-right">Higher friction</span>
       </div>
@@ -386,7 +406,7 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
   return (
     <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Dose coverage</span>
-      <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {rows.slice(0, 4).map((row) => {
           const toneClass =
             row.availabilityPercent === 100
@@ -398,7 +418,7 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
           return (
             <div
               key={row.label}
-              className={`rounded-[0.95rem] border px-3 py-2.5 ${toneClass}`}
+              className={`rounded-[0.95rem] border px-3 py-2 ${toneClass}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold">{row.label}</span>
@@ -424,7 +444,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
     return null;
   }
 
-  const visibleRows = showAll ? rows : rows.slice(0, 5);
+  const visibleRows = showAll ? rows : rows.slice(0, 4);
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
@@ -432,33 +452,38 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
       <span className="eyebrow-label">Manufacturer status</span>
       <div className="mt-3 divide-y divide-slate-100">
         {visibleRows.map((row) => (
-          <div key={row.name} className="flex items-start gap-3 py-2.5 first:pt-0 last:pb-0">
-            <span className={`mt-1.5 h-2.5 w-2.5 rounded-full ${row.statusDotClass}`} />
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
+          <div
+            key={row.name}
+            className="grid gap-2.5 py-3 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_auto] md:items-start"
+          >
+            <div className="flex items-start gap-3">
+              <span className={`mt-1.5 h-2.5 w-2.5 rounded-full ${row.statusDotClass}`} />
+              <div className="min-w-0 flex-1">
                 <h3 className="text-sm font-semibold text-slate-950">{row.name}</h3>
-                {row.lastUpdate ? (
-                  <span className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-400">
-                    {row.lastUpdate}
-                  </span>
+                {row.strengths.length ? (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {row.strengths.map((strength) => (
+                      <span
+                        key={`${row.name}-${strength}`}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.64rem] text-slate-600"
+                      >
+                        {strength}
+                      </span>
+                    ))}
+                  </div>
                 ) : null}
               </div>
-              {row.strengths.length ? (
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {row.strengths.map((strength) => (
-                    <span
-                      key={`${row.name}-${strength}`}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.64rem] text-slate-600"
-                    >
-                      {strength}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
             </div>
-            <span className={`text-[0.66rem] font-semibold uppercase tracking-[0.16em] ${row.statusTextClass}`}>
-              {row.statusLabel}
-            </span>
+            <div className="flex flex-wrap items-center gap-2 md:justify-end">
+              {row.lastUpdate ? (
+                <span className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-400">
+                  {row.lastUpdate}
+                </span>
+              ) : null}
+              <span className={`text-[0.66rem] font-semibold uppercase tracking-[0.16em] ${row.statusTextClass}`}>
+                {row.statusLabel}
+              </span>
+            </div>
           </div>
         ))}
       </div>
@@ -588,7 +613,7 @@ function PatientMeaningCard({ items }: { items: string[] }) {
 
   return (
     <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
-      <span className="eyebrow-label">What this means for you</span>
+      <span className="eyebrow-label">What to keep in mind</span>
       <div className="mt-3 divide-y divide-slate-100">
         {items.map((item) => {
           const tone = classifyPatientInsight(item);
@@ -730,16 +755,33 @@ function buildIntelligenceContext({
 function SnapshotStat({
   label,
   value,
+  compact = false,
 }: {
   label: string;
   value: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="rounded-[0.95rem] border border-white/75 bg-white/74 px-3 py-2.5">
-      <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
+    <div
+      className={cn(
+        "rounded-[0.95rem] border border-white/75 bg-white/74",
+        compact ? "px-2.5 py-2" : "px-3 py-2.5",
+      )}
+    >
+      <div
+        className={cn(
+          "uppercase tracking-[0.16em] text-slate-500",
+          compact ? "text-[0.58rem]" : "text-[0.64rem]",
+        )}
+      >
         {label}
       </div>
-      <div className="mt-1 text-[0.96rem] font-semibold leading-5 text-slate-900">
+      <div
+        className={cn(
+          "mt-1 font-semibold leading-5 text-slate-900",
+          compact ? "text-[0.88rem]" : "text-[0.96rem]",
+        )}
+      >
         {value}
       </div>
     </div>
@@ -781,10 +823,16 @@ export function MedicationAccessSnapshotCard({
       value: context.snapshot.lastUpdateLabel,
     },
   ];
+  const compact = variant === "patient";
 
   return (
     <div
-      className={`surface-panel rounded-[1.55rem] border p-4 sm:p-5 ${context.snapshot.band.panelClass} ${context.snapshot.band.borderClass}`}
+      className={cn(
+        "surface-panel border",
+        compact ? "rounded-[1.45rem] p-4" : "rounded-[1.55rem] p-4 sm:p-5",
+        context.snapshot.band.panelClass,
+        context.snapshot.band.borderClass,
+      )}
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="eyebrow-label">
@@ -799,7 +847,12 @@ export function MedicationAccessSnapshotCard({
         ) : null}
       </div>
 
-      <div className="mt-3 rounded-[0.95rem] border border-white/70 bg-white/72 px-3.5 py-3">
+      <div
+        className={cn(
+          "mt-3 rounded-[0.95rem] border border-white/70 bg-white/72",
+          compact ? "px-3 py-2.5" : "px-3.5 py-3",
+        )}
+      >
         <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
           Context shown
         </div>
@@ -811,37 +864,67 @@ export function MedicationAccessSnapshotCard({
             Matched family: {match.display_name}
           </div>
         ) : null}
-        <p className="mt-1 text-[0.76rem] leading-5 text-slate-600">
+        <p
+          className={cn(
+            "mt-1 leading-5 text-slate-600",
+            compact ? "text-[0.74rem]" : "text-[0.76rem]",
+          )}
+        >
           {context.familyContextNote}
         </p>
       </div>
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className={`text-[1.45rem] font-bold tracking-tight ${context.snapshot.band.textClass}`}>
+          <div
+            className={cn(
+              "font-bold tracking-tight",
+              compact ? "text-[1.28rem]" : "text-[1.45rem]",
+              context.snapshot.band.textClass,
+            )}
+          >
             {context.snapshot.band.label}
           </div>
-          <p className="mt-1 max-w-xl text-sm leading-6 text-slate-700">
+          <p
+            className={cn(
+              "mt-1 max-w-xl leading-6 text-slate-700",
+              compact ? "text-[0.88rem]" : "text-sm",
+            )}
+          >
             {context.snapshot.band.summary}
           </p>
         </div>
         <div
-          className={`rounded-full border px-3 py-1 text-[0.92rem] font-semibold tabular-nums ${context.snapshot.band.badgeClass}`}
+          className={cn(
+            "rounded-full border font-semibold tabular-nums",
+            compact ? "px-2.5 py-0.5 text-[0.82rem]" : "px-3 py-1 text-[0.92rem]",
+            context.snapshot.band.badgeClass,
+          )}
         >
           {context.snapshot.score}/100
         </div>
       </div>
 
-      <AccessMeter score={context.snapshot.score} />
+      <AccessMeter score={context.snapshot.score} compact={compact} />
 
-      <div className="mt-3.5 grid gap-2 sm:grid-cols-3">
+      <div className={cn("mt-3.5 grid gap-2 sm:grid-cols-3", compact && "mt-3")}>
         {metaItems.map((item) => (
-          <SnapshotStat key={item.label} label={item.label} value={item.value} />
+          <SnapshotStat
+            key={item.label}
+            label={item.label}
+            value={item.value}
+            compact={compact}
+          />
         ))}
       </div>
 
       {context.snapshot.primaryReason ? (
-        <div className="mt-3 rounded-[0.95rem] border border-white/70 bg-white/72 px-3.5 py-2.5">
+        <div
+          className={cn(
+            "mt-3 rounded-[0.95rem] border border-white/70 bg-white/72",
+            compact ? "px-3 py-2" : "px-3.5 py-2.5",
+          )}
+        >
           <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
             Shortage driver
           </div>
@@ -851,7 +934,12 @@ export function MedicationAccessSnapshotCard({
         </div>
       ) : null}
 
-      <p className="mt-3 text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">
+      <p
+        className={cn(
+          "mt-3 uppercase tracking-[0.16em] text-slate-500",
+          compact ? "text-[0.64rem]" : "text-[0.68rem]",
+        )}
+      >
         {context.freshnessLabel}
       </p>
     </div>
@@ -880,13 +968,38 @@ export function MedicationContextDetails({
     referenceTime,
   });
 
+  if (variant === "patient") {
+    return (
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]">
+        <div className="space-y-4">
+          <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
+          <RecallActivityCard items={match.evidence.recalls.items} />
+        </div>
+
+        <div className="space-y-4">
+          {context.snapshot.doseAvailability.length ? (
+            <DoseAvailabilityCard rows={context.snapshot.doseAvailability} />
+          ) : null}
+
+          {context.snapshot.manufacturerRows.length ? (
+            <ManufacturerStatusCard rows={context.snapshot.manufacturerRows} />
+          ) : null}
+        </div>
+
+        <div className="xl:col-span-2">
+          <SnapshotFooter
+            isDemoMatch={context.isDemoMatch}
+            variant={variant}
+            note={match.demo_context?.note}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {variant === "patient" ? (
-        <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
-      ) : (
-        <ActiveShortageEntriesCard items={context.snapshot.activeItems} />
-      )}
+      <ActiveShortageEntriesCard items={context.snapshot.activeItems} />
 
       {context.snapshot.doseAvailability.length ? (
         <DoseAvailabilityCard rows={context.snapshot.doseAvailability} />

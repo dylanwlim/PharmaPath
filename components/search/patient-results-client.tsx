@@ -6,7 +6,6 @@ import {
   AlertCircle,
   ExternalLink,
   LoaderCircle,
-  MapPin,
   PhoneCall,
 } from "lucide-react";
 import { CrowdSignalCard } from "@/components/crowd-signal/crowd-signal-card";
@@ -200,12 +199,11 @@ function MedicationLookupCard({
     <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Next step</span>
       <h3 className="mt-2.5 text-[1.06rem] tracking-tight text-slate-950">
-        Need the broader medication evidence view?
+        Need the broader medication view?
       </h3>
       <p className="mt-2 text-[0.92rem] leading-6 text-slate-600">
-        Open Medication Lookup when the next question is about shortage
-        planning, formulation spread, or manufacturer coverage instead of one
-        nearby call list.
+        Open Medication Lookup when you want the fuller shortage,
+        manufacturer, or recall picture behind this search.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {["Dose coverage", "Manufacturer status", "Recall context"].map(
@@ -228,34 +226,41 @@ function MedicationLookupCard({
   );
 }
 
-function TrustBoundaryCard({
+function SearchGuidanceCard({
   pharmacyData,
-  crowdReady,
 }: {
   pharmacyData: PharmacySearchResponse;
-  crowdReady: boolean;
 }) {
   return (
     <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
-      <span className="eyebrow-label">Trust boundary</span>
-      <div className="mt-2.5 flex items-center gap-2 font-medium text-slate-900">
-        <MapPin className="h-4 w-4 text-[#156d95]" />
-        {pharmacyData.disclaimer}
-      </div>
+      <span className="eyebrow-label">First call focus</span>
+      <h2 className="mt-2.5 text-[1.06rem] tracking-tight text-slate-950">
+        Know what this shortlist is prioritizing.
+      </h2>
       <p className="mt-2 text-[0.9rem] leading-6 text-slate-600">
-        {pharmacyData.guidance.demo_boundary} Community reports stay layered on
-        top of the live nearby list rather than acting as proof of verified
-        shelf inventory.
-        {pharmacyData.medication_profile.demo_only
-          ? " This medication profile is simulated for the demo and intentionally separated from the main medication reference flow."
-          : ""}
+        {pharmacyData.guidance.summary}
       </p>
-      {!crowdReady ? (
-        <div className="mt-2.5 flex items-center gap-2 text-sm text-slate-500">
-          <LoaderCircle className="h-4 w-4 animate-spin" />
-          Loading crowd signal...
+
+      <div className="mt-3 rounded-[1rem] border border-slate-200 bg-slate-50/82 px-4 py-3">
+        <div className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-500">
+          Ask first
         </div>
-      ) : null}
+        <p className="mt-1 text-sm font-medium leading-6 text-slate-900">
+          {pharmacyData.guidance.recommended_action}
+        </p>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {pharmacyData.guidance.tags.slice(0, 3).map((tag) => (
+          <span key={tag} className="flat-chip text-[0.82rem]">
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      <p className="mt-3 text-[0.78rem] leading-5 text-slate-500">
+        {pharmacyData.disclaimer}
+      </p>
     </div>
   );
 }
@@ -340,7 +345,6 @@ export function PatientResultsClient({
   const [crowdSignals, setCrowdSignals] = useState<
     Record<string, ReturnType<typeof buildCrowdSignalMap>[string]>
   >({});
-  const [crowdReady, setCrowdReady] = useState(false);
   const [isLoading, setIsLoading] = useState(hasSearchInput);
   const [showAll, setShowAll] = useState(false);
 
@@ -414,11 +418,9 @@ export function PatientResultsClient({
   useEffect(() => {
     if (!query) {
       setCrowdSignals({});
-      setCrowdReady(true);
       return;
     }
 
-    setCrowdReady(false);
     let cancelled = false;
     let unsubscribe: () => void = () => undefined;
 
@@ -430,13 +432,11 @@ export function PatientResultsClient({
 
         unsubscribe = subscribeToCrowdReportsForMedication(query, (reports) => {
           setCrowdSignals(buildCrowdSignalMap(reports));
-          setCrowdReady(true);
         });
       })
       .catch(() => {
         if (!cancelled) {
           setCrowdSignals({});
-          setCrowdReady(true);
         }
       });
 
@@ -513,43 +513,59 @@ export function PatientResultsClient({
 
   return (
     <>
-      <section className="px-4 pb-9 pt-24 sm:px-6 lg:px-8">
-        <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,0.74fr)_minmax(0,1.26fr)] lg:items-start xl:gap-10">
-          <div className="max-w-[29rem] pt-1 sm:max-w-[31rem]">
+      <section className="px-4 pb-10 pt-24 sm:px-6 lg:px-8">
+        <div className="site-shell grid gap-8 xl:grid-cols-[minmax(0,1.04fr)_minmax(20rem,0.72fr)] xl:items-start xl:gap-8">
+          <div className="max-w-[44rem] pt-1">
             <span className="eyebrow-label">Pharmacy Results</span>
-            <h1 className="mt-5 max-w-[26rem] text-[2.4rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.8rem] xl:text-[3rem]">
-              Refine the nearby call list without reopening a dense form.
+            <h1 className="mt-5 max-w-[34rem] text-[2.4rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.8rem] xl:text-[3rem]">
+              Find nearby pharmacies worth calling first.
             </h1>
-            <p className="mt-4 max-w-[28rem] text-[1rem] leading-7 text-slate-600 sm:text-[1.05rem]">
+            <p className="mt-4 max-w-[39rem] text-[1rem] leading-7 text-slate-600 sm:text-[1.05rem]">
               {isDemoMedication
-                ? "This search keeps the live nearby list and the clearly labeled demo medication profile together while staying explicit that the medication context is simulated."
-                : "This search keeps the live nearby list and medication access context together without turning either into a claim of verified shelf inventory."}
+                ? "Refine the nearby shortlist while keeping the demo medication context clearly labeled and separate from live pharmacy availability."
+                : "Update the medication, strength, location, or filters to rebuild the nearby shortlist. Availability still needs a direct pharmacy call before pickup or transfer."}
             </p>
 
-            <div className="mt-6 grid gap-3">
-              <div className="rounded-[1.25rem] border border-white/80 bg-white/78 px-4 py-3 text-[0.9rem] leading-6 text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-                Edit medication, strength, or location first. Radius, sort, and
-                open-now filters stay secondary.
-              </div>
-              <div className="rounded-[1.25rem] border border-white/80 bg-white/78 px-4 py-3 text-[0.9rem] leading-6 text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-                The nearby list is live. Stock still needs a pharmacy call
-                before pickup or transfer.
-              </div>
-            </div>
+            <PharmacySearchForm
+              className="mt-7"
+              initialMedication={resolvedMedicationLabel}
+              initialLocation={location}
+              initialLocationPlaceId={locationPlaceId || undefined}
+              initialRadiusMiles={radiusMiles}
+              initialSortBy={sortBy}
+              initialOnlyOpenNow={onlyOpenNow}
+              initialSelectedStrength={resolvedMedicationStrength}
+              compact
+              submitLabel="Refresh nearby search"
+            />
           </div>
 
-          <PharmacySearchForm
-            className="justify-self-stretch"
-            initialMedication={resolvedMedicationLabel}
-            initialLocation={location}
-            initialLocationPlaceId={locationPlaceId || undefined}
-            initialRadiusMiles={radiusMiles}
-            initialSortBy={sortBy}
-            initialOnlyOpenNow={onlyOpenNow}
-            initialSelectedStrength={resolvedMedicationStrength}
-            compact
-            submitLabel="Refresh nearby search"
-          />
+          <aside className="space-y-4 xl:pt-14">
+            {isLoading && hasSearchInput ? (
+              <>
+                <div className="surface-panel min-h-[11rem] rounded-[1.65rem] p-5" />
+                <div className="surface-panel min-h-[20rem] rounded-[1.65rem] p-5" />
+              </>
+            ) : null}
+
+            {!isLoading && pharmacyData ? (
+              <SearchGuidanceCard pharmacyData={pharmacyData} />
+            ) : null}
+
+            {!isLoading && featuredMatch && !drugError ? (
+              <MedicationAccessSnapshotCard
+                match={featuredMatch}
+                dataFreshness={drugData!.data_freshness}
+                variant="patient"
+                selectedMedicationLabel={resolvedMedicationLabel}
+                selectedStrength={resolvedMedicationStrength}
+              />
+            ) : null}
+
+            {!isLoading && drugError ? (
+              <MedicationContextError message={drugError} />
+            ) : null}
+          </aside>
         </div>
       </section>
 
@@ -558,21 +574,21 @@ export function PatientResultsClient({
           {!query || !location ? (
             <EmptyState
               eyebrow="Ready when you are"
-              title="Enter a medication and a location to load Pharmacy Finder."
-              body="PharmaPath combines a live nearby pharmacy lookup with medication access context without claiming any pharmacy has the medication confirmed on the shelf."
+              title="Enter a medication and location to build the nearby call list."
+              body="PharmaPath combines live nearby pharmacy results with medication context without claiming any pharmacy has the medication confirmed on the shelf."
             />
           ) : isLoading ? (
             <div className="space-y-5">
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.86fr)]">
-                <div className="surface-panel flex min-h-[22rem] items-center justify-center rounded-[1.85rem]">
-                  <div className="flex items-center gap-3 text-slate-500">
-                    <LoaderCircle className="h-5 w-5 animate-spin" />
-                    Loading nearby options and medication context…
-                  </div>
+              <div className="surface-panel flex min-h-[22rem] items-center justify-center rounded-[1.85rem]">
+                <div className="flex items-center gap-3 text-slate-500">
+                  <LoaderCircle className="h-5 w-5 animate-spin" />
+                  Loading nearby options and medication context…
                 </div>
-                <div className="surface-panel min-h-[22rem] rounded-[1.85rem] p-5" />
               </div>
-              <div className="surface-panel min-h-[12rem] rounded-[1.85rem] p-5" />
+              <div className="grid gap-4 xl:grid-cols-2">
+                <div className="surface-panel min-h-[12rem] rounded-[1.65rem] p-5" />
+                <div className="surface-panel min-h-[12rem] rounded-[1.65rem] p-5" />
+              </div>
             </div>
           ) : (
             <>
@@ -601,189 +617,144 @@ export function PatientResultsClient({
                 </div>
               ) : null}
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.04fr)_minmax(20rem,0.96fr)] xl:items-start">
-                <div className="space-y-5">
-                  <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <span className="eyebrow-label">
-                          Live nearby pharmacies
-                        </span>
-                        <h2 className="mt-3 text-[1.8rem] tracking-tight text-balance text-slate-950 sm:text-[2rem]">
-                          {pharmacyData?.location.display_label ||
-                            pharmacyData?.location.formatted_address ||
-                            location}
-                        </h2>
-                      </div>
-                      {pharmacyData ? (
-                        <div className="grid w-full grid-cols-3 gap-2.5 sm:w-auto sm:min-w-[18rem]">
-                          <MetricPill
-                            label="Results"
-                            value={String(pharmacyData.counts.total)}
-                          />
-                          <MetricPill
-                            label="Open now"
-                            value={String(pharmacyData.counts.open_now)}
-                          />
-                          <MetricPill
-                            label="Hours unknown"
-                            value={String(pharmacyData.counts.hours_unknown)}
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {pharmacyError ? (
-                      <div className="mt-5 rounded-[1.3rem] border border-rose-200 bg-rose-50 p-4 text-rose-700">
-                        <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em]">
-                          <AlertCircle className="h-4 w-4" />
-                          Nearby lookup unavailable
-                        </div>
-                        <p className="mt-2 text-[0.98rem] leading-7">
-                          {pharmacyError}
-                        </p>
-                      </div>
-                    ) : pharmacyData?.degraded_reason ? (
-                      <div className="mt-5 rounded-[1.3rem] border border-amber-200 bg-amber-50 p-4 text-amber-800">
-                        <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em]">
-                          <AlertCircle className="h-4 w-4" />
-                          Live nearby search limited
-                        </div>
-                        <p className="mt-2 text-[0.98rem] leading-7">
-                          {pharmacyData.degraded_reason}
-                        </p>
-                      </div>
-                    ) : pharmacyData?.recommended ? (
-                      <div className="mt-5">
-                        <div
-                          className={`${recommendedPharmacyCardClass} p-4 sm:p-5`}
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm uppercase tracking-[0.18em] text-slate-500">
-                                Recommended first call
-                              </div>
-                              <h3 className="mt-2 text-[1.4rem] tracking-tight text-slate-950 sm:text-[1.55rem]">
-                                {pharmacyData.recommended.name}
-                              </h3>
-                              <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                                {pharmacyData.recommended.address}
-                              </p>
-                            </div>
-                            <ResultDistanceChip
-                              distanceMiles={
-                                pharmacyData.recommended.distance_miles
-                              }
-                            />
-                          </div>
-
-                          <div className="mt-3">
-                            <PharmacyAvailabilityMeta
-                              result={pharmacyData.recommended}
-                            />
-                          </div>
-
-                          <p className="mt-3 line-clamp-2 text-[0.96rem] leading-6 text-slate-700">
-                            {pharmacyData.recommended.match_reason}
-                          </p>
-
-                          <div className="mt-3">
-                            <CrowdSignalCard
-                              medicationQuery={query}
-                              medicationContext={
-                                pharmacyData?.medication_profile
-                              }
-                              pharmacy={{
-                                name: pharmacyData.recommended.name,
-                                address: pharmacyData.recommended.address,
-                                placeId: pharmacyData.recommended.place_id,
-                                googleMapsUrl:
-                                  pharmacyData.recommended.google_maps_url,
-                              }}
-                              summary={resolveCrowdSignalSummary(
-                                pharmacyData.recommended,
-                                0,
-                              )}
-                            />
-                          </div>
-
-                          <PharmacyActionRow pharmacy={pharmacyData.recommended} />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-5 rounded-[1.3rem] border border-slate-200 bg-white p-4 text-slate-600">
-                        {pharmacyData?.degraded_reason
-                          ? "Live nearby pharmacy results are unavailable right now. Medication context is still available below."
-                          : "No nearby pharmacy results surfaced for this search. Try a broader location or a larger radius."}
-                      </div>
-                    )}
+              <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="max-w-[38rem]">
+                    <span className="eyebrow-label">Nearby call list</span>
+                    <h2 className="mt-3 text-[1.8rem] tracking-tight text-balance text-slate-950 sm:text-[2rem]">
+                      {pharmacyData?.location.display_label ||
+                        pharmacyData?.location.formatted_address ||
+                        location}
+                    </h2>
+                    {pharmacyData ? (
+                      <p className="mt-2 text-[0.92rem] leading-6 text-slate-600">
+                        {pharmacyData.guidance.ranking_focus}
+                      </p>
+                    ) : null}
                   </div>
+                  {pharmacyData ? (
+                    <div className="grid w-full grid-cols-3 gap-2.5 sm:w-auto sm:min-w-[18rem]">
+                      <MetricPill
+                        label="Results"
+                        value={String(pharmacyData.counts.total)}
+                      />
+                      <MetricPill
+                        label="Open now"
+                        value={String(pharmacyData.counts.open_now)}
+                      />
+                      <MetricPill
+                        label="Hours unknown"
+                        value={String(pharmacyData.counts.hours_unknown)}
+                      />
+                    </div>
+                  ) : null}
                 </div>
 
-                <div className="xl:self-start">
-                  {drugError ? (
-                    <MedicationContextError message={drugError} />
-                  ) : featuredMatch ? (
-                    <MedicationAccessSnapshotCard
-                      match={featuredMatch}
-                      dataFreshness={drugData!.data_freshness}
-                      variant="patient"
-                      selectedMedicationLabel={resolvedMedicationLabel}
-                      selectedStrength={resolvedMedicationStrength}
-                    />
-                  ) : (
-                    <EmptyState
-                      eyebrow="No clear match"
-                      title={`No medication context matched "${query}".`}
-                      body="No active shortage or recall context matched this medication. Try simplifying the medication name."
-                    />
-                  )}
-                </div>
+                {pharmacyError ? (
+                  <div className="mt-5 rounded-[1.3rem] border border-rose-200 bg-rose-50 p-4 text-rose-700">
+                    <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em]">
+                      <AlertCircle className="h-4 w-4" />
+                      Nearby lookup unavailable
+                    </div>
+                    <p className="mt-2 text-[0.98rem] leading-7">
+                      {pharmacyError}
+                    </p>
+                  </div>
+                ) : pharmacyData?.degraded_reason ? (
+                  <div className="mt-5 rounded-[1.3rem] border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                    <div className="flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em]">
+                      <AlertCircle className="h-4 w-4" />
+                      Live nearby search limited
+                    </div>
+                    <p className="mt-2 text-[0.98rem] leading-7">
+                      {pharmacyData.degraded_reason}
+                    </p>
+                  </div>
+                ) : pharmacyData?.recommended ? (
+                  <div className="mt-5">
+                    <div className={`${recommendedPharmacyCardClass} p-4 sm:p-5`}>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm uppercase tracking-[0.18em] text-slate-500">
+                            Recommended first call
+                          </div>
+                          <h3 className="mt-2 text-[1.4rem] tracking-tight text-slate-950 sm:text-[1.55rem]">
+                            {pharmacyData.recommended.name}
+                          </h3>
+                          <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                            {pharmacyData.recommended.address}
+                          </p>
+                        </div>
+                        <ResultDistanceChip
+                          distanceMiles={pharmacyData.recommended.distance_miles}
+                        />
+                      </div>
+
+                      <div className="mt-3">
+                        <PharmacyAvailabilityMeta result={pharmacyData.recommended} />
+                      </div>
+
+                      <p className="mt-3 line-clamp-2 text-[0.96rem] leading-6 text-slate-700">
+                        {pharmacyData.recommended.match_reason}
+                      </p>
+
+                      <div className="mt-3">
+                        <CrowdSignalCard
+                          medicationQuery={query}
+                          medicationContext={pharmacyData?.medication_profile}
+                          pharmacy={{
+                            name: pharmacyData.recommended.name,
+                            address: pharmacyData.recommended.address,
+                            placeId: pharmacyData.recommended.place_id,
+                            googleMapsUrl:
+                              pharmacyData.recommended.google_maps_url,
+                          }}
+                          summary={resolveCrowdSignalSummary(
+                            pharmacyData.recommended,
+                            0,
+                          )}
+                        />
+                      </div>
+
+                      <PharmacyActionRow pharmacy={pharmacyData.recommended} />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-5 rounded-[1.3rem] border border-slate-200 bg-white p-4 text-slate-600">
+                    {pharmacyData?.degraded_reason
+                      ? "Live nearby pharmacy results are unavailable right now. Medication context is still available below."
+                      : "No nearby pharmacy results surfaced for this search. Try a broader location or a larger radius."}
+                  </div>
+                )}
               </div>
 
               {featuredMatch && !drugError ? (
-                <div className="space-y-5">
-                  <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <span className="eyebrow-label">Medication context</span>
-                        <h3 className="mt-3 text-[1.24rem] tracking-tight text-slate-950">
-                          What to carry into the first call.
-                        </h3>
-                      </div>
-                    </div>
-
-                    <div className="mt-4">
-                      <MedicationContextDetails
-                        match={featuredMatch}
-                        dataFreshness={drugData!.data_freshness}
-                        variant="patient"
-                        selectedMedicationLabel={resolvedMedicationLabel}
-                        selectedStrength={resolvedMedicationStrength}
-                      />
-                    </div>
+                <div className="space-y-4">
+                  <div className="max-w-[44rem]">
+                    <span className="eyebrow-label">Medication context</span>
+                    <h3 className="mt-3 text-[1.24rem] tracking-tight text-slate-950">
+                      What to carry into the first call.
+                    </h3>
+                    <p className="mt-1.5 text-[0.92rem] leading-6 text-slate-600">
+                      Keep this context in the background while you decide who
+                      to call next.
+                    </p>
                   </div>
 
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <MedicationLookupCard
-                      query={query}
-                      location={location}
-                      matchId={featuredMatch.id}
-                    />
+                  <MedicationContextDetails
+                    match={featuredMatch}
+                    dataFreshness={drugData!.data_freshness}
+                    variant="patient"
+                    selectedMedicationLabel={resolvedMedicationLabel}
+                    selectedStrength={resolvedMedicationStrength}
+                  />
 
-                    {pharmacyData ? (
-                      <TrustBoundaryCard
-                        pharmacyData={pharmacyData}
-                        crowdReady={crowdReady}
-                      />
-                    ) : null}
-                  </div>
+                  <MedicationLookupCard
+                    query={query}
+                    location={location}
+                    matchId={featuredMatch.id}
+                  />
                 </div>
-              ) : pharmacyData ? (
-                <TrustBoundaryCard
-                  pharmacyData={pharmacyData}
-                  crowdReady={crowdReady}
-                />
               ) : null}
 
               {visibleExtras.length ? (
