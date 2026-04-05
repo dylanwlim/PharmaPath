@@ -115,11 +115,11 @@ export function FooterEntry({
     >
       <motion.div
         initial={false}
-        animate={animateFooterIn ? { opacity: 0, y: 18 } : { opacity: 1, y: 0 }}
+        animate={animateFooterIn ? { opacity: 0, y: 16 } : { opacity: 1, y: 0 }}
         transition={
           shouldAnimateOnScroll
             ? {
-                duration: motionTiming.reveal * 0.78,
+                duration: motionTiming.reveal * 0.72,
                 ease: motionEase.reveal,
               }
             : undefined
