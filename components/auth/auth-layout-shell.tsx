@@ -26,19 +26,19 @@ const valuePoints = [
 
 export function AuthLayoutShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#fbfcfb]">
-      <div className="absolute inset-0 hidden lg:block">
-        <div className="absolute inset-0 bg-[linear-gradient(112deg,#e8f4fa_0%,#f3f8fb_31%,#fbfcfb_57%,#ffffff_84%)]" />
-        <div className="absolute -left-12 top-[8%] h-[30rem] w-[30rem] rounded-full bg-[#156d95]/12 blur-3xl animate-gradient" />
+    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(135deg,#eef7fb_0%,#f7fbfd_34%,#fbfcfb_66%,#ffffff_100%)]">
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_20%,rgba(21,109,149,0.12),transparent_28%),radial-gradient(circle_at_30%_72%,rgba(35,163,134,0.1),transparent_26%),radial-gradient(circle_at_72%_18%,rgba(141,207,223,0.09),transparent_22%),linear-gradient(135deg,#eef7fb_0%,#f7fbfd_34%,#fbfcfb_66%,#ffffff_100%)]" />
+        <div className="absolute -left-14 top-[6%] hidden h-[30rem] w-[30rem] rounded-full bg-[#156d95]/12 blur-3xl animate-gradient lg:block" />
         <div
-          className="absolute left-[30%] top-[24%] h-[24rem] w-[24rem] rounded-full bg-[#8dcfdf]/10 blur-3xl animate-gradient"
+          className="absolute left-[28%] top-[22%] hidden h-[24rem] w-[24rem] rounded-full bg-[#8dcfdf]/10 blur-3xl animate-gradient lg:block"
           style={{ animationDelay: "-4s" }}
         />
         <div
-          className="absolute left-[22%] bottom-[-8%] h-[28rem] w-[28rem] rounded-full bg-[#23a386]/10 blur-3xl animate-gradient"
+          className="absolute left-[20%] bottom-[-10%] hidden h-[28rem] w-[28rem] rounded-full bg-[#23a386]/10 blur-3xl animate-gradient lg:block"
           style={{ animationDelay: "-7s" }}
         />
-        <div className="absolute inset-y-0 right-[-10%] w-[62%] bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.58)_0%,rgba(255,255,255,0.88)_42%,rgba(255,255,255,0.97)_68%,rgba(255,255,255,1)_100%)]" />
+        <div className="absolute inset-y-0 right-[-12%] hidden w-[58%] bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.52)_0%,rgba(255,255,255,0.86)_44%,rgba(255,255,255,0.98)_70%,rgba(255,255,255,1)_100%)] lg:block" />
       </div>
 
       <div className="relative flex min-h-screen">
@@ -94,9 +94,11 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
             <Logo />
           </div>
 
-          <div className="relative z-10 flex flex-1 items-center justify-center p-6 lg:p-12">
-            <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {children}
+          <div className="relative z-10 flex flex-1 items-center justify-center p-6 lg:p-10 xl:p-12">
+            <div className="w-full max-w-[34rem] animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="rounded-[2rem] border border-white/80 bg-white/84 p-7 shadow-[0_24px_80px_-44px_rgba(15,23,42,0.38)] backdrop-blur-xl sm:p-8 lg:p-9">
+                {children}
+              </div>
             </div>
           </div>
         </main>

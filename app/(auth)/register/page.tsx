@@ -190,7 +190,7 @@ function RegisterPageInner() {
             <AuthInput
               id="firstName"
               name="firstName"
-              placeholder="Dylan"
+              placeholder="Jane"
               autoComplete="given-name"
               disabled={isLoading}
             />
@@ -205,7 +205,7 @@ function RegisterPageInner() {
             <AuthInput
               id="lastName"
               name="lastName"
-              placeholder="Lim"
+              placeholder="Doe"
               autoComplete="family-name"
               disabled={isLoading}
             />
@@ -237,7 +237,7 @@ function RegisterPageInner() {
           <AuthInput
             id="location"
             name="location"
-            placeholder="10011 or Brooklyn, NY"
+            placeholder="10001 or New York, NY"
             autoComplete="postal-code"
             disabled={isLoading}
           />
