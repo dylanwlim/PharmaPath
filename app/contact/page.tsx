@@ -276,10 +276,10 @@ export default function ContactPage() {
         <main>
           <section className="px-4 pb-14 pt-[calc(var(--navbar-height)+0.9rem)] sm:px-6 sm:pb-16 sm:pt-[calc(var(--navbar-height)+1rem)] lg:px-8 lg:pb-20 lg:pt-[calc(var(--navbar-height)+1.15rem)]">
             <div className="site-shell">
-              <div className="mx-auto max-w-[52rem]">
+              <div className="mx-auto max-w-[60rem]">
                 <div className="surface-panel rounded-[2rem] p-6 sm:p-8 lg:p-9">
                   <div className="max-w-[38rem]">
-                    <span className="eyebrow-label">Report an issue</span>
+                    <span className="eyebrow-label">REPORT AN ISSUE</span>
                     <h1 className="mt-4 text-[2.45rem] leading-[0.98] tracking-tight text-slate-950 sm:text-[2.9rem]">
                       Report a bug or share feedback
                     </h1>
