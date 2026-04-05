@@ -132,21 +132,21 @@ export default function ContactPage() {
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-8 pt-[calc(var(--navbar-height)+1rem)] sm:px-6 sm:pb-9 sm:pt-[calc(var(--navbar-height)+1.15rem)] lg:px-8 lg:pb-10 lg:pt-[calc(var(--navbar-height)+1.35rem)]">
-          <div className="site-shell grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(21.5rem,0.82fr)] lg:items-start lg:gap-8 xl:gap-10">
-            <div className="max-w-[39rem] lg:pr-4">
+        <section className="px-4 pb-10 pt-[calc(var(--navbar-height)+0.9rem)] sm:px-6 sm:pb-12 sm:pt-[calc(var(--navbar-height)+1rem)] lg:px-8 lg:pb-14 lg:pt-[calc(var(--navbar-height)+1.08rem)] xl:pb-16">
+          <div className="site-shell grid gap-6 lg:grid-cols-[minmax(0,1.01fr)_minmax(22.5rem,0.89fr)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,0.98fr)_minmax(24rem,0.84fr)] xl:gap-10">
+            <div className="max-w-[37rem] lg:col-start-1 lg:row-start-1 lg:max-w-[38rem] lg:pr-3">
               <span className="eyebrow-label">Contact</span>
-              <h1 className="mt-5 max-w-[35rem] text-[2.75rem] leading-[0.98] tracking-tight text-balance text-slate-950 sm:text-[3.15rem] lg:text-[3.3rem] xl:text-[3.45rem]">
+              <h1 className="mt-4 max-w-[34rem] text-[2.72rem] leading-[0.98] tracking-tight text-balance text-slate-950 sm:text-[3.12rem] lg:max-w-[35rem] lg:text-[3.22rem] xl:text-[3.36rem]">
                 Send a product note without guessing who owns the inbox.
               </h1>
-              <p className="mt-4 max-w-[32rem] text-[1.02rem] leading-7 text-slate-600 sm:text-[1.06rem]">
+              <p className="mt-4 max-w-[33rem] text-[1.01rem] leading-7 text-slate-600 sm:text-[1.05rem]">
                 Use this page for bugs, feature requests, data issues, or partnership outreach.
                 The flow stays direct, and if inline delivery is unavailable the fallback opens a
                 prefilled email instead of dropping the message.
               </p>
             </div>
 
-            <div className="justify-self-stretch lg:max-w-[24rem] lg:justify-self-end">
+            <aside className="space-y-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:space-y-5 lg:self-start">
               <div className="rounded-[2rem] border border-slate-200/80 bg-white/88 p-6 shadow-[0_18px_48px_rgba(15,23,42,0.05)] sm:p-7">
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#156d95]/10">
@@ -169,13 +169,34 @@ export default function ContactPage() {
                   thread from another system.
                 </p>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <section className="px-4 pb-12 sm:px-6 sm:pb-14 lg:px-8 lg:pb-16">
-          <div className="site-shell grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(19.5rem,0.76fr)] lg:items-start xl:gap-8">
-            <div className="surface-panel rounded-[2rem] p-6 sm:p-7 lg:p-8">
+              <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
+                <span className="eyebrow-label">What to expect</span>
+                <ul className="mt-4 space-y-3.5">
+                  {processNotes.map((note) => (
+                    <li
+                      key={note}
+                      className="flex items-start gap-3 text-sm leading-6 text-slate-700"
+                    >
+                      <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-[#156d95]/60" />
+                      {note}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6 rounded-[1.45rem] border border-slate-200/80 bg-slate-50/85 p-5">
+                  <div className="text-[0.68rem] font-mono uppercase tracking-[0.18em] text-slate-500">
+                    Best use
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    This page is for product communication. Clinical questions still require direct
+                    pharmacy confirmation and clinician judgment.
+                  </p>
+                </div>
+              </div>
+            </aside>
+
+            <div className="surface-panel rounded-[2rem] p-6 sm:p-7 lg:col-start-1 lg:row-start-2 lg:p-8">
               {submissionState === "sent" ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <CheckCircle className="h-12 w-12 text-emerald-500" strokeWidth={1.5} />
@@ -270,7 +291,7 @@ export default function ContactPage() {
                     </label>
                     <textarea
                       id="contact-details"
-                      rows={6}
+                      rows={5}
                       value={draft.details}
                       onChange={(event) => setField("details", event.target.value)}
                       placeholder="Describe the issue, request, or context that would make the next step easier."
@@ -287,48 +308,27 @@ export default function ContactPage() {
                     </div>
                   ) : null}
 
-                  <div className="flex flex-col gap-4 border-t border-slate-200/80 pt-5 sm:flex-row sm:items-end sm:justify-between">
-                    <p className="max-w-[30rem] text-sm leading-6 text-slate-500">
-                      PharmaPath does not use this form to promise response timing or medication
-                      availability.
-                    </p>
-                    <button
-                      type="submit"
-                      disabled={submissionState === "submitting"}
-                      className="action-button-primary inline-flex items-center justify-center gap-2 self-start text-sm disabled:opacity-60 sm:min-w-[10.75rem] sm:self-auto"
-                    >
-                      <Send className="h-4 w-4" strokeWidth={1.75} />
-                      {submissionState === "submitting" ? "Sending note..." : "Send note"}
-                    </button>
+                  <div className="border-t border-slate-200/80 pt-5">
+                    <div className="rounded-[1.45rem] border border-slate-200/80 bg-slate-50/72 px-4 py-4 sm:px-5">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                        <p className="max-w-[29rem] text-[0.95rem] leading-6 text-slate-500">
+                          PharmaPath does not use this form to promise response timing or
+                          medication availability.
+                        </p>
+                        <button
+                          type="submit"
+                          disabled={submissionState === "submitting"}
+                          className="action-button-primary inline-flex items-center justify-center gap-2 self-start text-sm disabled:opacity-60 sm:min-w-[10.85rem] sm:self-auto"
+                        >
+                          <Send className="h-4 w-4" strokeWidth={1.75} />
+                          {submissionState === "submitting" ? "Sending note..." : "Send note"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </form>
               )}
             </div>
-
-            <aside className="space-y-4 lg:max-w-[24rem] lg:justify-self-end lg:space-y-5">
-              <div className="rounded-[2rem] border border-slate-200/80 bg-slate-50/88 p-6 sm:p-7">
-                <span className="eyebrow-label">What to expect</span>
-                <ul className="mt-4 space-y-3">
-                  {processNotes.map((note) => (
-                    <li
-                      key={note}
-                      className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-                    >
-                      <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-[#156d95]/60" />
-                      {note}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
-                <span className="eyebrow-label">Best use</span>
-                <p className="mt-4 text-sm leading-6 text-slate-600">
-                  This page is for product communication. Clinical questions still require direct
-                  pharmacy confirmation and clinician judgment.
-                </p>
-              </div>
-            </aside>
           </div>
         </section>
       </PageTransitionShell>

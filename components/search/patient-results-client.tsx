@@ -199,11 +199,23 @@ function MedicationLookupCard({
   return (
     <div className="surface-panel h-full rounded-[1.55rem] p-4 sm:p-5">
       <span className="eyebrow-label">Next step</span>
-      <p className="mt-3 text-sm leading-6 text-slate-600">
-        Open Medication Lookup if you want the same medication family framed
-        around shortage planning, formulation spread, and manufacturer
-        coverage.
+      <h3 className="mt-3 text-[1.16rem] tracking-tight text-slate-950">
+        Need the broader medication evidence view?
+      </h3>
+      <p className="mt-2 text-sm leading-6 text-slate-600">
+        Open Medication Lookup when the next question is about shortage
+        planning, formulation spread, or manufacturer coverage instead of one
+        nearby call list.
       </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {["Dose coverage", "Manufacturer status", "Recall context"].map(
+          (item) => (
+            <span key={item} className="flat-chip text-[0.82rem]">
+              {item}
+            </span>
+          ),
+        )}
+      </div>
       <div className="mt-4 flex flex-wrap gap-3">
         <NextLink
           href={buildMedicationLookupHref(query, location, matchId)}
@@ -469,18 +481,29 @@ export function PatientResultsClient({
 
   return (
     <>
-      <section className="px-4 pb-8 pt-24 sm:px-6 lg:px-8">
-        <div className="site-shell grid gap-7 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:items-start xl:gap-9">
-          <div className="max-w-[28rem] pt-1 sm:max-w-[30rem]">
+      <section className="px-4 pb-9 pt-24 sm:px-6 lg:px-8">
+        <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,0.74fr)_minmax(0,1.26fr)] lg:items-start xl:gap-10">
+          <div className="max-w-[29rem] pt-1 sm:max-w-[31rem]">
             <span className="eyebrow-label">Pharmacy Results</span>
-            <h1 className="mt-5 max-w-[25rem] text-[2.45rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.85rem] xl:text-[3.05rem]">
-              Nearby pharmacies first. Medication context on the right.
+            <h1 className="mt-5 max-w-[26rem] text-[2.4rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.8rem] xl:text-[3rem]">
+              Refine the nearby call list without reopening a dense form.
             </h1>
-            <p className="mt-4 max-w-[27rem] text-[1rem] leading-7 text-slate-600 sm:text-[1.06rem]">
+            <p className="mt-4 max-w-[28rem] text-[1rem] leading-7 text-slate-600 sm:text-[1.05rem]">
               {isDemoMedication
-                ? "This search keeps the live nearby list and the clearly labeled demo medication profile together, while staying explicit that the medication context is simulated."
-                : "This search keeps the live nearby list and medication access context together without blurring them into a claim of verified shelf inventory."}
+                ? "This search keeps the live nearby list and the clearly labeled demo medication profile together while staying explicit that the medication context is simulated."
+                : "This search keeps the live nearby list and medication access context together without turning either into a claim of verified shelf inventory."}
             </p>
+
+            <div className="mt-6 grid gap-3">
+              <div className="rounded-[1.25rem] border border-white/80 bg-white/78 px-4 py-3 text-[0.9rem] leading-6 text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+                Edit medication, strength, or location first. Radius, sort, and
+                open-now filters stay secondary.
+              </div>
+              <div className="rounded-[1.25rem] border border-white/80 bg-white/78 px-4 py-3 text-[0.9rem] leading-6 text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+                The nearby list is live. Stock still needs a pharmacy call
+                before pickup or transfer.
+              </div>
+            </div>
           </div>
 
           <PharmacySearchForm
@@ -546,7 +569,7 @@ export function PatientResultsClient({
                 </div>
               ) : null}
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.86fr)] xl:items-start">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.04fr)_minmax(20rem,0.96fr)] xl:items-start">
                 <div className="space-y-5">
                   <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -665,7 +688,7 @@ export function PatientResultsClient({
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 xl:sticky xl:top-[calc(var(--navbar-height)+1.5rem)]">
                   {drugError ? (
                     <MedicationContextError message={drugError} />
                   ) : featuredMatch ? (
@@ -687,30 +710,80 @@ export function PatientResultsClient({
               </div>
 
               {featuredMatch && !drugError ? (
-                <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <span className="eyebrow-label">Medication context</span>
-                      <h3 className="mt-3 text-[1.24rem] tracking-tight text-slate-950">
-                        What to carry into the first call.
-                      </h3>
+                <div className="grid gap-5 xl:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)] xl:items-start">
+                  <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <span className="eyebrow-label">Medication context</span>
+                        <h3 className="mt-3 text-[1.24rem] tracking-tight text-slate-950">
+                          What to carry into the first call.
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <MedicationContextDetails
+                        match={featuredMatch}
+                        dataFreshness={drugData!.data_freshness}
+                        variant="patient"
+                        selectedMedicationLabel={resolvedMedicationLabel}
+                        selectedStrength={resolvedMedicationStrength}
+                      />
                     </div>
                   </div>
 
-                  <div className="mt-4 space-y-4">
-                    <MedicationContextDetails
-                      match={featuredMatch}
-                      dataFreshness={drugData!.data_freshness}
-                      variant="patient"
-                      selectedMedicationLabel={resolvedMedicationLabel}
-                      selectedStrength={resolvedMedicationStrength}
-                    />
+                  <div className="space-y-5 xl:sticky xl:top-[calc(var(--navbar-height)+1.5rem)]">
                     <MedicationLookupCard
                       query={query}
                       location={location}
                       matchId={featuredMatch.id}
                     />
+
+                    {pharmacyData ? (
+                      <div className="rounded-[1.35rem] border border-slate-200/90 bg-white/92 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                        <div className="flex items-center gap-2 font-medium text-slate-900">
+                          <MapPin className="h-4 w-4 text-[#156d95]" />
+                          {pharmacyData.disclaimer}
+                        </div>
+                        <p className="mt-2 text-[0.92rem] leading-6">
+                          {pharmacyData.guidance.demo_boundary} Community
+                          reports stay layered on top of the live nearby list
+                          rather than acting as proof of verified shelf
+                          inventory.
+                          {pharmacyData.medication_profile.demo_only
+                            ? " This medication profile is simulated for the demo and intentionally separated from the main medication reference flow."
+                            : ""}
+                        </p>
+                        {!crowdReady ? (
+                          <div className="mt-2.5 flex items-center gap-2 text-slate-500">
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                            Loading crowd signal...
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
+                </div>
+              ) : pharmacyData ? (
+                <div className="rounded-[1.35rem] border border-slate-200/90 bg-white/92 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
+                  <div className="flex items-center gap-2 font-medium text-slate-900">
+                    <MapPin className="h-4 w-4 text-[#156d95]" />
+                    {pharmacyData.disclaimer}
+                  </div>
+                  <p className="mt-2 text-[0.92rem] leading-6">
+                    {pharmacyData.guidance.demo_boundary} Community reports
+                    stay layered on top of the live nearby list rather than
+                    acting as proof of verified shelf inventory.
+                    {pharmacyData.medication_profile.demo_only
+                      ? " This medication profile is simulated for the demo and intentionally separated from the main medication reference flow."
+                      : ""}
+                  </p>
+                  {!crowdReady ? (
+                    <div className="mt-2.5 flex items-center gap-2 text-slate-500">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      Loading crowd signal...
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -779,29 +852,6 @@ export function PatientResultsClient({
                       </div>
                     ))}
                   </div>
-                </div>
-              ) : null}
-
-              {pharmacyData ? (
-                <div className="rounded-[1.25rem] border border-slate-200 bg-white px-4 py-3.5 text-sm leading-6 text-slate-600">
-                  <div className="flex items-center gap-2 font-medium text-slate-900">
-                    <MapPin className="h-4 w-4 text-[#156d95]" />
-                    {pharmacyData.disclaimer}
-                  </div>
-                  <p className="mt-1.5 text-[0.92rem] leading-6">
-                    {pharmacyData.guidance.demo_boundary} Community reports sit
-                    on top of the live nearby list as a separate, weighted layer
-                    rather than as a claim of verified shelf inventory.
-                    {pharmacyData.medication_profile.demo_only
-                      ? " This medication profile is simulated for the demo and is intentionally separated from the main medication reference flow."
-                      : ""}
-                  </p>
-                  {!crowdReady ? (
-                    <div className="mt-2.5 flex items-center gap-2 text-slate-500">
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                      Loading crowd signal...
-                    </div>
-                  ) : null}
                 </div>
               ) : null}
             </>

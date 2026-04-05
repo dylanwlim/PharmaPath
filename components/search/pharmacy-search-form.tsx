@@ -1,11 +1,26 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  MapPin,
+  Pill,
+  Settings2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { LocationCombobox } from "@/components/search/location-combobox";
 import { MedicationCombobox } from "@/components/search/medication-combobox";
-import { MedicationStrengthField } from "@/components/search/medication-strength-field";
 import { featuredSearches } from "@/lib/content";
+import { motionEase, motionTiming } from "@/lib/motion";
 import {
   canFallbackToDirectLocationSearch,
   createLocationSessionToken,
@@ -37,6 +52,24 @@ type PharmacySearchFormProps = {
   showSamples?: boolean;
   className?: string;
 };
+
+type SearchStep = "medication" | "strength" | "location" | "review";
+
+type LocationSelection = {
+  label: string;
+  placeId: string | null;
+};
+
+const guidedSteps: Array<{
+  id: SearchStep;
+  label: string;
+  helper?: string;
+}> = [
+  { id: "medication", label: "Medication" },
+  { id: "strength", label: "Strength", helper: "If needed" },
+  { id: "location", label: "Location" },
+  { id: "review", label: "Search setup" },
+];
 
 function buildResultsHref({
   medication,
@@ -70,11 +103,6 @@ function buildResultsHref({
   return `${action}?${params.toString()}`;
 }
 
-type LocationSelection = {
-  label: string;
-  placeId: string | null;
-};
-
 function createLocationSelection(label: string, placeId?: string | null) {
   const trimmedLabel = label.trim();
 
@@ -86,6 +114,197 @@ function createLocationSelection(label: string, placeId?: string | null) {
     label: trimmedLabel,
     placeId: placeId?.trim() || null,
   } satisfies LocationSelection;
+}
+
+function getStepIndex(step: SearchStep) {
+  return guidedSteps.findIndex((item) => item.id === step);
+}
+
+function resolveInitialStep({
+  medication,
+  location,
+  selectedStrength,
+}: {
+  medication: string;
+  location: string;
+  selectedStrength: string;
+}) {
+  if (!medication.trim()) {
+    return "medication" satisfies SearchStep;
+  }
+
+  if (!location.trim()) {
+    return selectedStrength.trim()
+      ? ("location" satisfies SearchStep)
+      : ("location" satisfies SearchStep);
+  }
+
+  return selectedStrength.trim()
+    ? ("review" satisfies SearchStep)
+    : ("location" satisfies SearchStep);
+}
+
+function needsStrengthSelection(
+  option: MedicationSearchOption | null,
+  selectedStrength: string,
+) {
+  return Boolean(option && option.strengths.length > 1 && !selectedStrength.trim());
+}
+
+function resolveStepAfterMedication({
+  option,
+  selectedStrength,
+  location,
+}: {
+  option: MedicationSearchOption;
+  selectedStrength: string;
+  location: string;
+}) {
+  if (needsStrengthSelection(option, selectedStrength)) {
+    return "strength" satisfies SearchStep;
+  }
+
+  return location.trim()
+    ? ("review" satisfies SearchStep)
+    : ("location" satisfies SearchStep);
+}
+
+function resolvePreviousStep(step: SearchStep, hasStrengthStep: boolean) {
+  if (step === "strength") {
+    return "medication" satisfies SearchStep;
+  }
+
+  if (step === "location") {
+    return hasStrengthStep
+      ? ("strength" satisfies SearchStep)
+      : ("medication" satisfies SearchStep);
+  }
+
+  if (step === "review") {
+    return "location" satisfies SearchStep;
+  }
+
+  return "medication" satisfies SearchStep;
+}
+
+function FocusStepIndicator({
+  activeStep,
+  showStrengthStep,
+}: {
+  activeStep: SearchStep;
+  showStrengthStep: boolean;
+}) {
+  const activeIndex = getStepIndex(activeStep);
+
+  return (
+    <ol className="mt-4 flex flex-wrap gap-2">
+      {guidedSteps.map((item, index) => {
+        const isOptionalStrength = item.id === "strength" && !showStrengthStep;
+        const state =
+          index < activeIndex || (isOptionalStrength && activeIndex > index)
+            ? "complete"
+            : index === activeIndex
+              ? "active"
+              : "upcoming";
+
+        return (
+          <li
+            key={item.id}
+            className={cn(
+              "inline-flex min-h-10 items-center gap-2 rounded-full border px-3 py-2 text-left transition-colors",
+              state === "active" &&
+                "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d]",
+              state === "complete" &&
+                "border-slate-200 bg-white text-slate-700",
+              state === "upcoming" &&
+                "border-transparent bg-slate-100/80 text-slate-500",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-flex h-6 w-6 items-center justify-center rounded-full border text-[0.68rem] font-semibold",
+                state === "active" &&
+                  "border-[#156d95]/26 bg-white text-[#0f5d7d]",
+                state === "complete" && "border-slate-200 bg-white text-slate-700",
+                state === "upcoming" &&
+                  "border-slate-200/80 bg-white/70 text-slate-400",
+              )}
+            >
+              {state === "complete" ? <Check className="h-3.5 w-3.5" /> : index + 1}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
+                {item.label}
+              </span>
+              {item.helper ? (
+                <span className="block text-[0.7rem] leading-4 text-current/70">
+                  {showStrengthStep ? item.helper : "Skipped"}
+                </span>
+              ) : null}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function SummaryPill({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: ReactNode;
+}) {
+  return (
+    <div className="inline-flex min-w-0 items-center gap-2 rounded-full border border-slate-200/90 bg-white/88 px-3 py-2 text-left text-sm text-slate-700 shadow-[0_1px_1px_rgba(15,23,42,0.04)]">
+      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[0.66rem] uppercase tracking-[0.16em] text-slate-400">
+          {label}
+        </span>
+        <span className="block truncate font-medium text-slate-900">{value}</span>
+      </span>
+    </div>
+  );
+}
+
+function SummaryButton({
+  label,
+  value,
+  icon,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  icon: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="group flex min-w-0 flex-col rounded-[1.15rem] border border-slate-200/90 bg-white/90 px-4 py-3 text-left transition-[border-color,background-color,transform,box-shadow] duration-150 hover:-translate-y-px hover:border-[#156d95]/24 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10"
+      onClick={onClick}
+    >
+      <div className="flex items-center gap-2 text-[0.66rem] uppercase tracking-[0.16em] text-slate-400">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors group-hover:bg-[#156d95]/10 group-hover:text-[#156d95]">
+          {icon}
+        </span>
+        {label}
+      </div>
+      <span className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-slate-900">
+        {value}
+      </span>
+      <span className="mt-1 inline-flex items-center gap-1 text-[0.78rem] font-medium text-[#156d95]">
+        Edit
+        <ArrowRight className="h-3.5 w-3.5" />
+      </span>
+    </button>
+  );
 }
 
 export function PharmacySearchForm({
@@ -103,17 +322,38 @@ export function PharmacySearchForm({
   className,
 }: PharmacySearchFormProps) {
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
   const { profile } = useAuth();
   const [isPending, startTransition] = useTransition();
+  const medicationInputRef = useRef<HTMLInputElement>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const strengthButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const focusTargetRef = useRef<SearchStep | "submit">(
+    resolveInitialStep({
+      medication: initialMedication,
+      location: initialLocation,
+      selectedStrength: initialSelectedStrength,
+    }),
+  );
+  const [transitionDirection, setTransitionDirection] = useState(1);
+  const [activeStep, setActiveStep] = useState<SearchStep>(() =>
+    resolveInitialStep({
+      medication: initialMedication,
+      location: initialLocation,
+      selectedStrength: initialSelectedStrength,
+    }),
+  );
   const [medicationOption, setMedicationOption] =
     useState<MedicationSearchOption | null>(null);
   const [medication, setMedication] = useState(initialMedication);
   const [selectedStrength, setSelectedStrength] = useState(
     initialSelectedStrength.trim(),
   );
-  const [locationSelection, setLocationSelection] = useState<LocationSelection | null>(() =>
-    createLocationSelection(initialLocation, initialLocationPlaceId),
-  );
+  const [locationSelection, setLocationSelection] =
+    useState<LocationSelection | null>(() =>
+      createLocationSelection(initialLocation, initialLocationPlaceId),
+    );
   const [location, setLocation] = useState(initialLocation);
   const [radiusMiles, setRadiusMiles] = useState(initialRadiusMiles);
   const [sortBy, setSortBy] = useState(initialSortBy);
@@ -122,7 +362,33 @@ export function PharmacySearchForm({
   const [strengthError, setStrengthError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isResolvingSearch, setIsResolvingSearch] = useState(false);
-  const [locationSessionToken, setLocationSessionToken] = useState(createLocationSessionToken);
+  const [isApplyingSampleId, setIsApplyingSampleId] = useState<string | null>(
+    null,
+  );
+  const [locationSessionToken, setLocationSessionToken] = useState(
+    createLocationSessionToken,
+  );
+  const showsStrengthCheckpoint = Boolean(
+    medicationOption && medicationOption.strengths.length > 1,
+  );
+  const medicationSupportText =
+    medicationOption?.demoOnly
+      ? `Simulated demo medication · ${
+          medicationOption.simulatedUserCount || 0
+        } seeded demo users`
+      : Array.from(
+          new Set(
+            [
+              medicationOption?.formulation,
+              medicationOption?.dosageForm,
+            ].filter(Boolean),
+          ),
+        ).join(" · ") || null;
+  const summaryMedication =
+    medicationOption?.label || medication.trim() || "Choose a medication";
+  const summaryStrength = selectedStrength.trim();
+  const summaryLocation =
+    locationSelection?.label || location.trim() || "Set the search area";
 
   useEffect(() => {
     let cancelled = false;
@@ -131,14 +397,21 @@ export function PharmacySearchForm({
       initialMedication,
       resolvedInitialStrength,
     );
+    const nextStrength =
+      resolvedInitialStrength || cachedSelection?.matchedStrength || "";
 
     setMedicationOption(cachedSelection);
     setMedication(cachedSelection?.label || initialMedication);
-    setSelectedStrength(
-      resolvedInitialStrength || cachedSelection?.matchedStrength || "",
-    );
+    setSelectedStrength(nextStrength);
     setMedicationError(null);
     setStrengthError(null);
+    setActiveStep(
+      resolveInitialStep({
+        medication: cachedSelection?.label || initialMedication,
+        location: initialLocation,
+        selectedStrength: nextStrength,
+      }),
+    );
 
     if (!initialMedication || cachedSelection) {
       return () => {
@@ -152,13 +425,21 @@ export function PharmacySearchForm({
           return;
         }
 
+        const resolvedStrength =
+          resolvedInitialStrength ||
+          option.matchedStrength ||
+          inferMatchedStrength(initialMedication, option.strengths) ||
+          (option.strengths.length === 1 ? option.strengths[0].value : "");
+
         setMedicationOption(option);
         setMedication(option.label);
-        setSelectedStrength(
-          resolvedInitialStrength ||
-            option.matchedStrength ||
-            inferMatchedStrength(initialMedication, option.strengths) ||
-            (option.strengths.length === 1 ? option.strengths[0].value : ""),
+        setSelectedStrength(resolvedStrength);
+        setActiveStep(
+          resolveStepAfterMedication({
+            option,
+            selectedStrength: resolvedStrength,
+            location: initialLocation,
+          }),
         );
       })
       .catch(() => {
@@ -171,10 +452,13 @@ export function PharmacySearchForm({
     return () => {
       cancelled = true;
     };
-  }, [initialMedication, initialSelectedStrength]);
+  }, [initialMedication, initialSelectedStrength, initialLocation]);
 
   useEffect(() => {
-    const nextLocationSelection = createLocationSelection(initialLocation, initialLocationPlaceId);
+    const nextLocationSelection = createLocationSelection(
+      initialLocation,
+      initialLocationPlaceId,
+    );
     setLocationSelection(nextLocationSelection);
     setLocation(nextLocationSelection?.label || initialLocation);
   }, [initialLocation, initialLocationPlaceId]);
@@ -193,7 +477,9 @@ export function PharmacySearchForm({
 
   useEffect(() => {
     if (!initialLocation && !location && profile?.defaultLocationLabel) {
-      const nextLocationSelection = createLocationSelection(profile.defaultLocationLabel);
+      const nextLocationSelection = createLocationSelection(
+        profile.defaultLocationLabel,
+      );
       setLocationSelection(nextLocationSelection);
       setLocation(nextLocationSelection?.label || profile.defaultLocationLabel);
     }
@@ -210,6 +496,65 @@ export function PharmacySearchForm({
     }
   }, [initialRadiusMiles, profile?.preferredSearchRadius, radiusMiles]);
 
+  useEffect(() => {
+    const focusTarget = focusTargetRef.current;
+    if (!focusTarget) {
+      return;
+    }
+
+    const focusDelayMs = reduceMotion
+      ? 0
+      : Math.round(
+          (compact ? motionTiming.base * 0.76 : motionTiming.base * 0.84) *
+            1000 +
+            48,
+        );
+    const timeoutId = window.setTimeout(() => {
+      if (focusTarget === "medication") {
+        medicationInputRef.current?.focus();
+        return;
+      }
+
+      if (focusTarget === "location") {
+        locationInputRef.current?.focus();
+        return;
+      }
+
+      if (focusTarget === "submit") {
+        submitButtonRef.current?.focus();
+        return;
+      }
+
+      if (focusTarget === "strength") {
+        const activeIndex = medicationOption?.strengths.findIndex(
+          (strength) => strength.value === selectedStrength,
+        );
+        const targetIndex = activeIndex && activeIndex >= 0 ? activeIndex : 0;
+        strengthButtonRefs.current[targetIndex]?.focus();
+      }
+    }, focusDelayMs);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    activeStep,
+    compact,
+    medicationOption?.id,
+    medicationOption?.strengths,
+    reduceMotion,
+    selectedStrength,
+  ]);
+
+  const goToStep = (
+    nextStep: SearchStep,
+    focusTarget: SearchStep | "submit" = nextStep,
+  ) => {
+    focusTargetRef.current = focusTarget;
+    setTransitionDirection(
+      getStepIndex(nextStep) >= getStepIndex(activeStep) ? 1 : -1,
+    );
+    setActiveStep(nextStep);
+  };
+
   const handleMedicationInputChange = (nextValue: string) => {
     setMedication(nextValue);
     setMedicationError(null);
@@ -217,7 +562,8 @@ export function PharmacySearchForm({
 
     if (
       medicationOption &&
-      nextValue.trim().toLowerCase() !== medicationOption.label.trim().toLowerCase()
+      nextValue.trim().toLowerCase() !==
+        medicationOption.label.trim().toLowerCase()
     ) {
       setMedicationOption(null);
       setSelectedStrength("");
@@ -239,273 +585,641 @@ export function PharmacySearchForm({
 
     if (
       locationSelection &&
-      nextValue.trim().toLowerCase() !== locationSelection.label.trim().toLowerCase()
+      nextValue.trim().toLowerCase() !==
+        locationSelection.label.trim().toLowerCase()
     ) {
       setLocationSelection(null);
     }
   };
-  const medicationSupportText =
-    medicationOption?.demoOnly
-      ? `Simulated demo medication · ${medicationOption.simulatedUserCount || 0} seeded demo users`
-      : Array.from(
-          new Set(
-            [medicationOption?.formulation, medicationOption?.dosageForm].filter(Boolean),
-          ),
-        ).join(" · ") || null;
+
+  const handleMedicationSelection = (option: MedicationSearchOption) => {
+    const nextStrength =
+      option.matchedStrength ||
+      (option.strengths.length === 1 ? option.strengths[0].value : "");
+    const nextStep = resolveStepAfterMedication({
+      option,
+      selectedStrength: nextStrength,
+      location,
+    });
+
+    setMedicationOption(option);
+    setMedication(option.label);
+    setSelectedStrength(nextStrength);
+    setMedicationError(null);
+    setStrengthError(null);
+    goToStep(nextStep, nextStep === "review" ? "submit" : nextStep);
+  };
+
+  const handleStrengthSelection = (nextStrength: string) => {
+    setSelectedStrength(nextStrength);
+    setStrengthError(null);
+    goToStep(location.trim() ? "review" : "location", location.trim() ? "submit" : "location");
+  };
+
+  const handleLocationContinue = () => {
+    if (!location.trim()) {
+      setLocationError("Enter a city, ZIP, address, pharmacy, or landmark.");
+      return;
+    }
+
+    setLocationError(null);
+    goToStep("review", "submit");
+  };
+
+  const handleFeaturedSearch = async (search: (typeof featuredSearches)[number]) => {
+    setIsApplyingSampleId(search.id);
+    setMedicationError(null);
+    setStrengthError(null);
+    setLocationError(null);
+    setRadiusMiles(5);
+    setSortBy("best_match");
+    setOnlyOpenNow(false);
+
+    try {
+      const resolvedOption =
+        getCachedMedicationSelection(search.medication) ||
+        (await resolveMedicationOption(search.medication));
+      const resolvedStrength =
+        resolvedOption?.matchedStrength ||
+        inferMatchedStrength(search.medication, resolvedOption?.strengths || []) ||
+        (resolvedOption?.strengths.length === 1
+          ? resolvedOption.strengths[0].value
+          : "");
+      const nextLocationSelection = createLocationSelection(search.location);
+
+      setMedicationOption(resolvedOption);
+      setMedication(resolvedOption?.label || search.medication);
+      setSelectedStrength(resolvedStrength);
+      setLocationSelection(nextLocationSelection);
+      setLocation(nextLocationSelection?.label || search.location);
+      setLocationSessionToken(createLocationSessionToken());
+
+      if (resolvedOption) {
+        const nextStep = resolveStepAfterMedication({
+          option: resolvedOption,
+          selectedStrength: resolvedStrength,
+          location: search.location,
+        });
+        goToStep(
+          nextStep,
+          nextStep === "review" ? "submit" : nextStep,
+        );
+      } else {
+        goToStep("medication", "medication");
+      }
+    } finally {
+      setIsApplyingSampleId(null);
+    }
+  };
+
+  const stepViewportClassName = compact
+    ? "relative min-h-[28rem] sm:min-h-[22rem]"
+    : "relative min-h-[31rem] sm:min-h-[24rem]";
+  const stepMotion = {
+    initial: (direction: number) =>
+      reduceMotion
+        ? { opacity: 1, x: 0 }
+        : { opacity: 0, x: direction > 0 ? 28 : -28 },
+    animate: { opacity: 1, x: 0 },
+    exit: (direction: number) =>
+      reduceMotion
+        ? { opacity: 1, x: 0 }
+        : { opacity: 0, x: direction > 0 ? -24 : 24 },
+  };
+  const stepTransition = reduceMotion
+    ? { duration: 0 }
+    : {
+        duration: compact ? motionTiming.base * 0.76 : motionTiming.base * 0.84,
+        ease: motionEase.reveal,
+      };
+  const stepContextPills = (
+    <div className="flex flex-wrap gap-2">
+      <SummaryPill
+        label="Medication"
+        value={summaryMedication}
+        icon={<Pill className="h-4 w-4" />}
+      />
+      {summaryStrength ? (
+        <SummaryPill
+          label="Strength"
+          value={summaryStrength}
+          icon={<Settings2 className="h-4 w-4" />}
+        />
+      ) : null}
+      {summaryLocation && summaryLocation !== "Set the search area" ? (
+        <SummaryPill
+          label="Location"
+          value={summaryLocation}
+          icon={<MapPin className="h-4 w-4" />}
+        />
+      ) : null}
+    </div>
+  );
 
   return (
     <div
       className={cn(
-        "surface-panel rounded-[1.7rem] p-4 sm:p-[1.125rem] xl:p-5",
-        compact && "rounded-[1.6rem] p-3.5 sm:p-4",
+        "surface-panel rounded-[1.8rem] p-4 sm:p-[1.125rem] xl:p-5",
+        compact && "rounded-[1.65rem] p-3.5 sm:p-4",
         className,
       )}
     >
-      <form
-        className={cn("space-y-2.5", compact && "space-y-2")}
-        onSubmit={async (event) => {
-          event.preventDefault();
-          setIsResolvingSearch(true);
-          const normalizedMedication = medication.trim();
-          const normalizedLocation = location.trim();
+      <div
+        className={cn(
+          "rounded-[1.55rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(248,251,254,0.9))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:p-5",
+          compact && "rounded-[1.35rem] p-3.5 sm:p-4",
+        )}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-[34rem]">
+            <span className="eyebrow-label">
+              {compact ? "Refine nearby search" : "Guided nearby search"}
+            </span>
+            <h2
+              className={cn(
+                "mt-3 tracking-tight text-slate-950",
+                compact ? "text-[1.32rem]" : "text-[1.58rem] sm:text-[1.76rem]",
+              )}
+            >
+              {compact
+                ? "Edit the core inputs first, then reopen the secondary controls."
+                : "Start with the medication. We’ll reveal the rest only when it matters."}
+            </h2>
+            <p
+              className={cn(
+                "mt-2 max-w-[34rem] text-slate-600",
+                compact ? "text-[0.92rem] leading-6" : "text-[0.96rem] leading-7",
+              )}
+            >
+              Nearby pharmacies come from a live search. Stock is never
+              guaranteed, so the last step stays explicit about calling to
+              confirm before pickup or transfer.
+            </p>
+          </div>
 
-          if (!normalizedMedication || !normalizedLocation) {
-            setMedicationError(normalizedMedication ? null : "Choose a medication from the search results.");
-            setLocationError(
-              normalizedLocation ? null : "Enter a city, ZIP, address, pharmacy, or landmark.",
-            );
-            setIsResolvingSearch(false);
-            return;
-          }
+          <div className="rounded-full border border-white/80 bg-white/82 px-3.5 py-2 text-[0.72rem] uppercase tracking-[0.18em] text-slate-500 shadow-[0_1px_1px_rgba(15,23,42,0.04)]">
+            Step {getStepIndex(activeStep) + 1} of {guidedSteps.length}
+          </div>
+        </div>
 
-          const [medicationResult, locationResult] = await Promise.allSettled([
-            medicationOption
-              ? Promise.resolve(medicationOption)
-              : resolveMedicationOption(normalizedMedication),
-            resolveLocationQuery({
-              query: normalizedLocation,
-              placeId: locationSelection?.placeId,
-              sessionToken: locationSessionToken,
-            }),
-          ]);
+        <FocusStepIndicator
+          activeStep={activeStep}
+          showStrengthStep={showsStrengthCheckpoint}
+        />
 
-          try {
-            const resolvedMedication =
-              medicationResult.status === "fulfilled" ? medicationResult.value : null;
-            const resolvedLocation =
-              locationResult.status === "fulfilled" ? locationResult.value : null;
-            const canUseDirectLocationFallback =
-              locationResult.status === "rejected" &&
-              canFallbackToDirectLocationSearch(locationResult.reason);
-            const resolvedStrength =
-              selectedStrength ||
-              resolvedMedication?.matchedStrength ||
-              inferMatchedStrength(normalizedMedication, resolvedMedication?.strengths || []) ||
-              (resolvedMedication?.strengths.length === 1 ? resolvedMedication.strengths[0].value : "");
+        <form
+          className="mt-4"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            setIsResolvingSearch(true);
+            const normalizedMedication = medication.trim();
+            const normalizedLocation = location.trim();
 
-            setMedicationError(
-              medicationResult.status === "rejected"
-                ? medicationResult.reason instanceof Error
-                  ? medicationResult.reason.message
-                  : "Unable to search medications right now."
-                : resolvedMedication
+            if (!normalizedMedication || !normalizedLocation) {
+              setMedicationError(
+                normalizedMedication
                   ? null
                   : "Choose a medication from the search results.",
-            );
-            setStrengthError(
-              resolvedMedication && resolvedMedication.strengths.length > 1 && !resolvedStrength
-                ? "Choose a specific strength before searching."
-                : null,
-            );
-            setLocationError(
-              canUseDirectLocationFallback
-                ? null
-                : locationResult.status === "rejected"
-                ? locationResult.reason instanceof Error
-                  ? locationResult.reason.message
-                  : "Unable to resolve that location right now."
-                : resolvedLocation
+              );
+              setLocationError(
+                normalizedLocation
                   ? null
-                  : "Enter a real location to search nearby pharmacies.",
-            );
-
-            if (
-              !resolvedMedication ||
-              (!resolvedLocation && !canUseDirectLocationFallback) ||
-              (resolvedMedication.strengths.length > 1 && !resolvedStrength)
-            ) {
+                  : "Enter a city, ZIP, address, pharmacy, or landmark.",
+              );
+              goToStep(
+                normalizedMedication ? "location" : "medication",
+                normalizedMedication ? "location" : "medication",
+              );
+              setIsResolvingSearch(false);
               return;
             }
 
-            const nextLocationLabel = resolvedLocation?.display_label || normalizedLocation;
-            const nextLocationPlaceId = resolvedLocation?.place_id || null;
-            setMedicationOption(resolvedMedication);
-            setMedication(resolvedMedication.label);
-            setSelectedStrength(resolvedStrength);
-            setLocationSelection(
-              createLocationSelection(nextLocationLabel, nextLocationPlaceId),
-            );
-            setLocation(nextLocationLabel);
-            setLocationSessionToken(createLocationSessionToken());
-            startTransition(() => {
-              router.push(
-                buildResultsHref({
-                  medication: buildMedicationQueryLabel(resolvedMedication, resolvedStrength),
-                  location: nextLocationLabel,
-                  locationPlaceId: nextLocationPlaceId,
-                  radiusMiles,
-                  sortBy,
-                  onlyOpenNow,
-                  action,
-                }),
-              );
-            });
-          } finally {
-            setIsResolvingSearch(false);
-          }
-        }}
-      >
-        <div className="grid items-start gap-x-3.5 gap-y-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.24fr)_minmax(12rem,0.8fr)_minmax(0,1fr)]">
-          <MedicationCombobox
-            className="sm:col-span-2 lg:col-span-1"
-            label="Medication"
-            placeholder="Search medication"
-            value={medication}
-            selectedOptionId={medicationOption?.id || null}
-            helperText={medicationSupportText}
-            onValueChange={handleMedicationInputChange}
-            onSelect={(option) => {
-              setMedicationOption(option);
-              setMedication(option.label);
-              setSelectedStrength(
-                option.matchedStrength || (option.strengths.length === 1 ? option.strengths[0].value : ""),
-              );
-              setMedicationError(null);
-              setStrengthError(null);
-            }}
-            emptyMessage="No medication matches yet. Try a brand, generic, or strength."
-            error={medicationError}
-          />
+            const [medicationResult, locationResult] = await Promise.allSettled([
+              medicationOption
+                ? Promise.resolve(medicationOption)
+                : resolveMedicationOption(normalizedMedication),
+              resolveLocationQuery({
+                query: normalizedLocation,
+                placeId: locationSelection?.placeId,
+                sessionToken: locationSessionToken,
+              }),
+            ]);
 
-          <MedicationStrengthField
-            className="sm:col-span-1"
-            option={medicationOption}
-            value={selectedStrength}
-            onChange={(nextValue) => {
-              setSelectedStrength(nextValue);
-              setStrengthError(null);
-            }}
-            error={strengthError}
-            showWhenEmpty
-            resolvedValue={!medicationOption ? selectedStrength : null}
-            helperText={
-              !medicationOption && selectedStrength
-                ? "Selected presentation from the current search."
-                : undefined
-            }
-          />
+            try {
+              const resolvedMedication =
+                medicationResult.status === "fulfilled"
+                  ? medicationResult.value
+                  : null;
+              const resolvedLocation =
+                locationResult.status === "fulfilled" ? locationResult.value : null;
+              const canUseDirectLocationFallback =
+                locationResult.status === "rejected" &&
+                canFallbackToDirectLocationSearch(locationResult.reason);
+              const resolvedStrength =
+                selectedStrength ||
+                resolvedMedication?.matchedStrength ||
+                inferMatchedStrength(
+                  normalizedMedication,
+                  resolvedMedication?.strengths || [],
+                ) ||
+                (resolvedMedication?.strengths.length === 1
+                  ? resolvedMedication.strengths[0].value
+                  : "");
 
-          <LocationCombobox
-            className="sm:col-span-1"
-            label="Location"
-            placeholder="City, ZIP, or address"
-            value={location}
-            selectedPlaceId={locationSelection?.placeId || null}
-            sessionToken={locationSessionToken}
-            onValueChange={handleLocationInputChange}
-            onSelect={(option) => {
+              const nextMedicationError =
+                medicationResult.status === "rejected"
+                  ? medicationResult.reason instanceof Error
+                    ? medicationResult.reason.message
+                    : "Unable to search medications right now."
+                  : resolvedMedication
+                    ? null
+                    : "Choose a medication from the search results.";
+              const nextStrengthError =
+                resolvedMedication &&
+                resolvedMedication.strengths.length > 1 &&
+                !resolvedStrength
+                  ? "Choose a specific strength before searching."
+                  : null;
+              const nextLocationError = canUseDirectLocationFallback
+                ? null
+                : locationResult.status === "rejected"
+                  ? locationResult.reason instanceof Error
+                    ? locationResult.reason.message
+                    : "Unable to resolve that location right now."
+                  : resolvedLocation
+                    ? null
+                    : "Enter a real location to search nearby pharmacies.";
+
+              setMedicationError(nextMedicationError);
+              setStrengthError(nextStrengthError);
+              setLocationError(nextLocationError);
+
+              if (!resolvedMedication) {
+                goToStep("medication", "medication");
+                return;
+              }
+
+              if (nextStrengthError) {
+                setMedicationOption(resolvedMedication);
+                setMedication(resolvedMedication.label);
+                goToStep("strength", "strength");
+                return;
+              }
+
+              if (!resolvedLocation && !canUseDirectLocationFallback) {
+                goToStep("location", "location");
+                return;
+              }
+
+              const nextLocationLabel =
+                resolvedLocation?.display_label || normalizedLocation;
+              const nextLocationPlaceId = resolvedLocation?.place_id || null;
+              setMedicationOption(resolvedMedication);
+              setMedication(resolvedMedication.label);
+              setSelectedStrength(resolvedStrength);
               setLocationSelection(
-                createLocationSelection(option.description, option.placeId),
+                createLocationSelection(nextLocationLabel, nextLocationPlaceId),
               );
-              setLocation(option.description);
-              setLocationError(null);
-            }}
-            error={locationError}
-          />
-        </div>
-
-        <div className="grid gap-x-3.5 gap-y-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.74fr)_minmax(0,0.92fr)_minmax(0,1fr)_auto] lg:items-end">
-          <label className="search-field-stack">
-            <span className="search-field-label">Radius</span>
-            <select
-              className="search-select-control"
-              value={radiusMiles}
-              onChange={(event) => setRadiusMiles(Number(event.target.value))}
-            >
-              <option value={2}>2 miles</option>
-              <option value={5}>5 miles</option>
-              <option value={10}>10 miles</option>
-              <option value={25}>25 miles</option>
-            </select>
-          </label>
-
-          <label className="search-field-stack">
-            <span className="search-field-label">Sort</span>
-            <select
-              className="search-select-control"
-              value={sortBy}
-              onChange={(event) =>
-                setSortBy(event.target.value as "best_match" | "distance" | "rating")
-              }
-            >
-              <option value="best_match">Best overall match</option>
-              <option value="distance">Closest first</option>
-              <option value="rating">Highest rating</option>
-            </select>
-          </label>
-
-          <label className="search-field-stack sm:col-span-2 lg:col-span-1">
-            <span className="search-field-label">Availability</span>
-            <span className="search-toggle-control cursor-pointer">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
-                checked={onlyOpenNow}
-                onChange={(event) => setOnlyOpenNow(event.target.checked)}
-              />
-              <span className="min-w-0">Open now only</span>
-            </span>
-          </label>
-          <button
-            type="submit"
-            disabled={isPending || isResolvingSearch}
-            className="action-button-primary relative z-40 order-6 min-h-[3.35rem] whitespace-nowrap px-5 text-sm disabled:cursor-wait disabled:opacity-70 sm:col-span-2 lg:order-none lg:col-span-1 lg:justify-self-end"
+              setLocation(nextLocationLabel);
+              setLocationSessionToken(createLocationSessionToken());
+              startTransition(() => {
+                router.push(
+                  buildResultsHref({
+                    medication: buildMedicationQueryLabel(
+                      resolvedMedication,
+                      resolvedStrength,
+                    ),
+                    location: nextLocationLabel,
+                    locationPlaceId: nextLocationPlaceId,
+                    radiusMiles,
+                    sortBy,
+                    onlyOpenNow,
+                    action,
+                  }),
+                );
+              });
+            } finally {
+              setIsResolvingSearch(false);
+            }
+          }}
+        >
+          <div
+            className={cn(
+              "rounded-[1.45rem] border border-slate-200/90 bg-white/92 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)]",
+              compact && "rounded-[1.25rem] p-3.5",
+            )}
           >
-            {isPending || isResolvingSearch ? "Loading…" : submitLabel}
-          </button>
-          <p className="order-5 max-w-[40rem] text-[0.78rem] leading-5 text-slate-500 sm:col-span-2 lg:order-none lg:col-span-3 lg:pr-4">
-            Nearby pharmacies come from a live search. Stock still needs a direct call before pickup or transfer.
-          </p>
-        </div>
-      </form>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
+                  {activeStep === "medication" && "Start here"}
+                  {activeStep === "strength" && "Choose the exact presentation"}
+                  {activeStep === "location" && "Set the search area"}
+                  {activeStep === "review" && "Ready to search"}
+                </div>
+                <h3
+                  className={cn(
+                    "mt-2 tracking-tight text-slate-950",
+                    compact ? "text-[1.08rem]" : "text-[1.22rem] sm:text-[1.32rem]",
+                  )}
+                >
+                  {activeStep === "medication" &&
+                    "Pick the medication family before we show anything else."}
+                  {activeStep === "strength" &&
+                    "Only the remaining meaningful strength choices stay here."}
+                  {activeStep === "location" &&
+                    "Set the nearby search area before the secondary controls appear."}
+                  {activeStep === "review" &&
+                    "Review the search, then adjust the secondary controls if you need to."}
+                </h3>
+              </div>
 
-      {showSamples ? (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {featuredSearches.map((search) => (
-            <button
-              key={search.id}
-              type="button"
-              className="flat-chip hover:border-[#156d95]/25 hover:text-[#156d95]"
-              onClick={() =>
-                startTransition(() => {
-                  router.push(
-                    buildResultsHref({
-                      medication: search.medication,
-                      location: search.location,
-                      radiusMiles: 5,
-                      sortBy: "best_match",
-                      onlyOpenNow: false,
-                      action,
-                    }),
-                  );
-                })
-              }
-            >
-              {search.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
+              {activeStep !== "medication" ? (
+                <button
+                  type="button"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10"
+                  onClick={() =>
+                    goToStep(
+                      resolvePreviousStep(activeStep, showsStrengthCheckpoint),
+                      resolvePreviousStep(activeStep, showsStrengthCheckpoint),
+                    )
+                  }
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </button>
+              ) : null}
+            </div>
+
+            <div className="mt-4 border-t border-slate-200/80 pt-4">
+              <div className={stepViewportClassName}>
+                <AnimatePresence custom={transitionDirection} initial={false} mode="wait">
+                  <motion.div
+                    key={activeStep}
+                    custom={transitionDirection}
+                    variants={stepMotion}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={stepTransition}
+                    className="absolute inset-0"
+                  >
+                    {activeStep === "medication" ? (
+                      <div className="flex h-full flex-col justify-between gap-5">
+                        <div className="space-y-4">
+                          <MedicationCombobox
+                            className="max-w-none"
+                            label="Medication"
+                            placeholder="Search medication"
+                            value={medication}
+                            selectedOptionId={medicationOption?.id || null}
+                            helperText={
+                              medicationSupportText ||
+                              "Search by brand, generic, or a precise presentation."
+                            }
+                            onValueChange={handleMedicationInputChange}
+                            onSelect={handleMedicationSelection}
+                            emptyMessage="No medication matches yet. Try a brand, generic, or strength."
+                            error={medicationError}
+                            inputRef={medicationInputRef}
+                          />
+
+                          <div className="rounded-[1.05rem] border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-[0.84rem] leading-6 text-slate-600">
+                            Medication search stays immediate. Nearby pharmacies,
+                            radius, and other secondary choices stay hidden until
+                            the core path is complete.
+                          </div>
+                        </div>
+
+                        {showSamples && !compact ? (
+                          <div className="rounded-[1.15rem] border border-slate-200/80 bg-white/70 px-4 py-3.5">
+                            <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
+                              Quick starts
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2.5">
+                              {featuredSearches.map((search) => (
+                                <button
+                                  key={search.id}
+                                  type="button"
+                                  disabled={Boolean(isApplyingSampleId)}
+                                  className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 transition hover:border-[#156d95]/24 hover:text-[#156d95] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10 disabled:cursor-wait disabled:opacity-70"
+                                  onClick={() => void handleFeaturedSearch(search)}
+                                >
+                                  {isApplyingSampleId === search.id
+                                    ? "Loading…"
+                                    : search.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {activeStep === "strength" ? (
+                      <div className="flex h-full flex-col gap-4">
+                        {stepContextPills}
+                        <div className="space-y-3">
+                          <p className="max-w-2xl text-[0.92rem] leading-6 text-slate-600">
+                            We only stop here when the selected medication still
+                            covers multiple usable presentations. Pick the one
+                            you want the nearby search to carry forward.
+                          </p>
+                          <div className="grid gap-2.5 sm:grid-cols-2">
+                            {medicationOption?.strengths.map((strength, index) => {
+                              const isSelected = strength.value === selectedStrength;
+
+                              return (
+                                <button
+                                  key={strength.id}
+                                  ref={(node) => {
+                                    strengthButtonRefs.current[index] = node;
+                                  }}
+                                  type="button"
+                                  className={cn(
+                                    "flex min-h-[3.5rem] items-center justify-between rounded-[1.1rem] border px-4 py-3 text-left transition-[border-color,background-color,transform,box-shadow] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
+                                    isSelected
+                                      ? "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d]"
+                                      : "border-slate-200 bg-white text-slate-700 hover:border-[#156d95]/18",
+                                  )}
+                                  onClick={() => handleStrengthSelection(strength.value)}
+                                >
+                                  <span className="text-sm font-semibold">
+                                    {strength.label}
+                                  </span>
+                                  {isSelected ? (
+                                    <Check className="h-4 w-4" />
+                                  ) : null}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {strengthError ? (
+                            <p className="search-field-error">{strengthError}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {activeStep === "location" ? (
+                      <div className="flex h-full flex-col justify-between gap-5">
+                        <div className="space-y-4">
+                          {stepContextPills}
+                          <LocationCombobox
+                            className="max-w-none"
+                            label="Location"
+                            placeholder="City, ZIP, or address"
+                            value={location}
+                            selectedPlaceId={locationSelection?.placeId || null}
+                            sessionToken={locationSessionToken}
+                            onValueChange={handleLocationInputChange}
+                            onSelect={(option) => {
+                              setLocationSelection(
+                                createLocationSelection(
+                                  option.description,
+                                  option.placeId,
+                                ),
+                              );
+                              setLocation(option.description);
+                              setLocationError(null);
+                            }}
+                            error={locationError}
+                            helperText="Pick a live suggestion or keep the typed text for direct resolution at search time."
+                            inputRef={locationInputRef}
+                            submitOnSelect={false}
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="max-w-[33rem] text-[0.84rem] leading-6 text-slate-500">
+                            This is the last required input before radius, sort,
+                            open-now filtering, and the live nearby search CTA
+                            appear.
+                          </p>
+                          <button
+                            type="button"
+                            className="action-button-primary min-h-[3.15rem] px-5 text-sm"
+                            onClick={handleLocationContinue}
+                          >
+                            Continue
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {activeStep === "review" ? (
+                      <div className="flex h-full flex-col justify-between gap-5">
+                        <div className="space-y-4">
+                          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                            <SummaryButton
+                              label="Medication"
+                              value={summaryMedication}
+                              icon={<Pill className="h-4 w-4" />}
+                              onClick={() => goToStep("medication", "medication")}
+                            />
+                            {summaryStrength ? (
+                              <SummaryButton
+                                label="Strength"
+                                value={summaryStrength}
+                                icon={<Settings2 className="h-4 w-4" />}
+                                onClick={() => goToStep("strength", "strength")}
+                              />
+                            ) : null}
+                            <SummaryButton
+                              label="Location"
+                              value={summaryLocation}
+                              icon={<MapPin className="h-4 w-4" />}
+                              onClick={() => goToStep("location", "location")}
+                            />
+                          </div>
+
+                          <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1fr)]">
+                            <label className="search-field-stack">
+                              <span className="search-field-label">Radius</span>
+                              <select
+                                className="search-select-control"
+                                value={radiusMiles}
+                                onChange={(event) =>
+                                  setRadiusMiles(Number(event.target.value))
+                                }
+                              >
+                                <option value={2}>2 miles</option>
+                                <option value={5}>5 miles</option>
+                                <option value={10}>10 miles</option>
+                                <option value={25}>25 miles</option>
+                              </select>
+                            </label>
+
+                            <label className="search-field-stack">
+                              <span className="search-field-label">Sort</span>
+                              <select
+                                className="search-select-control"
+                                value={sortBy}
+                                onChange={(event) =>
+                                  setSortBy(
+                                    event.target.value as
+                                      | "best_match"
+                                      | "distance"
+                                      | "rating",
+                                  )
+                                }
+                              >
+                                <option value="best_match">
+                                  Best overall match
+                                </option>
+                                <option value="distance">Closest first</option>
+                                <option value="rating">Highest rating</option>
+                              </select>
+                            </label>
+
+                            <label className="search-field-stack sm:col-span-2 xl:col-span-1">
+                              <span className="search-field-label">Availability</span>
+                              <span className="search-toggle-control cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
+                                  checked={onlyOpenNow}
+                                  onChange={(event) =>
+                                    setOnlyOpenNow(event.target.checked)
+                                  }
+                                />
+                                <span className="min-w-0">Open now only</span>
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                          <p className="max-w-[34rem] text-[0.84rem] leading-6 text-slate-500">
+                            Radius, sort, and open-now filters only shape the
+                            nearby list. Inventory still needs a direct call
+                            before pickup or transfer.
+                          </p>
+                          <button
+                            ref={submitButtonRef}
+                            type="submit"
+                            disabled={isPending || isResolvingSearch}
+                            className="action-button-primary min-h-[3.2rem] whitespace-nowrap px-5 text-sm disabled:cursor-wait disabled:opacity-70"
+                          >
+                            {isPending || isResolvingSearch
+                              ? "Loading…"
+                              : submitLabel}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[1.2rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3 text-[0.82rem] leading-6 text-slate-600">
+            Nearby pharmacies come from a live search. Stock is not guaranteed.
+            Call to confirm before pickup or transfer.
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
