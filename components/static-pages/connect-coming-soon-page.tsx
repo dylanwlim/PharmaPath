@@ -41,7 +41,7 @@ export function ConnectComingSoonPage({
                   href="/contact"
                   className="action-button-secondary text-sm"
                 >
-                  Contact PharmaPath
+                  Report a bug or share feedback
                 </Link>
               </div>
             </div>

@@ -24,14 +24,14 @@ test("normalizeContactPayload trims fields and accepts the legacy subject key", 
   const payload = normalizeContactPayload({
     name: "  Jane   Example  ",
     email: "  Jane@Example.COM ",
-    subject: "  Bug or broken flow ",
+    subject: "  Bug report ",
     message: "  First line.\r\nSecond line.  ",
   });
 
   assert.deepEqual(payload, {
     name: "Jane Example",
     email: "jane@example.com",
-    category: "Bug or broken flow",
+    category: "Bug report",
     message: "First line.\nSecond line.",
     website: "",
     turnstileToken: "",
@@ -58,7 +58,7 @@ test("validateContactPayload returns inline-friendly field errors", async () => 
   assert.deepEqual(errors, {
     name: "Please enter your name.",
     email: "Enter a valid email address.",
-    category: "Choose the closest category.",
+    category: "Choose a category.",
     message: `Message must be at least ${CONTACT_MIN_MESSAGE_LENGTH} characters.`,
     turnstileToken: "Please complete the verification step.",
   });
@@ -82,19 +82,27 @@ test("contact runtime config reports missing delivery env vars", async () => {
 });
 
 test("contact email rendering escapes HTML-sensitive user input", async () => {
-  const { buildContactHtmlBody, buildContactTextBody } = await loadContactModules();
+  const {
+    buildContactEmailSubject,
+    buildContactHtmlBody,
+    buildContactTextBody,
+  } = await loadContactModules();
   const submission = {
     name: "<Jane>",
     email: "jane@example.com",
-    category: "Feature request",
+    category: "Feedback or suggestion",
     message: "Need <strong>clearer</strong> status text.",
   };
 
+  const subject = buildContactEmailSubject(submission);
   const html = buildContactHtmlBody(submission);
   const text = buildContactTextBody(submission);
 
+  assert.equal(subject, "[PharmaPath] Feedback");
   assert.match(html, /&lt;Jane&gt;/);
   assert.match(html, /&lt;strong&gt;clearer&lt;\/strong&gt;/);
-  assert.match(text, /Feature request/);
+  assert.match(html, /Sender/);
+  assert.match(text, /PharmaPath contact submission/);
+  assert.match(text, /Category: Feedback/);
   assert.match(text, /Need <strong>clearer<\/strong> status text\./);
 });

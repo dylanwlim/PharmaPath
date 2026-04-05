@@ -56,7 +56,10 @@ export async function POST(request: Request) {
 
     if (!rateLimit.allowed) {
       return jsonResponse(
-        { error: "Too many contact submissions. Please try again shortly." },
+        {
+          error:
+            "Too many messages were sent from this connection. Please wait a few minutes and try again.",
+        },
         429,
         {
           ...rateLimitHeaders,
@@ -79,7 +82,7 @@ export async function POST(request: Request) {
 
     if (payload.website) {
       return jsonResponse(
-        { error: "Unable to process that submission." },
+        { error: "Unable to send that message." },
         400,
         rateLimitHeaders,
       );
@@ -92,7 +95,7 @@ export async function POST(request: Request) {
     if (Object.keys(fieldErrors).length > 0) {
       return jsonResponse(
         {
-          error: "Please correct the highlighted fields.",
+          error: "Please check the highlighted fields.",
           fieldErrors,
         },
         400,
@@ -104,7 +107,7 @@ export async function POST(request: Request) {
       return jsonResponse(
         {
           error:
-            "The contact form is temporarily unavailable. Please use the email fallback link instead.",
+            "The form is temporarily unavailable right now. Please email us directly instead.",
           fallbackEmail: config.deliveryInbox,
         },
         503,
@@ -142,8 +145,14 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("[contact] send error", summarizeError(error));
+    const config = getContactRuntimeConfig(process.env);
+
     return jsonResponse(
-      { error: "Failed to send message. Please try again." },
+      {
+        error:
+          "We couldn't send your message right now. Please try again or email us directly instead.",
+        fallbackEmail: config.deliveryInbox,
+      },
       500,
     );
   }

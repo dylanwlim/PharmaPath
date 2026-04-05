@@ -81,7 +81,7 @@ export function TurnstileWidget({
 
       <div
         className={cn(
-          "rounded-[1.25rem] border border-slate-200/85 bg-slate-50/82 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)]",
+          "rounded-[1.25rem] border border-slate-200/90 bg-slate-50/88 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)]",
           error ? "border-rose-200 bg-rose-50/90" : null,
         )}
       >
@@ -90,9 +90,9 @@ export function TurnstileWidget({
             <ShieldCheck className="h-4 w-4" strokeWidth={1.8} />
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-800">Verification check</p>
-            <p className="mt-1 text-sm leading-6 text-slate-500">
-              This helps block abuse without interrupting the form.
+            <p className="text-sm font-medium text-slate-800">Quick verification</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              This helps keep the form available for real reports.
             </p>
           </div>
         </div>
