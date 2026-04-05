@@ -276,16 +276,19 @@ export function CrowdSignalCard({
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-900" htmlFor={`${pharmacy.name}-note`}>
-              Notes <span className="font-normal text-slate-500">(optional, max 240 chars)</span>
+              Notes <span className="font-normal text-slate-500">(optional, private history only)</span>
             </label>
             <textarea
               id={`${pharmacy.name}-note`}
               className="min-h-[84px] w-full rounded-[0.95rem] border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus-visible:border-[#156d95] focus-visible:ring-[3px] focus-visible:ring-[#156d95]/12"
-              placeholder="Example: Tech said they had two boxes left but recommended calling before driving over."
+              placeholder="Example: Staff suggested calling again later today because supply was changing quickly."
               maxLength={240}
               value={note}
               onChange={(event) => setNote(event.currentTarget.value)}
             />
+            <p className="text-[0.74rem] leading-5 text-slate-500">
+              Notes stay in your private contribution history. Contact details and prescription references are automatically redacted.
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">

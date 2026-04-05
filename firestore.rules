@@ -48,6 +48,38 @@ service cloud.firestore {
         : "";
     }
 
+    function validRecentSearchEntry(entry) {
+      return entry is map
+        && entry.keys().hasOnly([
+          "medication",
+          "location",
+          "radiusMiles",
+          "createdAt"
+        ])
+        && entry.medication is string
+        && entry.medication.size() > 0
+        && entry.medication.size() <= 160
+        && entry.location is string
+        && entry.location.size() > 0
+        && entry.location.size() <= 200
+        && entry.radiusMiles in [2, 5, 10, 25]
+        && (
+          entry.createdAt is timestamp
+          || (entry.createdAt is string && entry.createdAt.size() <= 40)
+        );
+    }
+
+    function validRecentSearches(entries) {
+      return entries is list
+        && entries.size() <= 6
+        && (entries.size() < 1 || validRecentSearchEntry(entries[0]))
+        && (entries.size() < 2 || validRecentSearchEntry(entries[1]))
+        && (entries.size() < 3 || validRecentSearchEntry(entries[2]))
+        && (entries.size() < 4 || validRecentSearchEntry(entries[3]))
+        && (entries.size() < 5 || validRecentSearchEntry(entries[4]))
+        && (entries.size() < 6 || validRecentSearchEntry(entries[5]));
+    }
+
     function validProfilePayload(userId, data) {
       return data.keys().hasOnly([
           "uid",
@@ -110,7 +142,7 @@ service cloud.firestore {
         )
         && (
           !("recentSearches" in data)
-          || (data.recentSearches is list && data.recentSearches.size() <= 6)
+          || validRecentSearches(data.recentSearches)
         );
     }
 
@@ -154,13 +186,9 @@ service cloud.firestore {
         );
     }
 
-    function validCrowdReport() {
+    function validPublicCrowdReport() {
       let data = request.resource.data;
       let profile = profileAfter(request.auth.uid);
-      let expectedAlias =
-        profile.data.publicContributorAlias
-          ? profile.data.contributorAlias
-          : "Private contributor";
 
       return exists(profilePath(request.auth.uid))
         && data.keys().hasOnly([
@@ -175,10 +203,63 @@ service cloud.firestore {
           "strengthDescriptor",
           "formulationDescriptor",
           "reportType",
+          "reporterContributionCount",
+          "createdAt",
+          "updatedAt"
+        ])
+        && data.signalKey is string
+        && data.signalKey.size() > 0
+        && data.signalKey.size() <= 200
+        && data.medicationKey is string
+        && data.medicationKey.size() > 0
+        && data.medicationKey.size() <= 160
+        && data.pharmacyKey is string
+        && data.pharmacyKey.size() > 0
+        && data.pharmacyKey.size() <= 160
+        && data.pharmacyName is string
+        && data.pharmacyName.size() > 0
+        && data.pharmacyName.size() <= 120
+        && data.pharmacyAddress is string
+        && data.pharmacyAddress.size() > 0
+        && data.pharmacyAddress.size() <= 200
+        && (!("pharmacyPlaceId" in data) || data.pharmacyPlaceId == null || data.pharmacyPlaceId is string)
+        && (!("googleMapsUrl" in data) || data.googleMapsUrl == null || data.googleMapsUrl is string)
+        && data.medicationQuery is string
+        && data.medicationQuery.size() > 0
+        && data.medicationQuery.size() <= 160
+        && (!("strengthDescriptor" in data) || data.strengthDescriptor == null || data.strengthDescriptor is string)
+        && (!("formulationDescriptor" in data) || data.formulationDescriptor == null || data.formulationDescriptor is string)
+        && data.reportType in [
+          "in_stock",
+          "low_stock_uncertain",
+          "out_of_stock",
+          "successfully_filled",
+          "could_not_fill",
+          "called_and_confirmed"
+        ]
+        && data.reporterContributionCount == profile.data.contributionCount - 1
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function validPrivateReportHistory(userId) {
+      let data = request.resource.data;
+      let profile = profileAfter(userId);
+
+      return exists(profilePath(userId))
+        && data.keys().hasOnly([
+          "signalKey",
+          "medicationKey",
+          "pharmacyKey",
+          "pharmacyName",
+          "pharmacyAddress",
+          "pharmacyPlaceId",
+          "googleMapsUrl",
+          "medicationQuery",
+          "strengthDescriptor",
+          "formulationDescriptor",
+          "reportType",
           "note",
-          "userId",
-          "reporterDisplayName",
-          "publicAliasSnapshot",
           "reporterContributionCount",
           "createdAt",
           "updatedAt"
@@ -214,9 +295,6 @@ service cloud.firestore {
           "called_and_confirmed"
         ]
         && (!("note" in data) || (data.note is string && data.note.size() <= 240))
-        && data.userId == request.auth.uid
-        && data.reporterDisplayName == profile.data.displayName
-        && data.publicAliasSnapshot == expectedAlias
         && data.reporterContributionCount == profile.data.contributionCount - 1
         && data.createdAt == request.time
         && data.updatedAt == request.time;
@@ -227,11 +305,18 @@ service cloud.firestore {
       allow create: if isOwner(userId) && validProfileCreate(userId);
       allow update: if isOwner(userId) && validProfileUpdate(userId);
       allow delete: if false;
+
+      match /reportHistory/{reportId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && validPrivateReportHistory(userId);
+        allow update: if false;
+        allow delete: if false;
+      }
     }
 
     match /crowdReports/{reportId} {
       allow read: if true;
-      allow create: if isSignedIn() && validCrowdReport();
+      allow create: if isSignedIn() && validPublicCrowdReport();
       allow update: if false;
       allow delete: if false;
     }

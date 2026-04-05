@@ -4,8 +4,12 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  GOOGLE_API_QUOTA_BACKOFF_MS,
   MISSING_GOOGLE_API_KEY_CODE,
+  activateGoogleApiBackoff,
+  clearGoogleApiBackoff,
   createGoogleApiUnavailablePayload,
+  getGoogleApiBackoffState,
   getGoogleApiKey,
   getGoogleApiRuntimeMetadata,
 } = require("../lib/server/google-api-config");
@@ -26,6 +30,7 @@ test("google api config trims the server key and reports runtime metadata", () =
       nodeEnv: process.env.NODE_ENV || null,
       vercelEnv: "preview",
       hasGoogleApiKey: true,
+      googleApiBackoffActive: false,
     });
   } finally {
     if (originalGoogleApiKey === undefined) {
@@ -56,4 +61,31 @@ test("google api unavailable payload exposes a stable diagnostic code", () => {
       code: MISSING_GOOGLE_API_KEY_CODE,
     },
   );
+});
+
+test("google api backoff activates and expires cleanly", () => {
+  const originalNow = Date.now;
+  const baseNow = originalNow();
+
+  try {
+    clearGoogleApiBackoff();
+    Date.now = () => baseNow;
+
+    const activeBackoff = activateGoogleApiBackoff({
+      code: "over_query_limit",
+      message: "Location service is temporarily unavailable.",
+      durationMs: GOOGLE_API_QUOTA_BACKOFF_MS,
+    });
+
+    assert.equal(activeBackoff.code, "over_query_limit");
+    assert.equal(activeBackoff.message, "Location service is temporarily unavailable.");
+    assert.ok(activeBackoff.retryAfterSeconds >= 1);
+    assert.equal(Boolean(getGoogleApiBackoffState()), true);
+
+    Date.now = () => baseNow + GOOGLE_API_QUOTA_BACKOFF_MS + 1;
+    assert.equal(getGoogleApiBackoffState(), null);
+  } finally {
+    clearGoogleApiBackoff();
+    Date.now = originalNow;
+  }
 });
