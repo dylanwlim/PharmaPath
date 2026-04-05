@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { LegalTableOfContents } from "@/components/legal/legal-table-of-contents";
 import { PageTransitionShell } from "@/components/page-transition-shell";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
@@ -7,6 +8,7 @@ import { SiteNavbar } from "@/components/site-navbar";
 export type LegalDocumentSection = {
   id: string;
   title: string;
+  navLabel?: string;
   summary?: string;
   content: ReactNode;
 };
@@ -29,18 +31,22 @@ function LegalSection({
   return (
     <section
       id={id}
-      className="surface-panel scroll-mt-[calc(var(--navbar-height)+1.5rem)] rounded-[2rem] p-6 sm:p-7"
+      aria-labelledby={`${id}-heading`}
+      className="scroll-mt-[calc(var(--navbar-height)+2rem)] rounded-[1.2rem] border border-slate-200/88 bg-white/97 p-4 shadow-[0_1px_1px_rgba(15,23,42,0.04),0_12px_28px_rgba(15,23,42,0.035)] sm:p-5 lg:p-[1.3rem]"
     >
-      <div className="max-w-3xl">
-        <h2 className="text-[1.55rem] tracking-tight text-slate-950 sm:text-[1.8rem]">
+      <div className="max-w-[45rem]">
+        <h2
+          id={`${id}-heading`}
+          className="text-[1.3rem] leading-tight tracking-tight text-slate-950 sm:text-[1.42rem]"
+        >
           {title}
         </h2>
         {summary ? (
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
+          <p className="mt-2 max-w-2xl text-[0.92rem] leading-6 text-slate-500">
             {summary}
           </p>
         ) : null}
-        <div className="mt-5 space-y-4 text-[0.98rem] leading-7 text-slate-600">
+        <div className="mt-3 space-y-3.5 text-[0.94rem] leading-[1.72] text-slate-600">
           {content}
         </div>
       </div>
@@ -60,73 +66,66 @@ export function LegalDocumentLayout({
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-10 pt-28 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-            <div className="max-w-[44rem]">
-              <span className="eyebrow-label">{eyebrow}</span>
-              <h1 className="mt-6 text-[2.7rem] leading-tight tracking-tight text-slate-950 sm:text-[3.35rem]">
+        <section className="px-4 pb-2 pt-[calc(var(--navbar-height)+0.45rem)] sm:px-6 sm:pb-3 sm:pt-[calc(var(--navbar-height)+0.55rem)] lg:px-8 lg:pb-4 lg:pt-[calc(var(--navbar-height)+0.65rem)]">
+          <div className="site-shell">
+            <div className="max-w-[42rem]">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="eyebrow-label">{eyebrow}</span>
+                <span className="inline-flex items-center rounded-full border border-slate-200/90 bg-white/90 px-3 py-1 text-[0.8rem] font-medium text-slate-600 shadow-[0_1px_1px_rgba(15,23,42,0.03)]">
+                  Updated {lastUpdated}
+                </span>
+              </div>
+              <h1 className="mt-3 max-w-[38rem] text-[2.2rem] leading-[1.01] tracking-tight text-slate-950 sm:text-[2.62rem]">
                 {title}
               </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
+              <p className="mt-3 max-w-[38rem] text-[0.98rem] leading-7 text-slate-600 sm:text-[1rem]">
                 {intro}
               </p>
-            </div>
-
-            <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
-              <span className="eyebrow-label">Document details</span>
-              <div className="mt-5 rounded-[1.4rem] border border-slate-200/80 bg-white/88 px-5 py-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Last updated
-                </div>
-                <div className="mt-2 text-base font-medium text-slate-950">
-                  {lastUpdated}
-                </div>
-              </div>
-              <div className="mt-4 space-y-4 text-sm leading-6 text-slate-600">
-                {sidebarContent}
-              </div>
             </div>
           </div>
         </section>
 
-        <section className="px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-[15.5rem_minmax(0,1fr)] lg:items-start">
-            <aside className="lg:sticky lg:top-[calc(var(--navbar-height)+1.5rem)]">
-              <div className="surface-panel rounded-[1.85rem] p-5">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  On this page
-                </div>
-                <nav className="mt-4 flex flex-col gap-1.5">
-                  {sections.map((section) => (
-                    <a
-                      key={section.id}
-                      href={`#${section.id}`}
-                      className="rounded-[1rem] px-3 py-2 text-sm text-slate-600 transition-colors duration-150 hover:bg-slate-100/80 hover:text-slate-950"
-                    >
-                      {section.title}
-                    </a>
-                  ))}
-                </nav>
-                <div className="mt-5 border-t border-slate-200 pt-4">
-                  <Link
-                    href="/contact"
-                    className="text-sm text-[#156d95] transition-colors duration-150 hover:text-[#0f5d7d]"
-                  >
-                    Privacy or terms question? Contact PharmaPath.
-                  </Link>
-                </div>
-              </div>
-            </aside>
-
-            <article className="space-y-5">
+        <section className="px-4 pb-12 sm:px-6 sm:pb-14 lg:px-8">
+          <div className="site-shell grid gap-5 lg:grid-cols-[19.5rem_minmax(0,1fr)] lg:items-start lg:gap-6 xl:grid-cols-[20.25rem_minmax(0,1fr)]">
+            <article className="max-w-[46rem] space-y-3.5 sm:space-y-4 lg:col-start-2">
               {sections.map((section) => (
                 <LegalSection key={section.id} {...section} />
               ))}
             </article>
+
+            <aside className="lg:sticky lg:top-[calc(var(--navbar-height)+1.35rem)] lg:col-start-1 lg:row-start-1">
+              <div className="space-y-3 lg:pr-1">
+                <div className="rounded-[1.15rem] border border-slate-200/88 bg-white/95 p-4 shadow-[0_1px_1px_rgba(15,23,42,0.04),0_12px_28px_rgba(15,23,42,0.035)] sm:p-[1.05rem]">
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    On this page
+                  </div>
+                  <LegalTableOfContents sections={sections} />
+                </div>
+
+                <div className="hidden rounded-[1.05rem] border border-slate-200/80 bg-white/90 p-3.5 shadow-[0_1px_1px_rgba(15,23,42,0.04),0_8px_20px_rgba(15,23,42,0.03)] lg:block">
+                  <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Quick note
+                  </div>
+                  <div className="mt-2.5 space-y-2.5 text-[0.88rem] leading-6 text-slate-600">
+                    {sidebarContent}
+                  </div>
+                  <div className="mt-3 border-t border-slate-200/85 pt-3">
+                    <Link
+                      href="/contact"
+                      className="inline-flex items-center rounded-full px-1 py-0.5 text-[0.88rem] text-[#156d95] transition-colors duration-150 hover:text-[#0f5d7d] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10"
+                    >
+                      Questions about this page?
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </aside>
           </div>
         </section>
       </PageTransitionShell>
-      <SiteFooter />
+      <div className="pt-5 sm:pt-6">
+        <SiteFooter />
+      </div>
     </>
   );
 }

@@ -288,19 +288,24 @@
   }
 
   .footer-link {
-    @apply inline-flex w-fit items-center rounded-full px-2 py-1 text-[0.95rem] leading-6 text-slate-600 transition-[background-color,color,text-decoration-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10;
+    @apply inline-flex w-fit items-center rounded-md px-1.5 py-0.5 text-[0.95rem] leading-6 text-slate-600 transition-[background-color,color,text-decoration-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10;
     text-decoration: underline;
-    text-decoration-color: transparent;
+    text-decoration-color: rgba(15, 23, 42, 0.12);
     text-decoration-thickness: 1px;
     text-underline-offset: 0.22em;
   }
 
   .footer-link:hover,
-  .footer-link:focus-visible,
+  .footer-link:focus-visible {
+    color: #202020;
+    background: rgba(255, 255, 255, 0.74);
+    text-decoration-color: rgba(32, 32, 32, 0.38);
+  }
+
   .footer-link[data-active="true"] {
     color: #202020;
-    background: rgba(255, 255, 255, 0.82);
-    text-decoration-color: rgba(32, 32, 32, 0.34);
+    background: rgba(255, 255, 255, 0.88);
+    text-decoration-color: rgba(32, 32, 32, 0.48);
   }
 
   .page-shell-enter {
