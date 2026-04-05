@@ -139,18 +139,18 @@ function RegisterPageInner() {
   const errorList = Object.entries(errors);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance text-slate-950">
+    <div className="space-y-4 lg:space-y-3.5">
+      <div className="space-y-1.5">
+        <h1 className="text-[2rem] font-semibold tracking-tight text-balance text-slate-950 lg:text-[2.2rem]">
           Create an account
         </h1>
-        <p className="text-slate-600">
+        <p className="max-w-[32rem] text-[0.98rem] leading-7 text-slate-600">
           Create your PharmaPath contributor profile to submit reports under your account and build
           trusted history over time.
         </p>
       </div>
 
-      <div className="glass-panel p-4">
+      <div className="rounded-[1.4rem] border border-slate-200/80 bg-slate-50/85 p-3.5">
         <p className="text-sm leading-6 text-slate-700">
           New reports start with very light influence. As your contribution history grows, your
           reports can move the crowd signal more, but never without a cap.
@@ -183,9 +183,9 @@ function RegisterPageInner() {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
             <AuthLabel htmlFor="firstName">First name</AuthLabel>
             <AuthInput
               id="firstName"
@@ -200,7 +200,7 @@ function RegisterPageInner() {
               </p>
             ) : null}
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <AuthLabel htmlFor="lastName">Last name</AuthLabel>
             <AuthInput
               id="lastName"
@@ -217,68 +217,72 @@ function RegisterPageInner() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <AuthLabel htmlFor="email">Email</AuthLabel>
-          <AuthInput
-            id="email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-            disabled={isLoading}
-          />
-          {errors.email ? (
-            <p className="text-sm text-rose-600 animate-in fade-in slide-in-from-top-1">{errors.email}</p>
-          ) : null}
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="space-y-1.5">
+            <AuthLabel htmlFor="email">Email</AuthLabel>
+            <AuthInput
+              id="email"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              disabled={isLoading}
+            />
+            {errors.email ? (
+              <p className="text-sm text-rose-600 animate-in fade-in slide-in-from-top-1">{errors.email}</p>
+            ) : null}
+          </div>
+
+          <div className="space-y-1.5">
+            <AuthLabel htmlFor="location">Home ZIP or city <span className="font-normal text-slate-500">(optional)</span></AuthLabel>
+            <AuthInput
+              id="location"
+              name="location"
+              placeholder="10001 or New York, NY"
+              autoComplete="postal-code"
+              disabled={isLoading}
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <AuthLabel htmlFor="location">Home ZIP or city <span className="font-normal text-slate-500">(optional)</span></AuthLabel>
-          <AuthInput
-            id="location"
-            name="location"
-            placeholder="10001 or New York, NY"
-            autoComplete="postal-code"
-            disabled={isLoading}
-          />
-        </div>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="space-y-1.5">
+            <AuthLabel htmlFor="password">Password</AuthLabel>
+            <PasswordInput
+              id="password"
+              name="password"
+              placeholder="Create a password"
+              autoComplete="new-password"
+              disabled={isLoading}
+              value={password}
+              onChange={(event) => setPassword(event.currentTarget.value)}
+            />
+            <PasswordStrength password={password} />
+            {errors.password ? (
+              <p className="text-sm text-rose-600 animate-in fade-in slide-in-from-top-1">
+                {errors.password}
+              </p>
+            ) : null}
+          </div>
 
-        <div className="space-y-2">
-          <AuthLabel htmlFor="password">Password</AuthLabel>
-          <PasswordInput
-            id="password"
-            name="password"
-            placeholder="Create a password"
-            autoComplete="new-password"
-            disabled={isLoading}
-            value={password}
-            onChange={(event) => setPassword(event.currentTarget.value)}
-          />
-          <PasswordStrength password={password} />
-          {errors.password ? (
-            <p className="text-sm text-rose-600 animate-in fade-in slide-in-from-top-1">
-              {errors.password}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <AuthLabel htmlFor="confirmPassword">Confirm password</AuthLabel>
-          <PasswordInput
-            id="confirmPassword"
-            name="confirmPassword"
-            placeholder="Confirm your password"
-            autoComplete="new-password"
-            disabled={isLoading}
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.currentTarget.value)}
-          />
-          <PasswordMatch password={password} confirmPassword={confirmPassword} />
-          {errors.confirmPassword ? (
-            <p className="text-sm text-rose-600 animate-in fade-in slide-in-from-top-1">
-              {errors.confirmPassword}
-            </p>
-          ) : null}
+          <div className="space-y-1.5">
+            <AuthLabel htmlFor="confirmPassword">Confirm password</AuthLabel>
+            <PasswordInput
+              id="confirmPassword"
+              name="confirmPassword"
+              placeholder="Confirm your password"
+              autoComplete="new-password"
+              disabled={isLoading}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.currentTarget.value)}
+            />
+            <PasswordMatch password={password} confirmPassword={confirmPassword} />
+            {errors.confirmPassword ? (
+              <p className="text-sm text-rose-600 animate-in fade-in slide-in-from-top-1">
+                {errors.confirmPassword}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         <AuthButton

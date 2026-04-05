@@ -88,18 +88,18 @@ function LoginPageInner() {
   const errorList = Object.entries(errors);
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance text-slate-950">
+    <div className="space-y-4 lg:space-y-3.5">
+      <div className="space-y-1.5">
+        <h1 className="text-[2rem] font-semibold tracking-tight text-balance text-slate-950 lg:text-[2.2rem]">
           Welcome back
         </h1>
-        <p className="text-slate-600">
+        <p className="max-w-[30rem] text-[0.98rem] leading-7 text-slate-600">
           Sign in to manage your profile, keep contribution history tied to your account, and report
           what nearby pharmacies are seeing.
         </p>
       </div>
 
-      <div className="glass-panel p-4">
+      <div className="rounded-[1.4rem] border border-slate-200/80 bg-slate-50/85 p-3.5">
         <p className="text-sm leading-6 text-slate-700">
           Your session unlocks trust-weighted crowd reports, profile settings, recent searches, and
           the ability to help future patients judge whether a pharmacy is worth calling first.
@@ -132,8 +132,8 @@ function LoginPageInner() {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+        <div className="space-y-1.5">
           <AuthLabel htmlFor="email">Email</AuthLabel>
           <AuthInput
             id="email"
@@ -152,7 +152,7 @@ function LoginPageInner() {
           ) : null}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <AuthLabel htmlFor="password">Password</AuthLabel>
             <Link
