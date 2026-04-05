@@ -1,30 +1,27 @@
 import type { ReactNode } from "react";
-import { ShieldCheck, Stethoscope, Users } from "lucide-react";
+import { Activity, ShieldCheck, Waves } from "lucide-react";
 import { SiteBrand } from "@/components/site-brand";
-import { combinedSurfaceLabel } from "@/lib/surface-labels";
 
 function Logo() {
   return <SiteBrand />;
 }
 
-const testimonial = {
-  quote:
-    "PharmaPath keeps the nearby pharmacy search credible by separating live search results, medication context, and community reporting instead of blurring them together.",
-  author: "Dylan Lim",
-  role: "Hackathon Product Lead",
-  company: "RamHack 2026",
-};
-
-const stats = [
-  { value: "Live", label: "Nearby pharmacy discovery" },
-  { value: "Weighted", label: "Crowd reports by trust + recency" },
-  { value: "Truthful", label: "No false stock claims" },
-];
-
-const features = [
-  { icon: ShieldCheck, label: "Trust-weighted reports" },
-  { icon: Stethoscope, label: combinedSurfaceLabel },
-  { icon: Users, label: "Contributor profiles" },
+const valuePoints = [
+  {
+    icon: Activity,
+    title: "Live",
+    description: "Nearby pharmacy discovery",
+  },
+  {
+    icon: Waves,
+    title: "Weighted",
+    description: "Crowd reports by trust + recency",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Truthful",
+    description: "No false stock claims",
+  },
 ];
 
 export function AuthLayoutShell({ children }: { children: ReactNode }) {
@@ -39,54 +36,46 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
           />
         </div>
 
-        <div className="relative z-10 flex w-full flex-col justify-between p-12">
+        <div className="relative z-10 flex w-full flex-col p-12 xl:p-14">
           <Logo />
 
-          <div className="space-y-8">
-            <blockquote className="space-y-4">
-              <p className="text-2xl font-medium leading-relaxed text-slate-950 text-balance">
-                &ldquo;{testimonial.quote}&rdquo;
-              </p>
-              <footer className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/75 font-medium text-slate-700 shadow-sm">
-                  {testimonial.author
-                    .split(" ")
-                    .map((token) => token[0])
-                    .join("")}
-                </div>
-                <div>
-                  <p className="font-medium text-slate-950">
-                    {testimonial.author}
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    {testimonial.role} at {testimonial.company}
+          <div className="flex flex-1 items-center py-10">
+            <div className="w-full space-y-10">
+              <div className="max-w-xl space-y-4">
+                <p className="text-[0.7rem] font-medium uppercase tracking-[0.28em] text-slate-500">
+                  Contributor access
+                </p>
+                <div className="space-y-3">
+                  <h2 className="max-w-lg text-4xl font-semibold tracking-tight text-balance text-slate-950 xl:text-[3.5rem] xl:leading-[1.05]">
+                    Welcome to the search that stays grounded.
+                  </h2>
+                  <p className="max-w-lg text-base leading-7 text-slate-600 xl:text-lg">
+                    Sign in to a calmer view of nearby pharmacy discovery, shaped by verified context and community signal.
                   </p>
                 </div>
-              </footer>
-            </blockquote>
-
-            <div className="flex gap-8 border-t border-slate-200 pt-8">
-              {stats.map((stat) => (
-                <div key={stat.label} className="max-w-[9rem]">
-                  <p className="text-2xl font-bold text-slate-950">
-                    {stat.value}
-                  </p>
-                  <p className="text-sm text-slate-600">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex gap-6">
-            {features.map((feature) => (
-              <div
-                key={feature.label}
-                className="flex items-center gap-2 text-slate-600"
-              >
-                <feature.icon className="h-4 w-4" />
-                <span className="text-sm">{feature.label}</span>
               </div>
-            ))}
+
+              <div className="grid gap-4 xl:grid-cols-3">
+                {valuePoints.map((point) => (
+                  <div
+                    key={point.title}
+                    className="rounded-[1.75rem] border border-white/65 bg-white/60 p-6 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.35)] backdrop-blur-sm transition-transform duration-300 ease-out hover:-translate-y-0.5"
+                  >
+                    <div className="mb-8 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#156d95]/8 text-[#156d95]">
+                      <point.icon className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[1.75rem] font-semibold tracking-tight text-slate-950">
+                        {point.title}
+                      </p>
+                      <p className="max-w-[13rem] text-sm leading-6 text-slate-600 xl:text-[0.95rem]">
+                        {point.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
