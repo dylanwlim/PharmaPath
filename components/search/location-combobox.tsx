@@ -35,12 +35,14 @@ type LocationComboboxProps = {
   helperText?: string | null;
   inputRef?: Ref<HTMLInputElement>;
   submitOnSelect?: boolean;
+  panelMode?: "floating" | "inline";
+  panelClassName?: string;
 };
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 const EMPTY_HINT =
-  "Search by city, ZIP, address, or pharmacy. Pick a live suggestion or keep the typed text for a direct search.";
+  "Search by city, ZIP code, or address. Choose a live suggestion when it matches the area you want.";
 
 export function LocationCombobox({
   label,
@@ -55,6 +57,8 @@ export function LocationCombobox({
   helperText,
   inputRef,
   submitOnSelect = true,
+  panelMode = "floating",
+  panelClassName,
 }: LocationComboboxProps) {
   const reduceMotion = useReducedMotion();
   const inputId = useId();
@@ -99,6 +103,7 @@ export function LocationCombobox({
   const describedBy = [helperText ? helperId : null, error ? errorId : null]
     .filter(Boolean)
     .join(" ");
+  const hasResolvedSelection = Boolean(selectedPlaceId && value.trim());
 
   useEffect(() => {
     if (!isOpen || !isSearchable) {
@@ -252,7 +257,11 @@ export function LocationCombobox({
             setIsOpen(true);
             setHighlightedIndexState(-1);
           }}
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            if (!hasResolvedSelection) {
+              setIsOpen(true);
+            }
+          }}
           onKeyDown={handleKeyDown}
         />
 
@@ -277,8 +286,12 @@ export function LocationCombobox({
                   : { duration: 0.16, ease: [0.22, 1, 0.36, 1] }
               }
               className={cn(
-                "search-floating-panel",
-                getComboboxPanelPositionClasses(placement),
+                panelMode === "inline"
+                  ? "search-inline-panel mt-2"
+                  : "search-floating-panel",
+                panelMode === "floating" &&
+                  getComboboxPanelPositionClasses(placement),
+                panelClassName,
               )}
             >
               <div

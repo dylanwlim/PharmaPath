@@ -40,7 +40,7 @@ test("pharmacy fallback response keeps the page renderable when live nearby sear
   assert.equal(payload.counts.total, 0);
   assert.equal(payload.recommended, null);
   assert.equal(payload.location.display_label, "Brooklyn, NY");
-  assert.equal(payload.medication_profile.workflow_label, "Higher-friction handoff");
+  assert.equal(payload.medication_profile.workflow_label, "Call before transfer");
   assert.equal("questions_to_ask" in payload.guidance, false);
 });
 

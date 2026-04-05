@@ -182,14 +182,14 @@ function resolvePreviousStep(step: SearchStep, hasStrengthStep: boolean) {
 
 function getFormHeading(compact: boolean) {
   return compact
-    ? "Update the search, then refresh the call list."
-    : "Search by medication, then narrow the details.";
+    ? "Refine the search, then refresh the list."
+    : "Start with the medication, then narrow the search.";
 }
 
 function getFormDescription(compact: boolean) {
   return compact
-    ? "Change the medication, strength, or location first. Use filters only when you need to widen or reorder nearby options."
-    : "Choose the medication first. If there are multiple strengths, we’ll ask for the one you need before you set the search area.";
+    ? "Update the medication, strength, location, or filters here."
+    : "We only ask for strength when it changes the nearby search.";
 }
 
 function getStepCopy(step: SearchStep, compact: boolean) {
@@ -207,7 +207,7 @@ function getStepCopy(step: SearchStep, compact: boolean) {
       eyebrow: "Strength",
       title: "Choose the strength you need.",
       description:
-        "We only stop here when this medication can map to more than one usable strength.",
+        "Some medications come in several strengths. Pick the one you want to search.",
     };
   }
 
@@ -216,17 +216,17 @@ function getStepCopy(step: SearchStep, compact: boolean) {
       eyebrow: "Location",
       title: "Enter where to search nearby.",
       description:
-        "Use a city, ZIP code, or address. Pick a live suggestion if it looks right, or keep the typed text for direct resolution when you search.",
+        "Use a city, ZIP code, or address. Choose a live suggestion when it matches the area you want.",
     };
   }
 
   return {
     eyebrow: compact ? "Refresh nearby search" : "Search options",
     title: compact
-      ? "Adjust search options, then refresh the call list."
-      : "Adjust search options, then see nearby pharmacies worth calling.",
+      ? "Adjust the search, then refresh the list."
+      : "Set the search options, then load the nearby list.",
     description:
-      "Use radius, sort, and open-now only when you want to reshape the shortlist.",
+      "Use radius, sort, and open now to fine-tune the nearby list.",
   };
 }
 
@@ -255,16 +255,23 @@ function FocusStepIndicator({
   showStrengthStep,
   medicationOption,
   selectedStrength,
+  compact = false,
 }: {
   activeStep: SearchStep;
   showStrengthStep: boolean;
   medicationOption: MedicationSearchOption | null;
   selectedStrength: string;
+  compact?: boolean;
 }) {
   const activeIndex = getStepIndex(activeStep);
 
   return (
-    <ol className="mt-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+    <ol
+      className={cn(
+        "mt-4 grid gap-2",
+        compact ? "grid-cols-4" : "grid-cols-2 lg:grid-cols-4",
+      )}
+    >
       {guidedSteps.map((item, index) => {
         const isOptionalStrength = item.id === "strength" && !showStrengthStep;
         const state =
@@ -278,41 +285,61 @@ function FocusStepIndicator({
           <li
             key={item.id}
             className={cn(
-              "flex min-w-0 items-start gap-2.5 rounded-[1.15rem] border px-3.5 py-3 text-left transition-colors lg:min-h-[4.25rem]",
+              "flex min-w-0 items-start gap-2 rounded-[1rem] border text-left transition-colors",
+              compact ? "px-2.5 py-2.5" : "px-3.5 py-3",
               state === "active" &&
-                "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d]",
+                "border-[#156d95]/28 bg-[#156d95]/8 text-[#0f5d7d]",
               state === "complete" &&
                 "border-slate-200 bg-white text-slate-700",
               state === "upcoming" &&
-                "border-transparent bg-slate-100/80 text-slate-500",
+                "border-slate-200/70 bg-slate-50/90 text-slate-600",
             )}
+          >
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center justify-center rounded-full border font-semibold",
+                compact ? "h-5 w-5 text-[0.62rem]" : "h-6 w-6 text-[0.68rem]",
+                state === "active" &&
+                  "border-[#156d95]/26 bg-white text-[#0f5d7d]",
+                state === "complete" && "border-slate-200 bg-white text-slate-700",
+                state === "upcoming" &&
+                  "border-slate-200/80 bg-white/90 text-slate-500",
+              )}
             >
+              {state === "complete" ? (
+                <Check className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+              ) : (
+                index + 1
+              )}
+            </span>
+            <span className="min-w-0">
               <span
                 className={cn(
-                  "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[0.68rem] font-semibold",
-                  state === "active" &&
-                    "border-[#156d95]/26 bg-white text-[#0f5d7d]",
-                  state === "complete" && "border-slate-200 bg-white text-slate-700",
-                  state === "upcoming" &&
-                    "border-slate-200/80 bg-white/70 text-slate-400",
+                  "block font-semibold uppercase",
+                  compact
+                    ? "text-[0.64rem] tracking-[0.12em]"
+                    : "text-[0.72rem] tracking-[0.15em]",
                 )}
               >
-                {state === "complete" ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                {item.label}
               </span>
-              <span className="min-w-0">
-                <span className="block text-[0.72rem] font-semibold uppercase tracking-[0.15em]">
-                  {item.label}
+              {item.helper ? (
+                <span
+                  className={cn(
+                    "mt-1 block uppercase text-current/75",
+                    compact
+                      ? "text-[0.54rem] tracking-[0.12em]"
+                      : "text-[0.63rem] tracking-[0.14em]",
+                  )}
+                >
+                  {getStrengthStepHelper({
+                    medicationOption,
+                    showStrengthStep,
+                    selectedStrength,
+                  })}
                 </span>
-                {item.helper ? (
-                  <span className="mt-1 block text-[0.63rem] uppercase tracking-[0.14em] text-current/65">
-                    {getStrengthStepHelper({
-                      medicationOption,
-                      showStrengthStep,
-                      selectedStrength,
-                    })}
-                  </span>
-                ) : null}
-              </span>
+              ) : null}
+            </span>
           </li>
         );
       })}
@@ -328,6 +355,7 @@ function SelectionSummaryChip({
   state,
   onClick,
   className,
+  compact = false,
 }: {
   label: string;
   value?: string | null;
@@ -336,12 +364,14 @@ function SelectionSummaryChip({
   state: "complete" | "active" | "pending";
   onClick?: () => void;
   className?: string;
+  compact?: boolean;
 }) {
   const content = (
     <>
       <span
         className={cn(
-          "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+          "inline-flex shrink-0 items-center justify-center rounded-full",
+          compact ? "h-8 w-8" : "h-9 w-9",
           state === "active" && "bg-[#156d95]/12 text-[#156d95]",
           state === "complete" && "bg-slate-100 text-slate-600",
           state === "pending" && "bg-slate-100/80 text-slate-400",
@@ -350,12 +380,18 @@ function SelectionSummaryChip({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[0.64rem] uppercase tracking-[0.16em] text-slate-400">
+        <span
+          className={cn(
+            "block uppercase text-slate-500",
+            compact ? "text-[0.58rem] tracking-[0.16em]" : "text-[0.64rem] tracking-[0.16em]",
+          )}
+        >
           {label}
         </span>
         <span
           className={cn(
-            "mt-1 block line-clamp-2 text-[0.95rem] leading-5 font-semibold",
+            "mt-1 block leading-5 font-semibold",
+            compact ? "text-[0.9rem]" : "text-[0.95rem]",
             value ? "text-slate-900" : "text-slate-500",
           )}
           title={value || placeholder}
@@ -379,7 +415,8 @@ function SelectionSummaryChip({
     return (
       <div
         className={cn(
-          "flex min-w-0 items-start gap-3 rounded-[1.1rem] border px-4 py-3 text-left shadow-[0_1px_1px_rgba(15,23,42,0.04)]",
+          "flex min-w-0 items-start gap-3 rounded-[1.05rem] border text-left shadow-[0_1px_1px_rgba(15,23,42,0.04)]",
+          compact ? "px-3.5 py-3" : "px-4 py-3",
           state === "active" &&
             "border-[#156d95]/22 bg-[#156d95]/8",
           state === "complete" && "border-slate-200/90 bg-white/92",
@@ -396,7 +433,8 @@ function SelectionSummaryChip({
     <button
       type="button"
       className={cn(
-        "flex min-w-0 items-start gap-3 rounded-[1.1rem] border px-4 py-3 text-left shadow-[0_1px_1px_rgba(15,23,42,0.04)] transition-[border-color,background-color,transform] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
+        "flex min-w-0 items-start gap-3 rounded-[1.05rem] border text-left shadow-[0_1px_1px_rgba(15,23,42,0.04)] transition-[border-color,background-color,transform] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
+        compact ? "px-3.5 py-3" : "px-4 py-3",
         state === "active" &&
           "border-[#156d95]/22 bg-[#156d95]/8",
         state === "complete" &&
@@ -510,6 +548,15 @@ export function PharmacySearchForm({
   const summaryLocation =
     locationSelection?.label || location.trim() || "Add a location";
   const stepCopy = getStepCopy(activeStep, compact);
+  const hasResolvedLocationSelection = Boolean(
+    locationSelection &&
+      location.trim() &&
+      locationSelection.label.trim().toLowerCase() ===
+        location.trim().toLowerCase(),
+  );
+  const locationHelperText = hasResolvedLocationSelection
+    ? `Selected area: ${locationSelection?.label}.`
+    : "Choose a live suggestion if it matches the area you want.";
 
   useEffect(() => {
     let cancelled = false;
@@ -934,55 +981,50 @@ export function PharmacySearchForm({
   return (
     <div
       className={cn(
-        "surface-panel rounded-[1.95rem] p-5 sm:p-6 xl:p-7",
-        compact && "rounded-[1.65rem] p-3.5 sm:p-4 xl:p-5",
+        "surface-panel rounded-[1.7rem] p-4 sm:p-5 xl:p-6",
+        compact && "rounded-[1.45rem] p-4",
         className,
       )}
     >
-      <div
-        className={cn(
-          "rounded-[1.7rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(248,251,254,0.92))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:p-6 xl:p-7",
-          compact && "rounded-[1.35rem] p-3.5 sm:p-4 xl:p-5",
-        )}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="max-w-[40rem]">
-            <span className="eyebrow-label">
-              {compact ? "Refine nearby search" : "Nearby pharmacy search"}
-            </span>
-            <h2
-              className={cn(
-                "mt-2.5 tracking-tight text-slate-950",
-                compact ? "text-[1.22rem]" : "text-[1.62rem] sm:text-[1.78rem]",
-              )}
-            >
-              {getFormHeading(compact)}
-            </h2>
-            <p
-              className={cn(
-                "mt-2 max-w-[40rem] text-slate-600",
-                compact ? "text-[0.88rem] leading-6" : "text-[0.93rem] leading-6",
-              )}
-            >
-              {getFormDescription(compact)}
-            </p>
-          </div>
-
-          <div className="rounded-full border border-white/80 bg-white/82 px-3 py-1.5 text-[0.68rem] uppercase tracking-[0.18em] text-slate-500 shadow-[0_1px_1px_rgba(15,23,42,0.04)]">
-            Step {getStepIndex(activeStep) + 1} of {guidedSteps.length}
-          </div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="max-w-[40rem]">
+          <span className="eyebrow-label">
+            {compact ? "Refine nearby search" : "Nearby pharmacy search"}
+          </span>
+          <h2
+            className={cn(
+              "mt-2 tracking-tight text-slate-950",
+              compact ? "text-[1.1rem]" : "text-[1.48rem] sm:text-[1.62rem]",
+            )}
+          >
+            {getFormHeading(compact)}
+          </h2>
+          <p
+            className={cn(
+              "mt-1.5 max-w-[40rem] text-slate-600",
+              compact ? "text-[0.84rem] leading-6" : "text-[0.91rem] leading-6",
+            )}
+          >
+            {getFormDescription(compact)}
+          </p>
         </div>
 
-        <FocusStepIndicator
-          activeStep={activeStep}
-          showStrengthStep={showsStrengthCheckpoint}
-          medicationOption={medicationOption}
-          selectedStrength={selectedStrength}
-        />
+        <div className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-[0.66rem] uppercase tracking-[0.18em] text-slate-600 shadow-[0_1px_1px_rgba(15,23,42,0.04)]">
+          Step {getStepIndex(activeStep) + 1} of {guidedSteps.length}
+        </div>
+      </div>
 
-        <form
-          className="mt-3.5"
-          onSubmit={async (event) => {
+      <FocusStepIndicator
+        activeStep={activeStep}
+        showStrengthStep={showsStrengthCheckpoint}
+        medicationOption={medicationOption}
+        selectedStrength={selectedStrength}
+        compact={compact}
+      />
+
+      <form
+        className="mt-4"
+        onSubmit={async (event) => {
             event.preventDefault();
             setIsResolvingSearch(true);
             const normalizedMedication = medication.trim();
@@ -1115,318 +1157,328 @@ export function PharmacySearchForm({
               setIsResolvingSearch(false);
             }
           }}
+      >
+        <div
+          ref={stepCardRef}
+          className={cn(
+            "rounded-[1.35rem] border border-slate-200/90 bg-white/94 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)] sm:p-5",
+            compact && "rounded-[1.2rem] p-4",
+          )}
         >
-          <div
-            ref={stepCardRef}
-            className={cn(
-              "rounded-[1.5rem] border border-slate-200/90 bg-white/92 p-5 shadow-[0_12px_32px_rgba(15,23,42,0.05)] sm:p-6 xl:p-7",
-              compact && "rounded-[1.25rem] p-3.5 sm:p-4 xl:p-5",
-            )}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="max-w-[42rem]">
-                <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
-                  {stepCopy.eyebrow}
-                </div>
-                <h3
-                  className={cn(
-                    "mt-2 tracking-tight text-slate-950",
-                    compact ? "text-[1.08rem]" : "text-[1.26rem] sm:text-[1.4rem]",
-                  )}
-                >
-                  {stepCopy.title}
-                </h3>
-                <p className="mt-1.5 max-w-[38rem] text-[0.86rem] leading-6 text-slate-600">
-                  {stepCopy.description}
-                </p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-[42rem]">
+              <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-500">
+                {stepCopy.eyebrow}
               </div>
-
-              {activeStep !== "medication" ? (
-                <button
-                  type="button"
-                  className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10"
-                  onClick={() =>
-                    goToStep(
-                      resolvePreviousStep(activeStep, showsStrengthCheckpoint),
-                      resolvePreviousStep(activeStep, showsStrengthCheckpoint),
-                    )
-                  }
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back
-                </button>
-              ) : null}
-            </div>
-
-            {selectionSummaryItems.length ? (
-              <div
+              <h3
                 className={cn(
-                  "mt-4 grid gap-3",
-                  compact ? "sm:grid-cols-2" : "md:grid-cols-2 xl:grid-cols-3",
+                  "mt-2 tracking-tight text-slate-950",
+                  compact ? "text-[1.02rem]" : "text-[1.2rem] sm:text-[1.34rem]",
                 )}
               >
-                {selectionSummaryItems.map((item) => (
-                  <SelectionSummaryChip
-                    key={item.key}
-                    label={item.label}
-                    value={item.value}
-                    placeholder={item.placeholder}
-                    icon={item.icon}
-                    state={item.state}
-                    onClick={item.onClick}
-                    className={
-                      compact &&
-                      selectionSummaryItems.length === 3 &&
-                      item.key === "location"
+                {stepCopy.title}
+              </h3>
+              <p className="mt-1.5 max-w-[38rem] text-[0.84rem] leading-6 text-slate-600">
+                {stepCopy.description}
+              </p>
+            </div>
+
+            {activeStep !== "medication" ? (
+              <button
+                type="button"
+                className="inline-flex min-h-9 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10"
+                onClick={() =>
+                  goToStep(
+                    resolvePreviousStep(activeStep, showsStrengthCheckpoint),
+                    resolvePreviousStep(activeStep, showsStrengthCheckpoint),
+                  )
+                }
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </button>
+            ) : null}
+          </div>
+
+          {selectionSummaryItems.length ? (
+            <div
+              className={cn(
+                "mt-4 grid gap-3",
+                compact ? "grid-cols-1 sm:grid-cols-2" : "md:grid-cols-2 xl:grid-cols-3",
+              )}
+            >
+              {selectionSummaryItems.map((item) => (
+                <SelectionSummaryChip
+                  key={item.key}
+                  label={item.label}
+                  value={item.value}
+                  placeholder={item.placeholder}
+                  icon={item.icon}
+                  state={item.state}
+                  onClick={item.onClick}
+                  compact={compact}
+                  className={
+                    compact && selectionSummaryItems.length === 3
+                      ? item.key === "medication" || item.key === "location"
                         ? "sm:col-span-2"
                         : undefined
-                    }
-                  />
-                ))}
-              </div>
-            ) : null}
-
-            <div className="mt-4 border-t border-slate-200/80 pt-4">
-              <AnimatePresence custom={transitionDirection} initial={false} mode="wait">
-                <motion.div
-                  key={activeStep}
-                  custom={transitionDirection}
-                  variants={stepMotion}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={stepTransition}
-                  className="space-y-4"
-                >
-                  {activeStep === "medication" ? (
-                    <div className="space-y-4">
-                      <MedicationCombobox
-                        className="max-w-none"
-                        label="Medication"
-                        placeholder="Search medication"
-                        value={medication}
-                        selectedOptionId={medicationOption?.id || null}
-                        helperText={
-                          medicationSupportText ||
-                          "Search by brand, generic, or exact presentation."
-                        }
-                        onValueChange={handleMedicationInputChange}
-                        onSelect={handleMedicationSelection}
-                        emptyMessage="No medication matches yet. Try a brand, generic, or strength."
-                        error={medicationError}
-                        inputRef={medicationInputRef}
-                        panelMode="floating"
-                        inputClassName="shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_1px_1px_rgba(15,23,42,0.02),0_8px_16px_rgba(15,23,42,0.04)]"
-                        panelClassName="mt-2"
-                      />
-
-                      {showSamples && !compact && !medication.trim() ? (
-                        <div className="rounded-[1.05rem] border border-slate-200/80 bg-white/70 px-4 py-3">
-                          <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
-                            Common starting points
-                          </div>
-                          <p className="mt-1.5 text-[0.8rem] leading-6 text-slate-600">
-                            Use one if it matches what you need.
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {featuredSearches.map((search) => (
-                              <button
-                                key={search.id}
-                                type="button"
-                                disabled={Boolean(isApplyingSampleId)}
-                                className="inline-flex min-h-8 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[0.88rem] text-slate-600 transition hover:border-[#156d95]/24 hover:text-[#156d95] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10 disabled:cursor-wait disabled:opacity-70"
-                                onClick={() => void handleFeaturedSearch(search)}
-                              >
-                                {isApplyingSampleId === search.id
-                                  ? "Loading..."
-                                  : search.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {activeStep === "strength" ? (
-                    <div className="space-y-3.5">
-                      <p className="max-w-2xl text-[0.88rem] leading-6 text-slate-600">
-                        Pick the exact strength you want the nearby search to
-                        carry forward.
-                      </p>
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                        {medicationOption?.strengths.map((strength, index) => {
-                          const isSelected = strength.value === selectedStrength;
-
-                          return (
-                            <button
-                              key={strength.id}
-                              ref={(node) => {
-                                strengthButtonRefs.current[index] = node;
-                              }}
-                              type="button"
-                              className={cn(
-                                "group flex min-h-[4.5rem] items-start justify-between rounded-[1.08rem] border px-4 py-3.5 text-left transition-[border-color,background-color,transform,box-shadow] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
-                                isSelected
-                                  ? "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d] shadow-[0_8px_20px_rgba(21,109,149,0.08)]"
-                                  : "border-slate-200 bg-white text-slate-700 hover:border-[#156d95]/18",
-                              )}
-                              onClick={() => handleStrengthSelection(strength.value)}
-                            >
-                              <span className="text-[1rem] font-semibold leading-6">
-                                {strength.label}
-                              </span>
-                              <span
-                                className={cn(
-                                  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
-                                  isSelected
-                                    ? "border-[#156d95]/22 bg-white text-[#156d95]"
-                                    : "border-slate-200 text-slate-300 group-hover:border-[#156d95]/22 group-hover:text-[#156d95]",
-                                )}
-                              >
-                                <Check className="h-4 w-4" />
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {strengthError ? (
-                        <p className="search-field-error">{strengthError}</p>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {activeStep === "location" ? (
-                    <div className="space-y-3.5">
-                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(15rem,0.34fr)] xl:items-end">
-                        <LocationCombobox
-                          className="max-w-none"
-                          label="Location"
-                          placeholder="City, ZIP, or address"
-                          value={location}
-                          selectedPlaceId={locationSelection?.placeId || null}
-                          sessionToken={locationSessionToken}
-                          onValueChange={handleLocationInputChange}
-                          onSelect={(option) => {
-                            setLocationSelection(
-                              createLocationSelection(
-                                option.description,
-                                option.placeId,
-                              ),
-                            );
-                            setLocation(option.description);
-                            setLocationError(null);
-                          }}
-                          error={locationError}
-                          helperText="Pick a live suggestion or keep the typed text for direct resolution at search time."
-                          inputRef={locationInputRef}
-                          submitOnSelect={false}
-                        />
-
-                        <div className="rounded-[1.08rem] border border-slate-200/85 bg-slate-50/78 px-4 py-4">
-                          <p className="text-sm font-medium text-slate-900">
-                            Continue when the search area looks right.
-                          </p>
-                          <p className="mt-1 text-[0.82rem] leading-6 text-slate-600">
-                            You can still adjust radius, sort, and open-now on
-                            the next step.
-                          </p>
-                          <button
-                            type="button"
-                            className="action-button-primary mt-3 min-h-[3.05rem] w-full px-5 text-sm"
-                            onClick={handleLocationContinue}
-                          >
-                            Continue
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {activeStep === "review" ? (
-                    <div className="space-y-4">
-                      <div className="grid gap-x-3.5 gap-y-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
-                        <label className="search-field-stack">
-                          <span className="search-field-label">Radius</span>
-                          <select
-                            className="search-select-control"
-                            value={radiusMiles}
-                            onChange={(event) =>
-                              setRadiusMiles(Number(event.target.value))
-                            }
-                          >
-                            <option value={2}>2 miles</option>
-                            <option value={5}>5 miles</option>
-                            <option value={10}>10 miles</option>
-                            <option value={25}>25 miles</option>
-                          </select>
-                        </label>
-
-                        <label className="search-field-stack">
-                          <span className="search-field-label">Sort</span>
-                          <select
-                            className="search-select-control"
-                            value={sortBy}
-                            onChange={(event) =>
-                              setSortBy(
-                                event.target.value as
-                                  | "best_match"
-                                  | "distance"
-                                  | "rating",
-                              )
-                            }
-                          >
-                            <option value="best_match">Best overall match</option>
-                            <option value="distance">Closest first</option>
-                            <option value="rating">Highest rating</option>
-                          </select>
-                        </label>
-
-                        <label className="search-field-stack xl:min-w-[13rem]">
-                          <span className="search-field-label">Availability</span>
-                          <span className="inline-flex min-h-[3.35rem] w-full items-center gap-2.5 rounded-[1.08rem] border border-slate-200/95 bg-slate-50/85 px-3.5 text-[0.94rem] leading-6 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_8px_18px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow,background-color,color] duration-150 focus-within:border-[#156d95] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#156d95]/10">
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
-                              checked={onlyOpenNow}
-                              onChange={(event) =>
-                                setOnlyOpenNow(event.target.checked)
-                              }
-                            />
-                            <span className="min-w-0">Open now only</span>
-                          </span>
-                        </label>
-                      </div>
-
-                      <div className="grid gap-4 rounded-[1rem] border border-slate-200/85 bg-slate-50/78 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-                        <div className="max-w-[40rem]">
-                          <p className="text-sm font-medium text-slate-900">
-                            Use filters to reshape the nearby shortlist.
-                          </p>
-                          <p className="mt-1 text-[0.82rem] leading-6 text-slate-600">
-                            Availability still needs a direct call before pickup
-                            or transfer.
-                          </p>
-                        </div>
-                        <button
-                          ref={submitButtonRef}
-                          type="submit"
-                          disabled={isPending || isResolvingSearch}
-                          className="action-button-primary min-h-[3.15rem] whitespace-nowrap px-5 text-sm disabled:cursor-wait disabled:opacity-70 xl:min-w-[14rem]"
-                        >
-                          {isPending || isResolvingSearch
-                            ? "Loading..."
-                            : submitLabel}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </motion.div>
-              </AnimatePresence>
+                      : undefined
+                  }
+                />
+              ))}
             </div>
+          ) : null}
+
+          <div className="mt-4 border-t border-slate-200/80 pt-4">
+            <AnimatePresence custom={transitionDirection} initial={false} mode="wait">
+              <motion.div
+                key={activeStep}
+                custom={transitionDirection}
+                variants={stepMotion}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={stepTransition}
+                className="space-y-4"
+              >
+                {activeStep === "medication" ? (
+                  <div className="space-y-4">
+                    <MedicationCombobox
+                      className="max-w-none"
+                      label="Medication"
+                      placeholder="Search medication"
+                      value={medication}
+                      selectedOptionId={medicationOption?.id || null}
+                      helperText={
+                        medicationSupportText ||
+                        "Search by brand, generic, or exact presentation."
+                      }
+                      onValueChange={handleMedicationInputChange}
+                      onSelect={handleMedicationSelection}
+                      emptyMessage="No medication matches yet. Try a brand, generic, or strength."
+                      error={medicationError}
+                      inputRef={medicationInputRef}
+                      panelMode="floating"
+                      inputClassName="shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_1px_1px_rgba(15,23,42,0.02),0_8px_16px_rgba(15,23,42,0.04)]"
+                      panelClassName="mt-2"
+                    />
+
+                    {showSamples && !compact && !medication.trim() ? (
+                      <div className="rounded-[1rem] border border-slate-200/80 bg-white/76 px-4 py-3">
+                        <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-500">
+                          Common starting points
+                        </div>
+                        <p className="mt-1.5 text-[0.8rem] leading-6 text-slate-600">
+                          Use one if it matches what you need.
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {featuredSearches.map((search) => (
+                            <button
+                              key={search.id}
+                              type="button"
+                              disabled={Boolean(isApplyingSampleId)}
+                              className="inline-flex min-h-8 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[0.88rem] text-slate-600 transition hover:border-[#156d95]/24 hover:text-[#156d95] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10 disabled:cursor-wait disabled:opacity-70"
+                              onClick={() => void handleFeaturedSearch(search)}
+                            >
+                              {isApplyingSampleId === search.id
+                                ? "Loading..."
+                                : search.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {activeStep === "strength" ? (
+                  <div className="space-y-3">
+                    <p className="max-w-2xl text-[0.86rem] leading-6 text-slate-600">
+                      Pick the exact strength you want to search.
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {medicationOption?.strengths.map((strength, index) => {
+                        const isSelected = strength.value === selectedStrength;
+
+                        return (
+                          <button
+                            key={strength.id}
+                            ref={(node) => {
+                              strengthButtonRefs.current[index] = node;
+                            }}
+                            type="button"
+                            className={cn(
+                              "group flex min-h-[3.8rem] items-center justify-between rounded-[1rem] border px-4 py-3 text-left transition-[border-color,background-color,transform,box-shadow] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
+                              isSelected
+                                ? "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d] shadow-[0_8px_20px_rgba(21,109,149,0.08)]"
+                                : "border-slate-200 bg-white text-slate-700 hover:border-[#156d95]/18",
+                            )}
+                            onClick={() => handleStrengthSelection(strength.value)}
+                          >
+                            <span className="text-[0.98rem] font-semibold leading-6">
+                              {strength.label}
+                            </span>
+                            <span
+                              className={cn(
+                                "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors",
+                                isSelected
+                                  ? "border-[#156d95]/22 bg-white text-[#156d95]"
+                                  : "border-slate-200 text-slate-300 group-hover:border-[#156d95]/22 group-hover:text-[#156d95]",
+                              )}
+                            >
+                              <Check className="h-4 w-4" />
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {strengthError ? (
+                      <p className="search-field-error">{strengthError}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {activeStep === "location" ? (
+                  <div className="space-y-3.5">
+                    <LocationCombobox
+                      className="max-w-none"
+                      label="Location"
+                      placeholder="City, ZIP, or address"
+                      value={location}
+                      selectedPlaceId={locationSelection?.placeId || null}
+                      sessionToken={locationSessionToken}
+                      onValueChange={handleLocationInputChange}
+                      onSelect={(option) => {
+                        setLocationSelection(
+                          createLocationSelection(
+                            option.description,
+                            option.placeId,
+                          ),
+                        );
+                        setLocation(option.description);
+                        setLocationError(null);
+                      }}
+                      error={locationError}
+                      helperText={locationHelperText}
+                      inputRef={locationInputRef}
+                      submitOnSelect={false}
+                      panelMode="inline"
+                    />
+
+                    <div className="flex flex-col gap-3 rounded-[1rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="max-w-[33rem]">
+                        <p className="text-sm font-medium text-slate-900">
+                          Continue when the search area looks right.
+                        </p>
+                        <p className="mt-1 text-[0.82rem] leading-6 text-slate-600">
+                          You can still change radius, sort, and open now on the next step.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="action-button-primary min-h-[3rem] px-5 text-sm sm:min-w-[11rem]"
+                        onClick={handleLocationContinue}
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeStep === "review" ? (
+                  <div className="space-y-3.5">
+                    <div
+                      className={cn(
+                        "grid gap-3 md:grid-cols-2",
+                        compact
+                          ? "xl:grid-cols-2"
+                          : "xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1fr)_minmax(13rem,0.82fr)] xl:items-end",
+                      )}
+                    >
+                      <label className="search-field-stack min-w-0">
+                        <span className="search-field-label">Radius</span>
+                        <select
+                          className="search-select-control"
+                          value={radiusMiles}
+                          onChange={(event) =>
+                            setRadiusMiles(Number(event.target.value))
+                          }
+                        >
+                          <option value={2}>2 miles</option>
+                          <option value={5}>5 miles</option>
+                          <option value={10}>10 miles</option>
+                          <option value={25}>25 miles</option>
+                        </select>
+                      </label>
+
+                      <label className="search-field-stack min-w-0">
+                        <span className="search-field-label">Sort</span>
+                        <select
+                          className="search-select-control"
+                          value={sortBy}
+                          onChange={(event) =>
+                            setSortBy(
+                              event.target.value as
+                                | "best_match"
+                                | "distance"
+                                | "rating",
+                            )
+                          }
+                        >
+                          <option value="best_match">Best overall match</option>
+                          <option value="distance">Closest first</option>
+                          <option value="rating">Highest rating</option>
+                        </select>
+                      </label>
+
+                      <label
+                        className={cn(
+                          "search-field-stack min-w-0",
+                          compact && "md:col-span-2 xl:col-span-2",
+                        )}
+                      >
+                        <span className="search-field-label">Availability</span>
+                        <span className="search-toggle-control">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
+                            checked={onlyOpenNow}
+                            onChange={(event) =>
+                              setOnlyOpenNow(event.target.checked)
+                            }
+                          />
+                          <span className="min-w-0 text-[0.94rem]">Open now only</span>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="flex flex-col gap-3 rounded-[1rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="max-w-[36rem]">
+                        <p className="text-sm font-medium text-slate-900">
+                          Review the settings, then load the nearby list.
+                        </p>
+                        <p className="mt-1 text-[0.82rem] leading-6 text-slate-600">
+                          Stock still needs a quick pharmacy call before pickup or transfer.
+                        </p>
+                      </div>
+                      <button
+                        ref={submitButtonRef}
+                        type="submit"
+                        disabled={isPending || isResolvingSearch}
+                        className="action-button-primary min-h-[3rem] whitespace-nowrap px-5 text-sm disabled:cursor-wait disabled:opacity-70 sm:min-w-[13rem]"
+                      >
+                        {isPending || isResolvingSearch
+                          ? "Loading..."
+                          : submitLabel}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 }

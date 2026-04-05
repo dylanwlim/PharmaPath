@@ -404,9 +404,9 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.35rem] p-4 sm:p-5">
       <span className="eyebrow-label">Dose coverage</span>
-      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {rows.slice(0, 4).map((row) => {
           const toneClass =
             row.availabilityPercent === 100
@@ -427,7 +427,7 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
                 </span>
               </div>
               <p className="mt-1 text-[0.72rem] leading-5 opacity-80">
-                {row.availableCount} producing / {row.totalCount} total matching entries
+                {row.availableCount} of {row.totalCount} entries still producing
               </p>
             </div>
           );
@@ -448,7 +448,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.35rem] p-4 sm:p-5">
       <span className="eyebrow-label">Manufacturer status</span>
       <div className="mt-3 divide-y divide-slate-100">
         {visibleRows.map((row) => (
@@ -543,7 +543,7 @@ function RecallActivityCard({
   }
 
   return (
-    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.35rem] p-4 sm:p-5">
       <span className="eyebrow-label">Recent recall activity</span>
       <div className="mt-3 space-y-2.5">
         {(showAll ? sortedItems : sortedItems.slice(0, 3)).map((recall, index) => {
@@ -612,7 +612,7 @@ function PatientMeaningCard({ items }: { items: string[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.35rem] p-4 sm:p-5">
       <span className="eyebrow-label">What to keep in mind</span>
       <div className="mt-3 divide-y divide-slate-100">
         {items.map((item) => {
@@ -739,8 +739,8 @@ function buildIntelligenceContext({
     Boolean(normalizedSelectedLabel) &&
     normalizedSelectedLabel !== match.display_name.trim().toLowerCase();
   const familyContextNote = selectedStrength
-    ? "Dose and manufacturer rows summarize the matched product family around the selected presentation. They can include sibling strengths in the same formulation."
-    : "This snapshot reflects the top matched medication family for the current search, not a live local inventory readout.";
+    ? "Dose and manufacturer notes cover the matching medication family around the strength you searched. They can still include nearby strengths in the same form."
+    : "This snapshot shows the closest medication match for this search. It does not read local pharmacy inventory.";
 
   return {
     isDemoMatch,
@@ -829,7 +829,7 @@ export function MedicationAccessSnapshotCard({
     <div
       className={cn(
         "surface-panel border",
-        compact ? "rounded-[1.45rem] p-4" : "rounded-[1.55rem] p-4 sm:p-5",
+        compact ? "rounded-[1.35rem] p-4" : "rounded-[1.45rem] p-4 sm:p-5",
         context.snapshot.band.panelClass,
         context.snapshot.band.borderClass,
       )}

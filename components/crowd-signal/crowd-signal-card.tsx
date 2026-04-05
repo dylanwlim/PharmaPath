@@ -98,7 +98,6 @@ export function CrowdSignalCard({
   );
   const likelihoodDisplay = resolvedSummary.reportCount ? `${resolvedSummary.likelihood}%` : "No data";
   const hasCrowdData = resolvedSummary.reportCount > 0;
-  const compactSummaryClass = compact ? "text-[0.84rem] leading-5" : "text-sm leading-6";
   const reportLink = status !== "authenticated" ? (
     <Link
       href={`/login?next=${encodeURIComponent(nextPath)}`}
@@ -146,6 +145,43 @@ export function CrowdSignalCard({
     }
   }
 
+  if (compact) {
+    return (
+      <div className="rounded-[1rem] border border-slate-200/85 bg-slate-50/76 px-3.5 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[0.64rem] uppercase tracking-[0.18em] text-slate-500">
+            Crowd reports
+          </span>
+          <span
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-[0.78rem] font-medium",
+              hasCrowdData ? crowdTone(resolvedSummary) : "border-slate-200 bg-white text-slate-600",
+            )}
+          >
+            {hasCrowdData ? resolvedSummary.label : "No recent reports"}
+          </span>
+          <span className="text-[0.76rem] text-slate-500">
+            {hasCrowdData
+              ? `${resolvedSummary.reportCount} ${resolvedSummary.reportCount === 1 ? "report" : "reports"} · ${resolvedSummary.freshnessNote}`
+              : "Helpful once more people share what they heard."}
+          </span>
+        </div>
+
+        {hasCrowdData ? (
+          <p className="mt-2 text-[0.82rem] leading-5 text-slate-600">
+            {resolvedSummary.explanation}
+          </p>
+        ) : null}
+
+        {isDemoMedication ? (
+          <p className="mt-2 text-[0.74rem] leading-5 text-amber-900/85">
+            {medicationContext?.demo_note} {medicationContext?.simulated_user_count || 0} seeded demo users are associated with this fictional medication, but pharmacy-specific live report counts remain separate from that simulated context.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -187,7 +223,7 @@ export function CrowdSignalCard({
 
       {!hasCrowdData ? (
         <div className="mt-2.5 space-y-1.5">
-          <p className={cn("text-slate-600", compactSummaryClass)}>
+          <p className="text-sm leading-6 text-slate-600">
             {compact
               ? "No recent crowd reports for this pharmacy and medication yet."
               : "No contributor reports have surfaced for this pharmacy and medication yet."}
@@ -200,7 +236,7 @@ export function CrowdSignalCard({
         </div>
       ) : (
         <>
-          <p className={cn("mt-2.5 text-slate-600", compactSummaryClass, compact && "line-clamp-2")}>
+          <p className="mt-2.5 text-sm leading-6 text-slate-600">
             {resolvedSummary.explanation}
           </p>
 

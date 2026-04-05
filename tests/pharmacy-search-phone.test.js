@@ -254,3 +254,124 @@ test("searchNearbyPharmacies keeps results usable when Google has no phone detai
     assert.equal(result.recommended?.hours_detail_label, null);
   });
 });
+
+test("searchNearbyPharmacies dedupes same-location chain aliases", async () => {
+  const { searchNearbyPharmacies } = loadPharmacySearch();
+  const detailRequests = [];
+
+  await withMockedFetch(async (url) => {
+    const requestUrl = new URL(url);
+
+    if (requestUrl.pathname.endsWith("/nearbysearch/json")) {
+      return createJsonResponse({
+        status: "OK",
+        results: [
+          {
+            place_id: "walgreens-main",
+            name: "Walgreens Pharmacy",
+            vicinity: "155 E 34th St, New York, NY",
+            geometry: {
+              location: {
+                lat: 40.7486,
+                lng: -73.9787,
+              },
+            },
+            opening_hours: {
+              open_now: true,
+            },
+            rating: 4.2,
+            user_ratings_total: 82,
+          },
+          {
+            place_id: "duane-reade-main",
+            name: "Duane Reade Pharmacy",
+            vicinity: "155 E 34th St, New York, NY",
+            geometry: {
+              location: {
+                lat: 40.7486,
+                lng: -73.9787,
+              },
+            },
+            opening_hours: {
+              open_now: true,
+            },
+            rating: 3.8,
+            user_ratings_total: 34,
+          },
+          {
+            place_id: "local-backup",
+            name: "Local Care Pharmacy",
+            vicinity: "400 2nd Ave, New York, NY",
+            geometry: {
+              location: {
+                lat: 40.7462,
+                lng: -73.9751,
+              },
+            },
+            opening_hours: {
+              open_now: true,
+            },
+            rating: 4.7,
+            user_ratings_total: 24,
+          },
+        ],
+      });
+    }
+
+    if (requestUrl.pathname.endsWith("/details/json")) {
+      detailRequests.push(requestUrl.searchParams.get("place_id"));
+      const placeId = requestUrl.searchParams.get("place_id");
+
+      if (placeId === "walgreens-main" || placeId === "duane-reade-main") {
+        return createJsonResponse({
+          status: "OK",
+          result: {
+            place_id: placeId,
+            formatted_phone_number: "(212) 555-0100",
+            international_phone_number: "+1 212-555-0100",
+            utc_offset: 0,
+            opening_hours: {
+              open_now: true,
+            },
+          },
+        });
+      }
+
+      return createJsonResponse({
+        status: "OK",
+        result: {
+          place_id: placeId,
+          formatted_phone_number: "(212) 555-0199",
+          international_phone_number: "+1 212-555-0199",
+          utc_offset: 0,
+          opening_hours: {
+            open_now: true,
+          },
+        },
+      });
+    }
+
+    throw new Error(`Unexpected Google URL: ${requestUrl.toString()}`);
+  }, async () => {
+    const result = await searchNearbyPharmacies({
+      medication: "Adderall XR 10 mg",
+      medicationProfileKey: "controlled_stimulant",
+      center: {
+        lat: 40.748,
+        lng: -73.979,
+      },
+      radiusMiles: 5,
+      onlyOpenNow: false,
+      apiKey: "test-google-key",
+      sortBy: "distance",
+    });
+
+    assert.equal(result.results.length, 2);
+    assert.equal(
+      result.results.filter((entry) => /(walgreens|duane reade)/i.test(entry.name)).length,
+      1,
+    );
+    assert.equal(result.results[0].name, "Walgreens Pharmacy");
+    assert.deepEqual(detailRequests.sort(), ["local-backup", "walgreens-main"]);
+  });
+});
