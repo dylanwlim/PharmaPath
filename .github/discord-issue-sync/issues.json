@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-05T07:05:09.502Z",
+  "issues": {
+    "17": {
+      "issueNumber": 17,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/17",
+      "issueUpdatedAt": "2026-03-31T15:12:38Z",
+      "messageIds": [
+        "1490245871198011392"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:03.215Z",
+      "title": "Add recently searched medications feature"
+    },
+    "18": {
+      "issueNumber": 18,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/18",
+      "issueUpdatedAt": "2026-03-31T15:12:38Z",
+      "messageIds": [
+        "1490245874054594680"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:03.901Z",
+      "title": "Improve pharmacy verification and medication data freshness"
+    },
+    "22": {
+      "issueNumber": 22,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/22",
+      "issueUpdatedAt": "2026-03-31T05:58:27Z",
+      "messageIds": [
+        "1490245875186929736"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:04.343Z",
+      "title": "Add passkey authentication"
+    },
+    "28": {
+      "issueNumber": 28,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/28",
+      "issueUpdatedAt": "2026-04-02T20:08:32Z",
+      "messageIds": [
+        "1490245876445089933"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:04.563Z",
+      "title": "Simplify pharmacy result cards and improve information hierarchy"
+    },
+    "30": {
+      "issueNumber": 30,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/30",
+      "issueUpdatedAt": "2026-04-02T20:09:42Z",
+      "messageIds": [
+        "1490245878575927307"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:04.989Z",
+      "title": "Add medication alerts and watchlist notifications"
+    },
+    "31": {
+      "issueNumber": 31,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/31",
+      "issueUpdatedAt": "2026-04-02T20:10:35Z",
+      "messageIds": [
+        "1490245880513695806"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:05.424Z",
+      "title": "Restrict unsupported location searches and validate geographic input"
+    },
+    "33": {
+      "issueNumber": 33,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/33",
+      "issueUpdatedAt": "2026-04-03T04:35:09Z",
+      "messageIds": [
+        "1490245882388545546"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:05.889Z",
+      "title": "Pharmacy notes capture per result"
+    },
+    "34": {
+      "issueNumber": 34,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/34",
+      "issueUpdatedAt": "2026-04-04T20:27:32Z",
+      "messageIds": [
+        "1490245884280049804"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:06.337Z",
+      "title": "Cleanup terms and privacy page ui and text"
+    },
+    "36": {
+      "issueNumber": 36,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/36",
+      "issueUpdatedAt": "2026-04-05T05:57:09Z",
+      "messageIds": [
+        "1490245885752508488"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:06.835Z",
+      "title": "Medication search accepts nonexistent terms and surfaces invalid strength data"
+    },
+    "37": {
+      "issueNumber": 37,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/37",
+      "issueUpdatedAt": "2026-04-05T05:54:25Z",
+      "messageIds": [
+        "1490245888059379843"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:07.240Z",
+      "title": "Improve crowd report reputation logic for conflicting minority reports"
+    },
+    "38": {
+      "issueNumber": 38,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/38",
+      "issueUpdatedAt": "2026-04-05T05:54:42Z",
+      "messageIds": [
+        "1490245890227703909"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:07.797Z",
+      "title": "Convert “other pharmacies to call next” into a constrained scrollable results rail"
+    },
+    "39": {
+      "issueNumber": 39,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/39",
+      "issueUpdatedAt": "2026-04-05T05:54:59Z",
+      "messageIds": [
+        "1490245892069003387"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:08.189Z",
+      "title": "Replace hardcoded nearby-search example chips with location-aware dynamic examples"
+    },
+    "40": {
+      "issueNumber": 40,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/40",
+      "issueUpdatedAt": "2026-04-05T05:55:10Z",
+      "messageIds": [
+        "1490245894015291422"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:08.656Z",
+      "title": "Add email signup / updates CTA for PharmaPath product updates"
+    },
+    "41": {
+      "issueNumber": 41,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/41",
+      "issueUpdatedAt": "2026-04-05T05:55:30Z",
+      "messageIds": [
+        "1490245895235702895"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:09.097Z",
+      "title": "Add username/content filtering guardrails for inappropriate or abusive names"
+    },
+    "42": {
+      "issueNumber": 42,
+      "issueUrl": "https://github.com/dylanwlim/PharmaPath/issues/42",
+      "issueUpdatedAt": "2026-04-05T05:55:45Z",
+      "messageIds": [
+        "1490245897559347330"
+      ],
+      "state": "open",
+      "syncedAt": "2026-04-05T07:05:09.502Z",
+      "title": "Design privacy-safe social/profile architecture before exposing user activity publicly"
+    }
+  }
+}
