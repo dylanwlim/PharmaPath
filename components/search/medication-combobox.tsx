@@ -248,8 +248,8 @@ export function MedicationCombobox({
           spellCheck={false}
           className={cn(
             "search-field-input pr-12",
-            isOpen && "border-[#156d95] ring-4 ring-[#156d95]/10",
-            error && "border-rose-300 ring-4 ring-rose-500/10",
+            isOpen && "border-[#156d95] ring-[3px] ring-[#156d95]/10",
+            error && "border-rose-300 ring-[3px] ring-rose-500/10",
             inputClassName,
           )}
           placeholder={placeholder}
@@ -303,21 +303,21 @@ export function MedicationCombobox({
                 style={{ maxHeight: panelMode === "floating" ? maxHeight : 296 }}
               >
                 {effectiveLoadState === "error" ? (
-                  <div className="rounded-[0.9rem] border border-dashed border-rose-200 bg-rose-50/85 px-3.5 py-3 text-sm leading-6 text-rose-700">
+                  <div className="rounded-[0.9rem] border border-dashed border-rose-200 bg-rose-50/78 px-3.5 py-3 text-[0.86rem] leading-6 text-rose-700">
                     {loadError || "Unable to load medication matches right now."}
                   </div>
                 ) : !hasTypedQuery ? (
-                  <div className="rounded-[0.9rem] border border-slate-200/80 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-600">
-                    Start typing a brand, generic, or strength to load medication matches.
+                  <div className="rounded-[0.9rem] border border-slate-200/70 bg-slate-50/72 px-3.5 py-3 text-[0.86rem] leading-6 text-slate-600">
+                    Start typing a brand, generic, or strength to see medication matches.
                   </div>
                 ) : needsMoreCharacters ? (
-                  <div className="rounded-[0.9rem] border border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                  <div className="rounded-[0.9rem] border border-slate-200/75 bg-slate-50/72 px-3.5 py-3 text-[0.84rem] leading-6 text-slate-500">
                     Type at least 2 characters to load medication matches.
                   </div>
                 ) : effectiveLoadState === "loading" && !visibleOptions.length ? (
                   <div
                     aria-live="polite"
-                    className="rounded-[0.9rem] border border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-600"
+                    className="rounded-[0.9rem] border border-slate-200/75 bg-slate-50/72 px-3.5 py-3 text-[0.86rem] leading-6 text-slate-600"
                   >
                     <span className="inline-flex items-center gap-2 font-medium">
                       <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -327,7 +327,7 @@ export function MedicationCombobox({
                 ) : visibleOptions.length ? (
                   <>
                     {effectiveLoadState === "loading" ? (
-                      <div className="rounded-[0.9rem] border border-slate-200 bg-slate-50/80 px-3 py-2 text-[0.73rem] leading-5 text-slate-500">
+                      <div className="rounded-[0.9rem] border border-slate-200/75 bg-slate-50/72 px-3 py-2 text-[0.73rem] leading-5 text-slate-500">
                         Showing current matches while fresher results load.
                       </div>
                     ) : null}
@@ -343,13 +343,13 @@ export function MedicationCombobox({
                           role="option"
                           aria-selected={isSelected}
                           className={cn(
-                            "flex w-full items-start justify-between gap-3 rounded-[0.88rem] border px-3 py-2.5 text-left transition-[background-color,border-color,transform] duration-150",
+                            "flex w-full items-start justify-between gap-3 rounded-[0.92rem] border px-3.5 py-3 text-left transition-[background-color,border-color,transform] duration-150",
                             isHighlighted
-                              ? "border-[#156d95]/22 bg-[#156d95]/9"
-                              : "border-transparent hover:border-slate-200/85 hover:bg-slate-50/90",
+                              ? "border-[#156d95]/22 bg-[#156d95]/8"
+                              : "border-transparent hover:border-slate-200/85 hover:bg-slate-50/80",
                             isSelected &&
                               !isHighlighted &&
-                              "border-slate-200/85 bg-slate-100/90",
+                              "border-slate-200/85 bg-slate-100/75",
                           )}
                           onMouseDown={(event) => event.preventDefault()}
                           onMouseEnter={() => setHighlightedIndexState(index)}
@@ -378,7 +378,7 @@ export function MedicationCombobox({
                     })}
                   </>
                 ) : (
-                  <div className="rounded-[0.9rem] border border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                  <div className="rounded-[0.9rem] border border-slate-200/75 bg-slate-50/72 px-3.5 py-3 text-[0.86rem] leading-6 text-slate-500">
                     {emptyMessage}
                   </div>
                 )}

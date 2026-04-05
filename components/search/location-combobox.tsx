@@ -241,8 +241,8 @@ export function LocationCombobox({
           spellCheck={false}
           className={cn(
             "search-field-input pr-12",
-            isOpen && "border-[#156d95] ring-4 ring-[#156d95]/10",
-            error && "border-rose-300 ring-4 ring-rose-500/10",
+            isOpen && "border-[#156d95] ring-[3px] ring-[#156d95]/10",
+            error && "border-rose-300 ring-[3px] ring-rose-500/10",
           )}
           placeholder={placeholder}
           title={value || placeholder}
@@ -288,17 +288,17 @@ export function LocationCombobox({
                 style={{ maxHeight }}
               >
                 {loadState === "error" ? (
-                  <div className="rounded-[0.9rem] border border-dashed border-amber-200 bg-amber-50/85 px-3.5 py-3 text-sm leading-6 text-amber-800">
+                  <div className="rounded-[0.9rem] border border-dashed border-amber-200 bg-amber-50/78 px-3.5 py-3 text-[0.86rem] leading-6 text-amber-800">
                     {loadError || "Unable to load location suggestions right now."} Press Enter to search this text directly.
                   </div>
                 ) : loadState === "idle" ? (
-                  <div className="rounded-[0.9rem] border border-slate-200/85 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-600">
+                  <div className="rounded-[0.9rem] border border-slate-200/75 bg-slate-50/72 px-3.5 py-3 text-[0.86rem] leading-6 text-slate-600">
                     {selectedPlaceId && value.trim()
                       ? "Current location is ready. Keep this choice or keep typing for a different search area."
                       : helperText || EMPTY_HINT}
                   </div>
                 ) : loadState === "loading" && !visibleOptions.length ? (
-                  <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                  <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/72 px-3.5 py-3 text-[0.86rem] leading-6 text-slate-500">
                     <span className="inline-flex items-center gap-2">
                       <LoaderCircle className="h-4 w-4 animate-spin" />
                       Searching locations...
@@ -317,13 +317,13 @@ export function LocationCombobox({
                         role="option"
                         aria-selected={isSelected}
                         className={cn(
-                          "flex w-full items-start justify-between gap-3 rounded-[0.9rem] border px-3 py-2.5 text-left transition-[background-color,border-color,transform] duration-150",
+                          "flex w-full items-start justify-between gap-3 rounded-[0.92rem] border px-3.5 py-3 text-left transition-[background-color,border-color,transform] duration-150",
                           isHighlighted
-                            ? "border-[#156d95]/22 bg-[#156d95]/9"
-                            : "border-transparent hover:border-slate-200/85 hover:bg-slate-50/90",
+                            ? "border-[#156d95]/22 bg-[#156d95]/8"
+                            : "border-transparent hover:border-slate-200/85 hover:bg-slate-50/80",
                           isSelected &&
                             !isHighlighted &&
-                            "border-slate-200/85 bg-slate-100/90",
+                            "border-slate-200/85 bg-slate-100/75",
                         )}
                         onMouseDown={(event) => event.preventDefault()}
                         onMouseEnter={() => setHighlightedIndexState(index)}

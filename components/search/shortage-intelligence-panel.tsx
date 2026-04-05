@@ -454,14 +454,14 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
         {visibleRows.map((row) => (
           <div
             key={row.name}
-            className="grid gap-2.5 py-3 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_auto] md:items-start"
+            className="grid gap-3 py-4 first:pt-0 last:pb-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
           >
             <div className="flex items-start gap-3">
               <span className={`mt-1.5 h-2.5 w-2.5 rounded-full ${row.statusDotClass}`} />
               <div className="min-w-0 flex-1">
                 <h3 className="text-sm font-semibold text-slate-950">{row.name}</h3>
                 {row.strengths.length ? (
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {row.strengths.map((strength) => (
                       <span
                         key={`${row.name}-${strength}`}
@@ -474,7 +474,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
                 ) : null}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2 md:justify-end">
+            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
               {row.lastUpdate ? (
                 <span className="text-[0.64rem] uppercase tracking-[0.16em] text-slate-400">
                   {row.lastUpdate}
@@ -970,29 +970,26 @@ export function MedicationContextDetails({
 
   if (variant === "patient") {
     return (
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)]">
-        <div className="space-y-4">
+      <div className="space-y-4">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
           <PatientMeaningCard items={match.patient_view.what_may_make_it_harder} />
-          <RecallActivityCard items={match.evidence.recalls.items} />
-        </div>
 
-        <div className="space-y-4">
           {context.snapshot.doseAvailability.length ? (
             <DoseAvailabilityCard rows={context.snapshot.doseAvailability} />
           ) : null}
-
-          {context.snapshot.manufacturerRows.length ? (
-            <ManufacturerStatusCard rows={context.snapshot.manufacturerRows} />
-          ) : null}
         </div>
 
-        <div className="xl:col-span-2">
-          <SnapshotFooter
-            isDemoMatch={context.isDemoMatch}
-            variant={variant}
-            note={match.demo_context?.note}
-          />
-        </div>
+        {context.snapshot.manufacturerRows.length ? (
+          <ManufacturerStatusCard rows={context.snapshot.manufacturerRows} />
+        ) : null}
+
+        <RecallActivityCard items={match.evidence.recalls.items} />
+
+        <SnapshotFooter
+          isDemoMatch={context.isDemoMatch}
+          variant={variant}
+          note={match.demo_context?.note}
+        />
       </div>
     );
   }

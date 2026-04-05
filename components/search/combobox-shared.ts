@@ -37,7 +37,7 @@ export function useComboboxPanelLayout(
         bounds.top - VIEWPORT_MARGIN,
       );
       const nextPlacement =
-        availableBelow < Math.min(estimatedHeight, 280) &&
+        availableBelow < Math.min(estimatedHeight, 220) &&
         availableAbove > availableBelow
           ? "top"
           : "bottom";

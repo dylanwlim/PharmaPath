@@ -150,7 +150,7 @@ export function CrowdSignalCard({
     <div
       className={cn(
         "rounded-[1.25rem] border border-slate-200 bg-white/92 p-3.5",
-        compact && "rounded-[1.05rem] border-slate-200/85 bg-slate-50/78 px-3 py-2.5",
+        compact && "rounded-[1.05rem] border-slate-200/85 bg-slate-50/72 px-3.5 py-3",
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -189,7 +189,7 @@ export function CrowdSignalCard({
         <div className="mt-2.5 space-y-1.5">
           <p className={cn("text-slate-600", compactSummaryClass)}>
             {compact
-              ? "No contributor reports yet. Use this pharmacy as a lead, then call to confirm availability."
+              ? "No recent crowd reports for this pharmacy and medication yet."
               : "No contributor reports have surfaced for this pharmacy and medication yet."}
           </p>
           {!compact ? (
@@ -245,21 +245,10 @@ export function CrowdSignalCard({
       {feedback ? <p className="mt-2.5 text-sm text-emerald-700">{feedback}</p> : null}
       {error ? <p className="mt-2.5 text-sm text-rose-700">{error}</p> : null}
 
-      {status !== "authenticated" || compact ? (
+      {!compact && status !== "authenticated" ? (
         <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-          {compact ? (
-            <>
-              <span className="text-[0.8rem]">
-                {hasCrowdData ? "Have a fresher read?" : "Want to improve this signal?"}
-              </span>
-              {reportLink}
-            </>
-          ) : status !== "authenticated" ? (
-            <>
-              <span>Want to improve this signal?</span>
-              {reportLink}
-            </>
-          ) : null}
+          <span>Want to improve this signal?</span>
+          {reportLink}
         </div>
       ) : null}
 
