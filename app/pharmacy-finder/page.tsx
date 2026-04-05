@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageTransitionShell } from "@/components/page-transition-shell";
-import { ExampleScenarioGrid } from "@/components/search/example-scenario-grid";
 import { PharmacySearchForm } from "@/components/search/pharmacy-search-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteNavbar } from "@/components/site-navbar";
@@ -21,44 +20,63 @@ export default function PharmacyFinderPage() {
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-4 pt-20 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-7 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start lg:gap-7 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:gap-9">
-            <div className="max-w-[30rem] pt-1 sm:max-w-[32rem]">
+        <section className="px-4 pb-7 pt-20 sm:px-6 lg:px-8">
+          <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start xl:gap-10">
+            <div className="max-w-[31rem] pt-2 sm:max-w-[33rem]">
               <span className="eyebrow-label">{surfaceNames.patient}</span>
-              <h1 className="mt-[1.125rem] max-w-[26rem] text-[2.35rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.72rem] lg:max-w-[27rem] xl:text-[2.95rem]">
-                Search a medication and location without pretending the stock is
-                guaranteed.
+              <h1 className="mt-[1.125rem] max-w-[28rem] text-[2.35rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.72rem] xl:text-[3rem]">
+                Start with the medication. The rest of the nearby search should
+                feel guided, not crowded.
               </h1>
-              <p className="mt-3.5 max-w-[27rem] text-[1rem] leading-7 text-slate-600 sm:text-[1.05rem]">
-                Pharmacy Finder keeps the live nearby list and medication
-                context separate so the first call stays clear.
+              <p className="mt-3.5 max-w-[29rem] text-[1rem] leading-7 text-slate-600 sm:text-[1.05rem]">
+                Pharmacy Finder now moves through medication, strength if it
+                matters, and location before it reveals the secondary controls.
+                The nearby list stays live, and the stock boundary stays
+                explicit.
               </p>
+
+              <div className="mt-6 grid gap-3">
+                <div className="rounded-[1.25rem] border border-white/80 bg-white/76 px-4 py-3 text-[0.92rem] leading-6 text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+                  Nearby pharmacies come from a live search, not a guaranteed
+                  inventory feed.
+                </div>
+                <div className="rounded-[1.25rem] border border-white/80 bg-white/76 px-4 py-3 text-[0.92rem] leading-6 text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+                  Medication context stays separate so the first pharmacy call
+                  remains clear about what still needs confirmation.
+                </div>
+              </div>
             </div>
 
-            <PharmacySearchForm
-              className="justify-self-stretch"
-              showSamples
-              submitLabel="Find nearby pharmacies"
-            />
+            <div className="justify-self-stretch">
+              <PharmacySearchForm
+                showSamples
+                submitLabel="Find nearby pharmacies"
+              />
+            </div>
           </div>
         </section>
 
         <section className="px-4 pb-14 sm:px-6 lg:px-8">
           <div className="site-shell">
-            <ExampleScenarioGrid
-              mode="patient"
-              eyebrow="Quick starts"
-              title="Four quick-start searches, each tuned to a real workflow."
-              description="Use these to move through realistic medication and location combinations without implying store-level inventory."
-            />
+            <div className="surface-panel grid gap-4 rounded-[1.9rem] p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <div className="max-w-[42rem]">
+                <span className="eyebrow-label">Keep the boundary clear</span>
+                <p className="mt-3 text-[0.98rem] leading-7 text-slate-600">
+                  Use Pharmacy Finder for the live nearby shortlist. Open the
+                  broader medication view when the question shifts from who to
+                  call first to formulation coverage, manufacturer status, or
+                  shortage planning.
+                </p>
+              </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/prescriber"
-                className="action-button-secondary text-sm"
-              >
-                {openSurfaceLabels.prescriber}
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/prescriber" className="action-button-secondary text-sm">
+                  {openSurfaceLabels.prescriber}
+                </Link>
+                <Link href="/methodology" className="action-button-secondary text-sm">
+                  Open Methodology
+                </Link>
+              </div>
             </div>
           </div>
         </section>

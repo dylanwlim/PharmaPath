@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type KeyboardEvent,
+  type Ref,
 } from "react";
 import {
   getComboboxPanelPositionClasses,
@@ -30,12 +31,15 @@ type LocationComboboxProps = {
   onSelect: (option: LocationSuggestion) => void;
   error?: string | null;
   className?: string;
+  helperText?: string | null;
+  inputRef?: Ref<HTMLInputElement>;
+  submitOnSelect?: boolean;
 };
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 const EMPTY_HINT =
-  "Search by city, ZIP, address, pharmacy, or landmark. Press Enter to use the typed text or Arrow keys to choose a suggestion.";
+  "Search by city, ZIP, address, or pharmacy. Pick a live suggestion or keep the typed text for a direct search.";
 
 export function LocationCombobox({
   label,
@@ -47,6 +51,9 @@ export function LocationCombobox({
   onSelect,
   error,
   className,
+  helperText,
+  inputRef,
+  submitOnSelect = true,
 }: LocationComboboxProps) {
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
@@ -87,6 +94,9 @@ export function LocationCombobox({
       : Math.min(highlightedIndexState, visibleOptions.length - 1);
   }, [highlightedIndexState, selectedPlaceId, visibleOptions]);
   const { placement, maxHeight } = useComboboxPanelLayout(wrapperRef, isOpen, 336);
+  const describedBy = [helperText ? helperId : null, error ? errorId : null]
+    .filter(Boolean)
+    .join(" ");
 
   useEffect(() => {
     if (!isOpen || !isSearchable) {
@@ -149,7 +159,10 @@ export function LocationCombobox({
 
   const activeOption = highlightedIndex >= 0 ? visibleOptions[highlightedIndex] || null : null;
 
-  const commitSelection = (option: LocationSuggestion, { submit = false } = {}) => {
+  const commitSelection = (
+    option: LocationSuggestion,
+    { submit = submitOnSelect } = {},
+  ) => {
     onSelect(option);
     setIsOpen(false);
 
@@ -186,10 +199,17 @@ export function LocationCombobox({
       return;
     }
 
-    if (event.key === "Enter" && isOpen && activeOption && highlightedIndex >= 0) {
-      event.preventDefault();
-      commitSelection(activeOption, { submit: true });
-      return;
+    if (event.key === "Enter") {
+      if (isOpen && activeOption && highlightedIndex >= 0) {
+        event.preventDefault();
+        commitSelection(activeOption, { submit: submitOnSelect });
+        return;
+      }
+
+      if (!submitOnSelect) {
+        event.preventDefault();
+        setIsOpen(false);
+      }
     }
 
     if (event.key === "Escape") {
@@ -203,6 +223,7 @@ export function LocationCombobox({
       <span className="search-field-label">{label}</span>
       <div ref={wrapperRef} className="relative">
         <input
+          ref={inputRef}
           id={inputId}
           role="combobox"
           aria-autocomplete="list"
@@ -210,11 +231,11 @@ export function LocationCombobox({
           aria-controls={listboxId}
           aria-expanded={isOpen}
           aria-activedescendant={activeOption ? `${listboxId}-${activeOption.placeId}` : undefined}
-          aria-describedby={error ? errorId : undefined}
+          aria-describedby={describedBy || undefined}
           aria-invalid={Boolean(error)}
           autoComplete="off"
           autoCapitalize="words"
-          enterKeyHint="search"
+          enterKeyHint={submitOnSelect ? "search" : "next"}
           spellCheck={false}
           className={cn(
             "search-field-input pr-12",
@@ -265,13 +286,13 @@ export function LocationCombobox({
                   <p className="text-sm font-medium text-slate-900">
                     {selectedPlaceId && value.trim()
                       ? "Current location is ready to search."
-                      : "Start typing to search nearby."}
+                      : "Start typing to place the nearby search."}
                   </p>
                   <p
-                    id={helperId}
+                    id={helperText ? helperId : undefined}
                     className="mt-1 text-[0.82rem] leading-5 text-slate-500"
                   >
-                    {EMPTY_HINT}
+                    {helperText || EMPTY_HINT}
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-2 text-[0.72rem] text-slate-500">
                     {["Queens, NY", "32751", "CVS Orlando"].map((example) => (
@@ -339,6 +360,11 @@ export function LocationCombobox({
         ) : null}
       </div>
       <div className="search-field-helper-slot">
+        {helperText && !isOpen ? (
+          <p id={helperId} className="search-field-helper line-clamp-2">
+            {helperText}
+          </p>
+        ) : null}
         {error ? (
           <p id={errorId} className="search-field-error">
             {error}

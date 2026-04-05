@@ -6,13 +6,16 @@ import { FooterEntry } from "@/components/route-entry";
 import { SiteBrand } from "@/components/site-brand";
 import { surfaceNames } from "@/lib/surface-labels";
 
-const pharmacyFooterHref = "/pharmacy-finder/results";
+const pharmacyFinderFooterHref = "/pharmacy-finder";
+const pharmacyResultsFooterHref = "/pharmacy-finder/results";
 const methodologyFooterHref = "/methodology";
+const claimBoundaryFooterHref = "/methodology#claim-boundary";
 
 type FooterLinkItem = {
   label: string;
   href: string;
   activePrefixes?: string[];
+  exact?: boolean;
 };
 
 type FooterSection = {
@@ -26,13 +29,13 @@ const footerSections: FooterSection[] = [
     links: [
       {
         label: surfaceNames.patient,
-        href: pharmacyFooterHref,
-        activePrefixes: ["/pharmacy-finder"],
+        href: pharmacyFinderFooterHref,
+        exact: true,
       },
       {
         label: "Pharmacy Results",
-        href: pharmacyFooterHref,
-        activePrefixes: ["/pharmacy-finder"],
+        href: pharmacyResultsFooterHref,
+        activePrefixes: ["/pharmacy-finder/results"],
       },
       { label: surfaceNames.prescriber, href: "/prescriber" },
     ],
@@ -40,8 +43,12 @@ const footerSections: FooterSection[] = [
   {
     title: "Evidence",
     links: [
-      { label: "Methodology", href: methodologyFooterHref },
-      { label: "Claim Boundary", href: methodologyFooterHref },
+      { label: "Methodology", href: methodologyFooterHref, exact: true },
+      {
+        label: "Claim Boundary",
+        href: claimBoundaryFooterHref,
+        activePrefixes: ["/methodology"],
+      },
     ],
   },
   {
@@ -68,15 +75,19 @@ function FooterLink({
   label,
   pathname,
   activePrefixes,
+  exact,
 }: {
   href: string;
   label: string;
   pathname: string;
   activePrefixes?: string[];
+  exact?: boolean;
 }) {
   const isActive = activePrefixes?.length
     ? activePrefixes.some((prefix) => matchesPrefix(pathname, prefix))
-    : !href.includes("#") && matchesPrefix(pathname, href);
+    : exact
+      ? pathname === href
+      : !href.includes("#") && matchesPrefix(pathname, href);
 
   return (
     <Link
@@ -123,6 +134,7 @@ export function SiteFooter() {
                         label={link.label}
                         pathname={pathname}
                         activePrefixes={link.activePrefixes}
+                        exact={link.exact}
                       />
                     </li>
                   ))}
@@ -145,6 +157,7 @@ export function SiteFooter() {
                   label={link.label}
                   pathname={pathname}
                   activePrefixes={link.activePrefixes}
+                  exact={link.exact}
                 />
               ))}
             </div>

@@ -9,7 +9,12 @@ import {
   startTransition,
   useState,
   type KeyboardEvent,
+  type Ref,
 } from "react";
+import {
+  getComboboxPanelPositionClasses,
+  useComboboxPanelLayout,
+} from "@/components/search/combobox-shared";
 import {
   getMedicationSearchPreview,
   normalizeMedicationSearchQuery,
@@ -30,6 +35,10 @@ type MedicationComboboxProps = {
   helperText?: string | null;
   error?: string | null;
   className?: string;
+  inputRef?: Ref<HTMLInputElement>;
+  panelMode?: "floating" | "inline";
+  inputClassName?: string;
+  panelClassName?: string;
 };
 
 type LoadState = "idle" | "loading" | "ready" | "error";
@@ -45,6 +54,10 @@ export function MedicationCombobox({
   helperText,
   error,
   className,
+  inputRef,
+  panelMode = "floating",
+  inputClassName,
+  panelClassName,
 }: MedicationComboboxProps) {
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
@@ -63,6 +76,11 @@ export function MedicationCombobox({
   const visibleOptions = useMemo(
     () => (isOpen && isSearchable ? options : []),
     [isOpen, isSearchable, options],
+  );
+  const { placement, maxHeight } = useComboboxPanelLayout(
+    wrapperRef,
+    isOpen,
+    320,
   );
   const highlightedIndex = useMemo(() => {
     if (!visibleOptions.length) {
@@ -208,6 +226,7 @@ export function MedicationCombobox({
       <span className="search-field-label">{label}</span>
       <div ref={wrapperRef} className="relative">
         <input
+          ref={inputRef}
           id={inputId}
           role="combobox"
           aria-autocomplete="list"
@@ -224,6 +243,7 @@ export function MedicationCombobox({
             "search-field-input pr-12",
             isOpen && "border-[#156d95] ring-4 ring-[#156d95]/10",
             error && "border-rose-300 ring-4 ring-rose-500/10",
+            inputClassName,
           )}
           placeholder={placeholder}
           title={value || placeholder}
@@ -251,12 +271,21 @@ export function MedicationCombobox({
         </div>
 
         {isOpen ? (
-          <div className="search-inline-panel mt-2">
+          <div
+            className={cn(
+              panelMode === "floating"
+                ? "search-floating-panel"
+                : "search-inline-panel mt-2",
+              panelMode === "floating" &&
+                getComboboxPanelPositionClasses(placement),
+              panelClassName,
+            )}
+          >
             <div
               id={listboxId}
               role="listbox"
               className="search-floating-scroll space-y-1"
-              style={{ maxHeight: 296 }}
+              style={{ maxHeight: panelMode === "floating" ? maxHeight : 296 }}
             >
               {effectiveLoadState === "error" ? (
                 <div className="rounded-[1rem] border border-dashed border-rose-200 bg-rose-50/85 px-4 py-4 text-sm leading-6 text-rose-700">

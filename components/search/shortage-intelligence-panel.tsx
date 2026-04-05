@@ -384,7 +384,7 @@ function DoseAvailabilityCard({ rows }: { rows: DoseAvailabilityRow[] }) {
   }
 
   return (
-    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
+    <div className="surface-panel h-full rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Dose coverage</span>
       <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
         {rows.slice(0, 4).map((row) => {
@@ -428,7 +428,7 @@ function ManufacturerStatusCard({ rows }: { rows: ManufacturerStatusRow[] }) {
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
+    <div className="surface-panel h-full rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Manufacturer status</span>
       <div className="mt-3 divide-y divide-slate-100">
         {visibleRows.map((row) => (

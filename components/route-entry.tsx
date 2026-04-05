@@ -105,7 +105,10 @@ export function FooterEntry({
     };
   }, [pathname, reduceMotion]);
 
-  const animateFooterIn = shouldAnimateOnScroll && !hasEnteredViewport;
+  const footerMotionState =
+    shouldAnimateOnScroll && !hasEnteredViewport
+      ? { opacity: 0.72, y: 14 }
+      : { opacity: 1, y: 0 };
 
   return (
     <div
@@ -115,7 +118,7 @@ export function FooterEntry({
     >
       <motion.div
         initial={false}
-        animate={animateFooterIn ? { opacity: 0, y: 16 } : { opacity: 1, y: 0 }}
+        animate={footerMotionState}
         transition={
           shouldAnimateOnScroll
             ? {
