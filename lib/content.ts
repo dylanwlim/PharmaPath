@@ -48,13 +48,13 @@ export const workflowShowcase = [
   },
   {
     id: "methodology",
-    title: "Methodology keeps the boundary explicit.",
+    title: `${surfaceNames.methodology} keeps the next step clear.`,
     summary:
-      "See which parts come from the live search, which parts come from medication reference records, and which questions still require a pharmacy call.",
+      "See what PharmaPath can show, what still needs direct confirmation, and how to use the product safely without overrelying on it.",
     bullets: [
-      "Known vs inferred vs unavailable",
-      "Call-ready guardrails",
-      "Truthful copy without overclaiming",
+      "What PharmaPath can show",
+      "What still needs a pharmacy call",
+      "Safe-use guidance without overclaiming",
     ],
     href: "/methodology",
     accent: "from-amber-100 via-white to-orange-50",

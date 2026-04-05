@@ -57,7 +57,7 @@ export default function PharmacyFinderPage() {
                     {openSurfaceLabels.prescriber}
                   </Link>
                   <Link href="/methodology" className="action-button-secondary px-4 py-2.5 text-sm">
-                    Open Methodology
+                    Open {surfaceNames.methodology}
                   </Link>
                 </div>
               </div>

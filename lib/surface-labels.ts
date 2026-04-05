@@ -1,7 +1,7 @@
 export const surfaceNames = {
   patient: "Pharmacy Finder",
   prescriber: "Medication Lookup",
-  methodology: "Methodology",
+  methodology: "How to Use",
 } as const;
 
 export const openSurfaceLabels = {

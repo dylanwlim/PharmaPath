@@ -9,7 +9,7 @@ import { surfaceNames } from "@/lib/surface-labels";
 const pharmacyFinderFooterHref = "/pharmacy-finder";
 const pharmacyResultsFooterHref = "/pharmacy-finder/results";
 const methodologyFooterHref = "/methodology";
-const claimBoundaryFooterHref = "/methodology#claim-boundary";
+const needsConfirmationFooterHref = "/methodology#needs-confirmation";
 
 type FooterLinkItem = {
   label: string;
@@ -41,12 +41,16 @@ const footerSections: FooterSection[] = [
     ],
   },
   {
-    title: "Evidence",
+    title: "Guidance",
     links: [
-      { label: "Methodology", href: methodologyFooterHref, exact: true },
       {
-        label: "Claim Boundary",
-        href: claimBoundaryFooterHref,
+        label: surfaceNames.methodology,
+        href: methodologyFooterHref,
+        exact: true,
+      },
+      {
+        label: "What Needs Confirmation",
+        href: needsConfirmationFooterHref,
         activePrefixes: ["/methodology"],
       },
     ],

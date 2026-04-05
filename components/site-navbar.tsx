@@ -13,7 +13,7 @@ const navItems = [
   { label: "Overview", href: "/" },
   { label: surfaceNames.patient, href: "/pharmacy-finder" },
   { label: surfaceNames.prescriber, href: "/prescriber" },
-  { label: "Methodology", href: "/methodology" },
+  { label: surfaceNames.methodology, href: "/methodology" },
   { label: "Contact", href: "/contact" },
 ];
 

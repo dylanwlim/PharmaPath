@@ -76,26 +76,26 @@ const routeVisualMeta: Record<
     accentColor: "#159a83",
   },
   methodology: {
-    panelTitle: "Methodology",
-    panelLabel: "Trust boundary",
+    panelTitle: surfaceNames.methodology,
+    panelLabel: "Public guide",
     sections: [
       {
-        title: "Known vs inferred",
-        value: "Boundaries surfaced",
+        title: "What it can show",
+        value: "Shortlist first",
         detail:
-          "The app distinguishes what comes directly from the live nearby search from what is inferred or still unknown.",
+          "Explains how PharmaPath helps narrow nearby options and review medication-related context without pretending to confirm the final answer.",
       },
       {
-        title: "Call readiness",
-        value: "Next steps visible",
+        title: "What it cannot confirm",
+        value: "Call still required",
         detail:
-          "Each view is designed to shorten the next call instead of overselling certainty.",
+          "Keeps live stock, exact formulation availability, timing, and price on the pharmacy side of the line.",
       },
       {
-        title: "Honest language",
-        value: "Truthful positioning",
+        title: "How to use it",
+        value: "Safer decisions",
         detail:
-          "Makes the language explicit so the app never overstates what the data can actually guarantee.",
+          "Frames PharmaPath as a tool for the next step, not a replacement for direct confirmation or clinical judgment.",
       },
     ],
     footer: "",
@@ -268,8 +268,8 @@ export function WorkflowShowcase() {
             </h2>
             <p className="mt-4 max-w-[40rem] text-lg leading-7 text-slate-600">
               Pharmacy Finder handles the nearby call list, Medication Lookup
-              keeps the evidence trail intact, and Methodology marks the
-              boundary between direct information and inference.
+              covers broader medication context, and How to Use explains what
+              still needs direct confirmation.
             </p>
           </div>
 
