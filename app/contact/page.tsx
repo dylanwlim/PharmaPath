@@ -132,48 +132,50 @@ export default function ContactPage() {
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-14 pt-28 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-[0.94fr_1.06fr] lg:items-end">
-            <div>
+        <section className="px-4 pb-8 pt-[calc(var(--navbar-height)+1rem)] sm:px-6 sm:pb-9 sm:pt-[calc(var(--navbar-height)+1.15rem)] lg:px-8 lg:pb-10 lg:pt-[calc(var(--navbar-height)+1.35rem)]">
+          <div className="site-shell grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(21.5rem,0.82fr)] lg:items-start lg:gap-8 xl:gap-10">
+            <div className="max-w-[39rem] lg:pr-4">
               <span className="eyebrow-label">Contact</span>
-              <h1 className="mt-6 text-[2.9rem] leading-tight tracking-tight text-slate-950 sm:text-[3.45rem]">
+              <h1 className="mt-5 max-w-[35rem] text-[2.75rem] leading-[0.98] tracking-tight text-balance text-slate-950 sm:text-[3.15rem] lg:text-[3.3rem] xl:text-[3.45rem]">
                 Send a product note without guessing who owns the inbox.
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+              <p className="mt-4 max-w-[32rem] text-[1.02rem] leading-7 text-slate-600 sm:text-[1.06rem]">
                 Use this page for bugs, feature requests, data issues, or partnership outreach.
                 The flow stays direct, and if inline delivery is unavailable the fallback opens a
                 prefilled email instead of dropping the message.
               </p>
             </div>
 
-            <div className="rounded-[2rem] border border-slate-200/80 bg-white/80 p-6 shadow-[0_18px_48px_rgba(15,23,42,0.05)]">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#156d95]/10">
-                  <Mail className="h-5 w-5 text-[#156d95]" strokeWidth={1.75} />
-                </span>
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Direct inbox
+            <div className="justify-self-stretch lg:max-w-[24rem] lg:justify-self-end">
+              <div className="rounded-[2rem] border border-slate-200/80 bg-white/88 p-6 shadow-[0_18px_48px_rgba(15,23,42,0.05)] sm:p-7">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#156d95]/10">
+                    <Mail className="h-5 w-5 text-[#156d95]" strokeWidth={1.75} />
+                  </span>
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      Direct inbox
+                    </div>
+                    <a
+                      href={`mailto:${inboxAddress}`}
+                      className="mt-1 inline-block text-base font-medium text-slate-950 underline-offset-2 hover:underline"
+                    >
+                      {inboxAddress}
+                    </a>
                   </div>
-                  <a
-                    href={`mailto:${inboxAddress}`}
-                    className="mt-1 inline-block text-base font-medium text-slate-950 underline-offset-2 hover:underline"
-                  >
-                    {inboxAddress}
-                  </a>
                 </div>
+                <p className="mt-5 text-sm leading-6 text-slate-600">
+                  Use the direct inbox if you need to forward screenshots, logs, or a longer
+                  thread from another system.
+                </p>
               </div>
-              <p className="mt-4 text-sm leading-6 text-slate-600">
-                Use the direct inbox if you need to forward screenshots, logs, or a longer thread
-                from another system.
-              </p>
             </div>
           </div>
         </section>
 
-        <section className="px-4 pb-24 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-[1fr_0.56fr] lg:items-start">
-            <div className="surface-panel rounded-[2rem] p-6 sm:p-8">
+        <section className="px-4 pb-12 sm:px-6 sm:pb-14 lg:px-8 lg:pb-16">
+          <div className="site-shell grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(19.5rem,0.76fr)] lg:items-start xl:gap-8">
+            <div className="surface-panel rounded-[2rem] p-6 sm:p-7 lg:p-8">
               {submissionState === "sent" ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <CheckCircle className="h-12 w-12 text-emerald-500" strokeWidth={1.5} />
@@ -193,7 +195,7 @@ export default function ContactPage() {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={(event) => void submitDraft(event)} className="space-y-6">
+                <form onSubmit={(event) => void submitDraft(event)} className="space-y-5 sm:space-y-6">
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div>
                       <label htmlFor="contact-full-name" className={fieldLabelClass}>
@@ -268,7 +270,7 @@ export default function ContactPage() {
                     </label>
                     <textarea
                       id="contact-details"
-                      rows={7}
+                      rows={6}
                       value={draft.details}
                       onChange={(event) => setField("details", event.target.value)}
                       placeholder="Describe the issue, request, or context that would make the next step easier."
@@ -285,15 +287,15 @@ export default function ContactPage() {
                     </div>
                   ) : null}
 
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm leading-6 text-slate-500">
+                  <div className="flex flex-col gap-4 border-t border-slate-200/80 pt-5 sm:flex-row sm:items-end sm:justify-between">
+                    <p className="max-w-[30rem] text-sm leading-6 text-slate-500">
                       PharmaPath does not use this form to promise response timing or medication
                       availability.
                     </p>
                     <button
                       type="submit"
                       disabled={submissionState === "submitting"}
-                      className="action-button-primary inline-flex items-center gap-2 text-sm disabled:opacity-60"
+                      className="action-button-primary inline-flex items-center justify-center gap-2 self-start text-sm disabled:opacity-60 sm:min-w-[10.75rem] sm:self-auto"
                     >
                       <Send className="h-4 w-4" strokeWidth={1.75} />
                       {submissionState === "submitting" ? "Sending note..." : "Send note"}
@@ -303,10 +305,10 @@ export default function ContactPage() {
               )}
             </div>
 
-            <aside className="space-y-4">
-              <div className="rounded-[2rem] border border-slate-200/80 bg-slate-50/80 p-6">
+            <aside className="space-y-4 lg:max-w-[24rem] lg:justify-self-end lg:space-y-5">
+              <div className="rounded-[2rem] border border-slate-200/80 bg-slate-50/88 p-6 sm:p-7">
                 <span className="eyebrow-label">What to expect</span>
-                <ul className="mt-5 space-y-3">
+                <ul className="mt-4 space-y-3">
                   {processNotes.map((note) => (
                     <li
                       key={note}
@@ -319,7 +321,7 @@ export default function ContactPage() {
                 </ul>
               </div>
 
-              <div className="surface-panel rounded-[2rem] p-6">
+              <div className="surface-panel rounded-[2rem] p-6 sm:p-7">
                 <span className="eyebrow-label">Best use</span>
                 <p className="mt-4 text-sm leading-6 text-slate-600">
                   This page is for product communication. Clinical questions still require direct

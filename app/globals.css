@@ -304,6 +304,10 @@
   .site-footer-enter {
     @apply motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700;
   }
+
+  .site-footer-static {
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -311,9 +315,11 @@
     scroll-behavior: auto;
   }
 
-  .site-footer-static {
+  .site-footer-static,
+  .site-footer-static .will-change-transform {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+    animation: none !important;
   }
 }

@@ -49,6 +49,7 @@ export function FooterEntry({
   className?: string;
 }) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
   const footerRef = useRef<HTMLDivElement | null>(null);
   const [shouldAnimateOnScroll, setShouldAnimateOnScroll] = useState(false);
   const [hasEnteredViewport, setHasEnteredViewport] = useState(true);
@@ -61,11 +62,7 @@ export function FooterEntry({
 
     let observer: IntersectionObserver | null = null;
     const frameId = window.requestAnimationFrame(() => {
-      const prefersReducedMotion =
-        typeof window.matchMedia === "function" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      if (prefersReducedMotion) {
+      if (reduceMotion) {
         setShouldAnimateOnScroll(false);
         setHasEnteredViewport(true);
         return;
@@ -94,8 +91,8 @@ export function FooterEntry({
           observer?.disconnect();
         },
         {
-          threshold: 0.14,
-          rootMargin: "0px 0px -8% 0px",
+          threshold: 0.18,
+          rootMargin: "0px 0px -10% 0px",
         },
       );
 
@@ -106,27 +103,31 @@ export function FooterEntry({
       window.cancelAnimationFrame(frameId);
       observer?.disconnect();
     };
-  }, [pathname]);
+  }, [pathname, reduceMotion]);
 
   const animateFooterIn = shouldAnimateOnScroll && !hasEnteredViewport;
 
   return (
-    <motion.div
+    <div
       ref={footerRef}
       key={`footer:${pathname}`}
-      initial={false}
-      animate={animateFooterIn ? { opacity: 0, y: 8 } : { opacity: 1, y: 0 }}
-      transition={
-        shouldAnimateOnScroll
-          ? {
-              duration: motionTiming.reveal * 0.72,
-              ease: motionEase.reveal,
-            }
-          : undefined
-      }
-      className={cn("site-footer-static will-change-transform", className)}
+      className={cn("site-footer-static", className)}
     >
-      {children}
-    </motion.div>
+      <motion.div
+        initial={false}
+        animate={animateFooterIn ? { opacity: 0, y: 18 } : { opacity: 1, y: 0 }}
+        transition={
+          shouldAnimateOnScroll
+            ? {
+                duration: motionTiming.reveal * 0.78,
+                ease: motionEase.reveal,
+              }
+            : undefined
+        }
+        className="will-change-transform"
+      >
+        {children}
+      </motion.div>
+    </div>
   );
 }

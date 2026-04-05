@@ -6,20 +6,42 @@ import { FooterEntry } from "@/components/route-entry";
 import { SiteBrand } from "@/components/site-brand";
 import { surfaceNames } from "@/lib/surface-labels";
 
-const footerSections = [
+const pharmacyFooterHref = "/pharmacy-finder/results";
+const methodologyFooterHref = "/methodology";
+
+type FooterLinkItem = {
+  label: string;
+  href: string;
+  activePrefixes?: string[];
+};
+
+type FooterSection = {
+  title: string;
+  links: FooterLinkItem[];
+};
+
+const footerSections: FooterSection[] = [
   {
     title: "Product",
     links: [
-      { label: surfaceNames.patient, href: "/pharmacy-finder" },
-      { label: "Pharmacy Results", href: "/pharmacy-finder/results" },
+      {
+        label: surfaceNames.patient,
+        href: pharmacyFooterHref,
+        activePrefixes: ["/pharmacy-finder"],
+      },
+      {
+        label: "Pharmacy Results",
+        href: pharmacyFooterHref,
+        activePrefixes: ["/pharmacy-finder"],
+      },
       { label: surfaceNames.prescriber, href: "/prescriber" },
     ],
   },
   {
     title: "Evidence",
     links: [
-      { label: "Methodology", href: "/methodology" },
-      { label: "Claim Boundary", href: "/methodology#claim-boundary" },
+      { label: "Methodology", href: methodologyFooterHref },
+      { label: "Claim Boundary", href: methodologyFooterHref },
     ],
   },
   {
@@ -31,22 +53,30 @@ const footerSections = [
   },
 ];
 
-const footerMetaLinks = [
+const footerMetaLinks: FooterLinkItem[] = [
   { label: "Contact", href: "/contact" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Use", href: "/terms" },
 ];
 
+function matchesPrefix(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
 function FooterLink({
   href,
   label,
   pathname,
+  activePrefixes,
 }: {
   href: string;
   label: string;
   pathname: string;
+  activePrefixes?: string[];
 }) {
-  const isActive = !href.includes("#") && pathname === href;
+  const isActive = activePrefixes?.length
+    ? activePrefixes.some((prefix) => matchesPrefix(pathname, prefix))
+    : !href.includes("#") && matchesPrefix(pathname, href);
 
   return (
     <Link
@@ -92,6 +122,7 @@ export function SiteFooter() {
                         href={link.href}
                         label={link.label}
                         pathname={pathname}
+                        activePrefixes={link.activePrefixes}
                       />
                     </li>
                   ))}
@@ -113,6 +144,7 @@ export function SiteFooter() {
                   href={link.href}
                   label={link.label}
                   pathname={pathname}
+                  activePrefixes={link.activePrefixes}
                 />
               ))}
             </div>
