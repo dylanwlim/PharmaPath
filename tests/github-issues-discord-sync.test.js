@@ -256,3 +256,116 @@ test("discord retry delay prefers rate limit headers and falls back safely", asy
   assert.equal(bodyDrivenDelay, 1750);
   assert.equal(fallbackDelay, 4000);
 });
+
+test("discord request retries 429 responses and succeeds on a later attempt", async () => {
+  const { discordRequest } = await syncModulePromise;
+  const sleepCalls = [];
+  const logs = [];
+  let fetchCount = 0;
+
+  const result = await discordRequest("https://discord.com/api/webhooks/123/token", {
+    method: "POST",
+    body: {
+      content: "hello",
+    },
+    fetchImpl: async () => {
+      fetchCount += 1;
+
+      if (fetchCount === 1) {
+        return {
+          ok: false,
+          status: 429,
+          headers: {
+            get(name) {
+              if (name === "retry-after") {
+                return "2";
+              }
+
+              return null;
+            },
+          },
+          async text() {
+            return JSON.stringify({
+              message: "You are being rate limited.",
+              retry_after: 2,
+            });
+          },
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        headers: {
+          get() {
+            return null;
+          },
+        },
+        async text() {
+          return JSON.stringify({
+            id: "message-1",
+          });
+        },
+      };
+    },
+    sleepImpl: async (milliseconds) => {
+      sleepCalls.push(milliseconds);
+    },
+    logger: {
+      info(message, details) {
+        logs.push({ level: "info", message, details });
+      },
+      warn(message, details) {
+        logs.push({ level: "warn", message, details });
+      },
+      error() {},
+    },
+  });
+
+  assert.equal(fetchCount, 2);
+  assert.deepEqual(sleepCalls, [2250]);
+  assert.equal(result.id, "message-1");
+  assert.equal(logs[0].level, "warn");
+  assert.equal(logs[0].message, "Discord webhook rate limited; retrying request");
+  assert.equal(logs[1].level, "info");
+  assert.equal(logs[1].message, "Discord webhook request succeeded after retry");
+});
+
+test("discord request slot pacing waits when the next full-resync request would burst too quickly", async () => {
+  const { waitForDiscordRequestSlot } = await syncModulePromise;
+  const originalNow = Date.now;
+  const sleepCalls = [];
+  const logs = [];
+  let now = 1000;
+
+  Date.now = () => now;
+
+  try {
+    const requestContext = {
+      minimumSpacingMs: 450,
+      nextAllowedAt: 1300,
+    };
+
+    await waitForDiscordRequestSlot({
+      method: "POST",
+      requestContext,
+      sleepImpl: async (milliseconds) => {
+        sleepCalls.push(milliseconds);
+        now += milliseconds;
+      },
+      logger: {
+        info(message, details) {
+          logs.push({ message, details });
+        },
+        warn() {},
+        error() {},
+      },
+    });
+
+    assert.deepEqual(sleepCalls, [300]);
+    assert.equal(logs[0].message, "Throttling Discord webhook request");
+    assert.equal(requestContext.nextAllowedAt, 1750);
+  } finally {
+    Date.now = originalNow;
+  }
+});

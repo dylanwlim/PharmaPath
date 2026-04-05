@@ -78,6 +78,7 @@ The resync job will:
 ## Failure handling and tradeoffs
 
 - Runs are serialized with a workflow concurrency group to reduce duplicate posts during bursty issue activity.
+- Full resync requests are deliberately paced so the webhook client does not burst issue-message creates too aggressively.
 - Missing mapping entries are handled without crashing:
   an open issue gets a new Discord message, and a closed/deleted issue is logged and skipped.
 - Discord 429 rate limits are retried with the server-provided delay plus a small buffer so large full resyncs do not fail on normal webhook throttling.

@@ -7,6 +7,8 @@ const DEFAULT_STATE_PATH = ".github/discord-issue-sync/issues.json";
 const STATE_VERSION = 1;
 const DISCORD_EMBED_DESCRIPTION_LIMIT = 4096;
 const DISCORD_MAX_RETRY_ATTEMPTS = 6;
+const DISCORD_RETRY_SAFETY_BUFFER_MS = 250;
+const DISCORD_FULL_RESYNC_REQUEST_SPACING_MS = 450;
 const ISSUE_ACTIONS_TO_UPSERT = new Set([
   "assigned",
   "edited",
@@ -323,6 +325,24 @@ function sleep(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+function parseRetryAfterMilliseconds(value) {
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+
+  const parsed = Number.parseFloat(String(value));
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 0;
+  }
+
+  if (parsed > 100) {
+    return Math.ceil(parsed);
+  }
+
+  return Math.ceil(parsed * 1000);
+}
+
 function parseHeaderDelayMilliseconds(value) {
   if (value === null || value === undefined || value === "") {
     return 0;
@@ -340,19 +360,50 @@ function parseHeaderDelayMilliseconds(value) {
 export function getDiscordRetryDelayMs(headers, data, attempt) {
   const retryAfterHeaderDelay = parseHeaderDelayMilliseconds(headers?.get?.("retry-after"));
   const resetAfterHeaderDelay = parseHeaderDelayMilliseconds(headers?.get?.("x-ratelimit-reset-after"));
-  let bodyDelay = 0;
-
-  if (typeof data?.retry_after === "number" && Number.isFinite(data.retry_after) && data.retry_after > 0) {
-    bodyDelay = data.retry_after > 100 ? Math.ceil(data.retry_after) : Math.ceil(data.retry_after * 1000);
-  }
+  const bodyDelay = parseRetryAfterMilliseconds(data?.retry_after);
 
   const derivedDelay = retryAfterHeaderDelay || resetAfterHeaderDelay || bodyDelay;
 
   if (derivedDelay > 0) {
-    return Math.min(derivedDelay + 250, 60000);
+    return Math.min(derivedDelay + DISCORD_RETRY_SAFETY_BUFFER_MS, 60000);
   }
 
   return Math.min(1000 * 2 ** attempt, 30000);
+}
+
+export function createDiscordRequestContext({ minimumSpacingMs = 0 } = {}) {
+  return {
+    minimumSpacingMs,
+    nextAllowedAt: 0,
+  };
+}
+
+export async function waitForDiscordRequestSlot({
+  logger = createLogger(),
+  messageId = "",
+  method = "POST",
+  requestContext,
+  sleepImpl = sleep,
+}) {
+  const minimumSpacingMs = requestContext?.minimumSpacingMs || 0;
+
+  if (minimumSpacingMs <= 0) {
+    return;
+  }
+
+  const now = Date.now();
+  const waitMs = Math.max(0, (requestContext.nextAllowedAt || 0) - now);
+
+  if (waitMs > 0) {
+    logger.info("Throttling Discord webhook request", {
+      method,
+      messageId,
+      waitMs,
+    });
+    await sleepImpl(waitMs);
+  }
+
+  requestContext.nextAllowedAt = Date.now() + minimumSpacingMs;
 }
 
 function createGitHubClient({ apiBaseUrl, repositoryFullName, token }) {
@@ -473,12 +524,31 @@ export function buildWebhookMessageUrl(webhookUrl, { messageId = "", wait = fals
   return url.toString();
 }
 
-async function discordRequest(
+export async function discordRequest(
   webhookUrl,
-  { allow404 = false, body, logger = createLogger(), maxRetryAttempts = DISCORD_MAX_RETRY_ATTEMPTS, messageId = "", method = "POST", wait = false } = {},
+  {
+    allow404 = false,
+    body,
+    fetchImpl = fetch,
+    logger = createLogger(),
+    maxRetryAttempts = DISCORD_MAX_RETRY_ATTEMPTS,
+    messageId = "",
+    method = "POST",
+    requestContext,
+    sleepImpl = sleep,
+    wait = false,
+  } = {},
 ) {
   for (let attempt = 0; attempt <= maxRetryAttempts; attempt += 1) {
-    const response = await fetch(buildWebhookMessageUrl(webhookUrl, { messageId, wait }), {
+    await waitForDiscordRequestSlot({
+      logger,
+      messageId,
+      method,
+      requestContext,
+      sleepImpl,
+    });
+
+    const response = await fetchImpl(buildWebhookMessageUrl(webhookUrl, { messageId, wait }), {
       method,
       headers: {
         "Content-Type": "application/json",
@@ -502,7 +572,7 @@ async function discordRequest(
         messageId,
         retryDelayMs,
       });
-      await sleep(retryDelayMs);
+      await sleepImpl(retryDelayMs);
       continue;
     }
 
@@ -512,37 +582,48 @@ async function discordRequest(
       );
     }
 
+    if (attempt > 0) {
+      logger.info("Discord webhook request succeeded after retry", {
+        attempt: attempt + 1,
+        method,
+        messageId,
+      });
+    }
+
     return data || {};
   }
 
   throw new Error(`Discord webhook ${method} exhausted retry attempts unexpectedly.`);
 }
 
-async function createDiscordMessage(webhookUrl, payload, logger) {
+async function createDiscordMessage(webhookUrl, payload, logger, requestContext) {
   return discordRequest(webhookUrl, {
     method: "POST",
     body: payload,
     logger,
+    requestContext,
     wait: true,
   });
 }
 
-async function updateDiscordMessage(webhookUrl, messageId, payload, logger) {
+async function updateDiscordMessage(webhookUrl, messageId, payload, logger, requestContext) {
   return discordRequest(webhookUrl, {
     method: "PATCH",
     messageId,
     body: payload,
     allow404: true,
     logger,
+    requestContext,
   });
 }
 
-async function deleteDiscordMessage(webhookUrl, messageId, logger) {
+async function deleteDiscordMessage(webhookUrl, messageId, logger, requestContext) {
   return discordRequest(webhookUrl, {
     method: "DELETE",
     messageId,
     allow404: true,
     logger,
+    requestContext,
   });
 }
 
@@ -785,27 +866,27 @@ export async function deleteDiscordIssueMessages({
   };
 }
 
-async function upsertIssueMessage({ issue, logger, stateEntry, webhookUrl }) {
+async function upsertIssueMessage({ issue, logger, requestContext, stateEntry, webhookUrl }) {
   return syncDiscordIssueMessages({
     issue,
     logger,
     stateEntry,
-    createMessage: (payload) => createDiscordMessage(webhookUrl, payload, logger),
-    updateMessage: (messageId, payload) => updateDiscordMessage(webhookUrl, messageId, payload, logger),
-    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId, logger),
+    createMessage: (payload) => createDiscordMessage(webhookUrl, payload, logger, requestContext),
+    updateMessage: (messageId, payload) => updateDiscordMessage(webhookUrl, messageId, payload, logger, requestContext),
+    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId, logger, requestContext),
   });
 }
 
-async function removeIssueMessage({ issueNumber, logger, stateEntry, webhookUrl }) {
+async function removeIssueMessage({ issueNumber, logger, requestContext, stateEntry, webhookUrl }) {
   return deleteDiscordIssueMessages({
     issueNumber,
     logger,
     stateEntry,
-    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId, logger),
+    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId, logger, requestContext),
   });
 }
 
-async function runEventSync({ eventPayload, logger, state, webhookUrl }) {
+async function runEventSync({ eventPayload, logger, requestContext, state, webhookUrl }) {
   const action = String(eventPayload?.action || "");
   const issue = eventPayload?.issue;
 
@@ -847,6 +928,7 @@ async function runEventSync({ eventPayload, logger, state, webhookUrl }) {
     const result = await removeIssueMessage({
       issueNumber: issue.number,
       logger,
+      requestContext,
       stateEntry: existingEntry,
       webhookUrl,
     });
@@ -863,6 +945,7 @@ async function runEventSync({ eventPayload, logger, state, webhookUrl }) {
   const result = await upsertIssueMessage({
     issue,
     logger,
+    requestContext,
     stateEntry: existingEntry,
     webhookUrl,
   });
@@ -876,7 +959,7 @@ async function runEventSync({ eventPayload, logger, state, webhookUrl }) {
   };
 }
 
-async function runFullResync({ client, logger, state, webhookUrl }) {
+async function runFullResync({ client, logger, requestContext, state, webhookUrl }) {
   logger.info("Starting full Discord issue resync");
 
   const openIssues = await client.listOpenIssues();
@@ -889,6 +972,7 @@ async function runFullResync({ client, logger, state, webhookUrl }) {
     const result = await upsertIssueMessage({
       issue,
       logger,
+      requestContext,
       stateEntry: state.issues[String(issue.number)],
       webhookUrl,
     });
@@ -906,6 +990,7 @@ async function runFullResync({ client, logger, state, webhookUrl }) {
     await removeIssueMessage({
       issueNumber,
       logger,
+      requestContext,
       stateEntry,
       webhookUrl,
     });
@@ -971,6 +1056,9 @@ export async function runSync({ env = process.env, logger = createLogger(), mode
   const repository = env.DEFAULT_BRANCH ? { default_branch: env.DEFAULT_BRANCH } : await client.getRepository();
   const stateBranch = env.DISCORD_ISSUE_SYNC_STATE_BRANCH || DEFAULT_STATE_BRANCH;
   const statePath = env.DISCORD_ISSUE_SYNC_STATE_PATH || DEFAULT_STATE_PATH;
+  const requestContext = createDiscordRequestContext({
+    minimumSpacingMs: resolvedMode === "full-resync" ? DISCORD_FULL_RESYNC_REQUEST_SPACING_MS : 0,
+  });
 
   await ensureStateBranch(client, stateBranch, repository.default_branch, logger);
 
@@ -980,12 +1068,14 @@ export async function runSync({ env = process.env, logger = createLogger(), mode
       ? await runFullResync({
           client,
           logger,
+          requestContext,
           state,
           webhookUrl,
         })
       : await runEventSync({
           eventPayload,
           logger,
+          requestContext,
           state,
           webhookUrl,
         });
