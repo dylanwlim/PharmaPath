@@ -71,5 +71,7 @@ export function useComboboxPanelLayout(
 }
 
 export function getComboboxPanelPositionClasses(placement: ComboboxPlacement) {
-  return placement === "top" ? "bottom-full mb-2" : "top-full mt-2";
+  return placement === "top"
+    ? "bottom-full mb-1.5 origin-bottom"
+    : "top-full mt-1.5 origin-top";
 }

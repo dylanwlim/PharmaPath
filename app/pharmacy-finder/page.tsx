@@ -20,9 +20,9 @@ export default function PharmacyFinderPage() {
     <>
       <SiteNavbar />
       <PageTransitionShell>
-        <section className="px-4 pb-7 pt-20 sm:px-6 lg:px-8">
-          <div className="site-shell grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start xl:gap-10">
-            <div className="max-w-[31rem] pt-2 sm:max-w-[33rem]">
+        <section className="px-4 pb-14 pt-20 sm:px-6 lg:px-8">
+          <div className="site-shell grid gap-8 xl:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] xl:items-start xl:gap-10">
+            <div className="max-w-[31rem] pt-2 sm:max-w-[33rem] xl:sticky xl:top-[calc(var(--navbar-height)+1.5rem)]">
               <span className="eyebrow-label">{surfaceNames.patient}</span>
               <h1 className="mt-[1.125rem] max-w-[28rem] text-[2.35rem] leading-[0.97] tracking-tight text-balance text-slate-950 sm:text-[2.72rem] xl:text-[3rem]">
                 Start with the medication. The rest of the nearby search should
@@ -47,35 +47,31 @@ export default function PharmacyFinderPage() {
               </div>
             </div>
 
-            <div className="justify-self-stretch">
+            <div className="justify-self-stretch space-y-5">
               <PharmacySearchForm
                 showSamples
                 submitLabel="Find nearby pharmacies"
               />
-            </div>
-          </div>
-        </section>
 
-        <section className="px-4 pb-14 sm:px-6 lg:px-8">
-          <div className="site-shell">
-            <div className="surface-panel grid gap-4 rounded-[1.9rem] p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-              <div className="max-w-[42rem]">
-                <span className="eyebrow-label">Keep the boundary clear</span>
-                <p className="mt-3 text-[0.98rem] leading-7 text-slate-600">
-                  Use Pharmacy Finder for the live nearby shortlist. Open the
-                  broader medication view when the question shifts from who to
-                  call first to formulation coverage, manufacturer status, or
-                  shortage planning.
-                </p>
-              </div>
+              <div className="surface-panel grid gap-4 rounded-[1.65rem] p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                <div className="max-w-[40rem]">
+                  <span className="eyebrow-label">Keep the boundary clear</span>
+                  <p className="mt-2.5 text-[0.92rem] leading-6 text-slate-600">
+                    Use Pharmacy Finder for the live nearby shortlist. Open the
+                    broader medication view when the question shifts from who to
+                    call first to formulation coverage, manufacturer status, or
+                    shortage planning.
+                  </p>
+                </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Link href="/prescriber" className="action-button-secondary text-sm">
-                  {openSurfaceLabels.prescriber}
-                </Link>
-                <Link href="/methodology" className="action-button-secondary text-sm">
-                  Open Methodology
-                </Link>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/prescriber" className="action-button-secondary text-sm">
+                    {openSurfaceLabels.prescriber}
+                  </Link>
+                  <Link href="/methodology" className="action-button-secondary text-sm">
+                    Open Methodology
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

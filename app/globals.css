@@ -209,15 +209,15 @@
   }
 
   .search-floating-panel {
-    @apply absolute left-0 right-0 z-[80] overflow-hidden rounded-[1.15rem] border border-slate-200/95 bg-white shadow-[0_20px_44px_rgba(15,23,42,0.14)] ring-1 ring-slate-950/5;
+    @apply absolute left-0 right-0 z-[90] overflow-hidden rounded-[1.08rem] border border-slate-200/95 bg-white/98 shadow-[0_18px_38px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/5 backdrop-blur-md;
   }
 
   .search-inline-panel {
-    @apply overflow-hidden rounded-[1.05rem] border border-slate-200/95 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.11)] ring-1 ring-slate-950/5;
+    @apply overflow-hidden rounded-[1rem] border border-slate-200/95 bg-white/98 shadow-[0_14px_28px_rgba(15,23,42,0.1)] ring-1 ring-slate-950/5 backdrop-blur-md;
   }
 
   .search-floating-scroll {
-    @apply overflow-y-auto p-1.5;
+    @apply overflow-y-auto p-1.25;
     scrollbar-width: thin;
     scrollbar-color: rgba(100, 116, 139, 0.6) transparent;
   }

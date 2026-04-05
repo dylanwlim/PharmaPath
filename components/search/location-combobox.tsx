@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, LoaderCircle } from "lucide-react";
 import {
   useDeferredValue,
@@ -55,6 +56,7 @@ export function LocationCombobox({
   inputRef,
   submitOnSelect = true,
 }: LocationComboboxProps) {
+  const reduceMotion = useReducedMotion();
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
   const helperId = `${inputId}-helper`;
@@ -251,7 +253,6 @@ export function LocationCombobox({
             setHighlightedIndexState(-1);
           }}
           onClick={() => setIsOpen(true)}
-          onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
         />
 
@@ -264,100 +265,97 @@ export function LocationCombobox({
           />
         </div>
 
-        {isOpen ? (
-          <div
-            className={cn(
-              "search-floating-panel",
-              getComboboxPanelPositionClasses(placement),
-            )}
-          >
-            <div
-              id={listboxId}
-              role="listbox"
-              className="search-floating-scroll space-y-1"
-              style={{ maxHeight }}
-            >
-              {loadState === "error" ? (
-                <div className="rounded-[1rem] border border-dashed border-amber-200 bg-amber-50/85 px-4 py-4 text-sm leading-6 text-amber-800">
-                  {loadError || "Unable to load location suggestions right now."} Press Enter to search this text directly.
-                </div>
-              ) : loadState === "idle" ? (
-                <div className="rounded-[0.95rem] border border-slate-200/90 bg-slate-50/90 px-4 py-3.5">
-                  <p className="text-sm font-medium text-slate-900">
-                    {selectedPlaceId && value.trim()
-                      ? "Current location is ready to search."
-                      : "Start typing to place the nearby search."}
-                  </p>
-                  <p
-                    id={helperText ? helperId : undefined}
-                    className="mt-1 text-[0.82rem] leading-5 text-slate-500"
-                  >
-                    {helperText || EMPTY_HINT}
-                  </p>
-                  <div className="mt-2.5 flex flex-wrap gap-2 text-[0.72rem] text-slate-500">
-                    {["Queens, NY", "32751", "CVS Orlando"].map((example) => (
-                      <span
-                        key={example}
-                        className="rounded-full border border-slate-200 bg-white/90 px-2.5 py-1"
-                      >
-                        {example}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : loadState === "loading" && !visibleOptions.length ? (
-                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
-                  Searching locations…
-                </div>
-              ) : visibleOptions.length ? (
-                visibleOptions.map((option, index) => {
-                  const isSelected = option.placeId === selectedPlaceId;
-                  const isHighlighted = index === highlightedIndex;
-
-                  return (
-                    <button
-                      key={option.placeId}
-                      id={`${listboxId}-${option.placeId}`}
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      className={cn(
-                        "flex w-full items-start justify-between gap-3 rounded-[0.95rem] border px-3 py-3 text-left transition-colors duration-150",
-                        isHighlighted
-                          ? "border-[#156d95]/18 bg-[#156d95]/8"
-                          : "border-transparent hover:bg-slate-100/80",
-                        isSelected && !isHighlighted && "bg-slate-100/90",
-                      )}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onMouseEnter={() => setHighlightedIndexState(index)}
-                      onClick={() => commitSelection(option)}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="break-words text-sm font-medium leading-5 text-slate-900">
-                            {option.primaryText}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                            {option.typeLabel}
-                          </span>
-                        </div>
-                        {option.secondaryText ? (
-                          <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
-                            {option.secondaryText}
-                          </p>
-                        ) : null}
-                      </div>
-                    </button>
-                  );
-                })
-              ) : (
-                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
-                  No live suggestions yet. Press Enter to search this text directly.
-                </div>
+        <AnimatePresence initial={false}>
+          {isOpen ? (
+            <motion.div
+              initial={reduceMotion ? false : { opacity: 0, y: -4, scale: 0.985 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.985 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0.12 }
+                  : { duration: 0.16, ease: [0.22, 1, 0.36, 1] }
+              }
+              className={cn(
+                "search-floating-panel",
+                getComboboxPanelPositionClasses(placement),
               )}
-            </div>
-          </div>
-        ) : null}
+            >
+              <div
+                id={listboxId}
+                role="listbox"
+                className="search-floating-scroll space-y-1"
+                style={{ maxHeight }}
+              >
+                {loadState === "error" ? (
+                  <div className="rounded-[0.9rem] border border-dashed border-amber-200 bg-amber-50/85 px-3.5 py-3 text-sm leading-6 text-amber-800">
+                    {loadError || "Unable to load location suggestions right now."} Press Enter to search this text directly.
+                  </div>
+                ) : loadState === "idle" ? (
+                  <div className="rounded-[0.9rem] border border-slate-200/85 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-600">
+                    {selectedPlaceId && value.trim()
+                      ? "Current location is ready. Keep this choice or keep typing for a different search area."
+                      : helperText || EMPTY_HINT}
+                  </div>
+                ) : loadState === "loading" && !visibleOptions.length ? (
+                  <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                    <span className="inline-flex items-center gap-2">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      Searching locations...
+                    </span>
+                  </div>
+                ) : visibleOptions.length ? (
+                  visibleOptions.map((option, index) => {
+                    const isSelected = option.placeId === selectedPlaceId;
+                    const isHighlighted = index === highlightedIndex;
+
+                    return (
+                      <button
+                        key={option.placeId}
+                        id={`${listboxId}-${option.placeId}`}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        className={cn(
+                          "flex w-full items-start justify-between gap-3 rounded-[0.9rem] border px-3 py-2.5 text-left transition-[background-color,border-color,transform] duration-150",
+                          isHighlighted
+                            ? "border-[#156d95]/22 bg-[#156d95]/9"
+                            : "border-transparent hover:border-slate-200/85 hover:bg-slate-50/90",
+                          isSelected &&
+                            !isHighlighted &&
+                            "border-slate-200/85 bg-slate-100/90",
+                        )}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onMouseEnter={() => setHighlightedIndexState(index)}
+                        onClick={() => commitSelection(option)}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="break-words text-sm font-medium leading-5 text-slate-900">
+                              {option.primaryText}
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                              {option.typeLabel}
+                            </span>
+                          </div>
+                          {option.secondaryText ? (
+                            <p className="mt-1 break-words text-[0.73rem] leading-5 text-slate-500">
+                              {option.secondaryText}
+                            </p>
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                    No live suggestions yet. Press Enter to search this text directly.
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
       <div className="search-field-helper-slot">
         {helperText && !isOpen ? (

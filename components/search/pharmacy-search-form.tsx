@@ -1,14 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  MapPin,
-  Pill,
-  Settings2,
-} from "lucide-react";
+import { ArrowLeft, Check, MapPin, Pill, Settings2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -211,7 +204,7 @@ function FocusStepIndicator({
           <li
             key={item.id}
             className={cn(
-              "inline-flex min-h-10 items-center gap-2 rounded-full border px-3 py-2 text-left transition-colors",
+              "inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-left transition-colors",
               state === "active" &&
                 "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d]",
               state === "complete" &&
@@ -222,7 +215,7 @@ function FocusStepIndicator({
           >
             <span
               className={cn(
-                "inline-flex h-6 w-6 items-center justify-center rounded-full border text-[0.68rem] font-semibold",
+                "inline-flex h-5.5 w-5.5 items-center justify-center rounded-full border text-[0.66rem] font-semibold",
                 state === "active" &&
                   "border-[#156d95]/26 bg-white text-[#0f5d7d]",
                 state === "complete" && "border-slate-200 bg-white text-slate-700",
@@ -232,16 +225,14 @@ function FocusStepIndicator({
             >
               {state === "complete" ? <Check className="h-3.5 w-3.5" /> : index + 1}
             </span>
-            <span className="min-w-0">
-              <span className="block text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
-                {item.label}
-              </span>
-              {item.helper ? (
-                <span className="block text-[0.7rem] leading-4 text-current/70">
-                  {showStrengthStep ? item.helper : "Skipped"}
-                </span>
-              ) : null}
+            <span className="min-w-0 text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
+              {item.label}
             </span>
+            {item.helper ? (
+              <span className="text-[0.65rem] uppercase tracking-[0.16em] text-current/65">
+                {showStrengthStep ? item.helper : "Skipped"}
+              </span>
+            ) : null}
           </li>
         );
       })}
@@ -249,62 +240,103 @@ function FocusStepIndicator({
   );
 }
 
-function SummaryPill({
+function SelectionSummaryChip({
   label,
   value,
+  placeholder,
   icon,
-}: {
-  label: string;
-  value: string;
-  icon: ReactNode;
-}) {
-  return (
-    <div className="inline-flex min-w-0 items-center gap-2 rounded-full border border-slate-200/90 bg-white/88 px-3 py-2 text-left text-sm text-slate-700 shadow-[0_1px_1px_rgba(15,23,42,0.04)]">
-      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-[0.66rem] uppercase tracking-[0.16em] text-slate-400">
-          {label}
-        </span>
-        <span className="block truncate font-medium text-slate-900">{value}</span>
-      </span>
-    </div>
-  );
-}
-
-function SummaryButton({
-  label,
-  value,
-  icon,
+  state,
   onClick,
 }: {
   label: string;
-  value: string;
+  value?: string | null;
+  placeholder: string;
   icon: ReactNode;
-  onClick: () => void;
+  state: "complete" | "active" | "pending";
+  onClick?: () => void;
 }) {
+  const content = (
+    <>
+      <span
+        className={cn(
+          "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+          state === "active" && "bg-[#156d95]/12 text-[#156d95]",
+          state === "complete" && "bg-slate-100 text-slate-600",
+          state === "pending" && "bg-slate-100/80 text-slate-400",
+        )}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[0.64rem] uppercase tracking-[0.16em] text-slate-400">
+          {label}
+        </span>
+        <span
+          className={cn(
+            "mt-0.5 block truncate text-sm font-semibold",
+            value ? "text-slate-900" : "text-slate-500",
+          )}
+        >
+          {value || placeholder}
+        </span>
+      </span>
+      {state === "complete" && onClick ? (
+        <span className="shrink-0 text-[0.72rem] font-medium text-[#156d95]">
+          Edit
+        </span>
+      ) : state === "active" ? (
+        <span className="shrink-0 text-[0.68rem] font-medium uppercase tracking-[0.16em] text-[#156d95]">
+          Current
+        </span>
+      ) : null}
+    </>
+  );
+
+  if (!onClick) {
+    return (
+      <div
+        className={cn(
+          "flex min-w-0 items-center gap-3 rounded-[1rem] border px-3.5 py-2.5 text-left shadow-[0_1px_1px_rgba(15,23,42,0.04)]",
+          state === "active" &&
+            "border-[#156d95]/22 bg-[#156d95]/8",
+          state === "complete" && "border-slate-200/90 bg-white/92",
+          state === "pending" && "border-dashed border-slate-200 bg-slate-50/82",
+        )}
+      >
+        {content}
+      </div>
+    );
+  }
+
   return (
     <button
       type="button"
-      className="group flex min-w-0 flex-col rounded-[1.15rem] border border-slate-200/90 bg-white/90 px-4 py-3 text-left transition-[border-color,background-color,transform,box-shadow] duration-150 hover:-translate-y-px hover:border-[#156d95]/24 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10"
+      className={cn(
+        "flex min-w-0 items-center gap-3 rounded-[1rem] border px-3.5 py-2.5 text-left shadow-[0_1px_1px_rgba(15,23,42,0.04)] transition-[border-color,background-color,transform] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
+        state === "active" &&
+          "border-[#156d95]/22 bg-[#156d95]/8",
+        state === "complete" &&
+          "border-slate-200/90 bg-white/92 hover:border-[#156d95]/22 hover:bg-white",
+        state === "pending" &&
+          "border-dashed border-slate-200 bg-slate-50/82 hover:border-slate-300",
+      )}
       onClick={onClick}
     >
-      <div className="flex items-center gap-2 text-[0.66rem] uppercase tracking-[0.16em] text-slate-400">
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors group-hover:bg-[#156d95]/10 group-hover:text-[#156d95]">
-          {icon}
-        </span>
-        {label}
-      </div>
-      <span className="mt-2 line-clamp-2 text-sm font-semibold leading-6 text-slate-900">
-        {value}
-      </span>
-      <span className="mt-1 inline-flex items-center gap-1 text-[0.78rem] font-medium text-[#156d95]">
-        Edit
-        <ArrowRight className="h-3.5 w-3.5" />
-      </span>
+      {content}
     </button>
   );
+}
+
+function focusElementWithoutScroll(target: HTMLElement | null) {
+  if (!target) {
+    return;
+  }
+
+  try {
+    target.focus({ preventScroll: true });
+  } catch {
+    target.focus();
+  }
 }
 
 export function PharmacySearchForm({
@@ -328,6 +360,7 @@ export function PharmacySearchForm({
   const medicationInputRef = useRef<HTMLInputElement>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const stepCardRef = useRef<HTMLDivElement>(null);
   const strengthButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const focusTargetRef = useRef<SearchStep | "submit">(
     resolveInitialStep({
@@ -336,6 +369,8 @@ export function PharmacySearchForm({
       selectedStrength: initialSelectedStrength,
     }),
   );
+  const hasMountedRef = useRef(false);
+  const shouldAutoAlignRef = useRef(false);
   const [transitionDirection, setTransitionDirection] = useState(1);
   const [activeStep, setActiveStep] = useState<SearchStep>(() =>
     resolveInitialStep({
@@ -497,6 +532,11 @@ export function PharmacySearchForm({
   }, [initialRadiusMiles, profile?.preferredSearchRadius, radiusMiles]);
 
   useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
     const focusTarget = focusTargetRef.current;
     if (!focusTarget) {
       return;
@@ -511,17 +551,17 @@ export function PharmacySearchForm({
         );
     const timeoutId = window.setTimeout(() => {
       if (focusTarget === "medication") {
-        medicationInputRef.current?.focus();
+        focusElementWithoutScroll(medicationInputRef.current);
         return;
       }
 
       if (focusTarget === "location") {
-        locationInputRef.current?.focus();
+        focusElementWithoutScroll(locationInputRef.current);
         return;
       }
 
       if (focusTarget === "submit") {
-        submitButtonRef.current?.focus();
+        focusElementWithoutScroll(submitButtonRef.current);
         return;
       }
 
@@ -530,7 +570,7 @@ export function PharmacySearchForm({
           (strength) => strength.value === selectedStrength,
         );
         const targetIndex = activeIndex && activeIndex >= 0 ? activeIndex : 0;
-        strengthButtonRefs.current[targetIndex]?.focus();
+        focusElementWithoutScroll(strengthButtonRefs.current[targetIndex]);
       }
     }, focusDelayMs);
 
@@ -544,11 +584,69 @@ export function PharmacySearchForm({
     selectedStrength,
   ]);
 
+  useEffect(() => {
+    if (!shouldAutoAlignRef.current) {
+      return;
+    }
+
+    shouldAutoAlignRef.current = false;
+    const card = stepCardRef.current;
+    if (!card) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      const rect = card.getBoundingClientRect();
+      const targetTop = window.innerWidth >= 1024 ? 108 : 92;
+      const lowerBound = Math.max(targetTop + 12, window.innerHeight * 0.24);
+
+      if (rect.top >= targetTop && rect.top <= lowerBound) {
+        return;
+      }
+
+      window.scrollBy({
+        top: rect.top - targetTop,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeStep, reduceMotion]);
+
   const goToStep = (
     nextStep: SearchStep,
     focusTarget: SearchStep | "submit" = nextStep,
   ) => {
     focusTargetRef.current = focusTarget;
+    shouldAutoAlignRef.current = true;
+
+    if (nextStep === activeStep) {
+      window.requestAnimationFrame(() => {
+        if (focusTarget === "medication") {
+          focusElementWithoutScroll(medicationInputRef.current);
+        } else if (focusTarget === "location") {
+          focusElementWithoutScroll(locationInputRef.current);
+        } else if (focusTarget === "submit") {
+          focusElementWithoutScroll(submitButtonRef.current);
+        }
+
+        const card = stepCardRef.current;
+        if (!card) {
+          return;
+        }
+
+        const rect = card.getBoundingClientRect();
+        const targetTop = window.innerWidth >= 1024 ? 108 : 92;
+        if (rect.top < targetTop) {
+          window.scrollBy({
+            top: rect.top - targetTop,
+            behavior: reduceMotion ? "auto" : "smooth",
+          });
+        }
+      });
+      return;
+    }
+
     setTransitionDirection(
       getStepIndex(nextStep) >= getStepIndex(activeStep) ? 1 : -1,
     );
@@ -672,9 +770,6 @@ export function PharmacySearchForm({
     }
   };
 
-  const stepViewportClassName = compact
-    ? "relative min-h-[28rem] sm:min-h-[22rem]"
-    : "relative min-h-[31rem] sm:min-h-[24rem]";
   const stepMotion = {
     initial: (direction: number) =>
       reduceMotion
@@ -692,29 +787,66 @@ export function PharmacySearchForm({
         duration: compact ? motionTiming.base * 0.76 : motionTiming.base * 0.84,
         ease: motionEase.reveal,
       };
-  const stepContextPills = (
-    <div className="flex flex-wrap gap-2">
-      <SummaryPill
-        label="Medication"
-        value={summaryMedication}
-        icon={<Pill className="h-4 w-4" />}
-      />
-      {summaryStrength ? (
-        <SummaryPill
-          label="Strength"
-          value={summaryStrength}
-          icon={<Settings2 className="h-4 w-4" />}
-        />
-      ) : null}
-      {summaryLocation && summaryLocation !== "Set the search area" ? (
-        <SummaryPill
-          label="Location"
-          value={summaryLocation}
-          icon={<MapPin className="h-4 w-4" />}
-        />
-      ) : null}
-    </div>
-  );
+  const selectionSummaryItems = [
+    activeStep !== "medication" || medication.trim()
+      ? {
+          key: "medication",
+          label: "Medication",
+          value: medication.trim() ? summaryMedication : null,
+          placeholder: "Choose a medication",
+          icon: <Pill className="h-4 w-4" />,
+          state: activeStep === "medication" ? "active" : "complete",
+          onClick:
+            activeStep === "medication"
+              ? undefined
+              : () => goToStep("medication", "medication"),
+        }
+      : null,
+    showsStrengthCheckpoint || summaryStrength || activeStep === "strength"
+      ? {
+          key: "strength",
+          label: "Strength",
+          value: summaryStrength || null,
+          placeholder: "Choose strength",
+          icon: <Settings2 className="h-4 w-4" />,
+          state: activeStep === "strength"
+            ? "active"
+            : summaryStrength
+              ? "complete"
+              : "pending",
+          onClick:
+            activeStep === "strength" || !summaryStrength
+              ? undefined
+              : () => goToStep("strength", "strength"),
+        }
+      : null,
+    activeStep !== "medication" || location.trim()
+      ? {
+          key: "location",
+          label: "Location",
+          value: location.trim() ? summaryLocation : null,
+          placeholder: "Choose a location",
+          icon: <MapPin className="h-4 w-4" />,
+          state: activeStep === "location"
+            ? "active"
+            : location.trim()
+              ? "complete"
+              : "pending",
+          onClick:
+            activeStep === "location" || !location.trim()
+              ? undefined
+              : () => goToStep("location", "location"),
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    key: string;
+    label: string;
+    value: string | null;
+    placeholder: string;
+    icon: ReactNode;
+    state: "complete" | "active" | "pending";
+    onClick?: () => void;
+  }>;
 
   return (
     <div
@@ -730,15 +862,15 @@ export function PharmacySearchForm({
           compact && "rounded-[1.35rem] p-3.5 sm:p-4",
         )}
       >
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-[34rem]">
             <span className="eyebrow-label">
               {compact ? "Refine nearby search" : "Guided nearby search"}
             </span>
             <h2
               className={cn(
-                "mt-3 tracking-tight text-slate-950",
-                compact ? "text-[1.32rem]" : "text-[1.58rem] sm:text-[1.76rem]",
+                "mt-2.5 tracking-tight text-slate-950",
+                compact ? "text-[1.22rem]" : "text-[1.5rem] sm:text-[1.68rem]",
               )}
             >
               {compact
@@ -748,7 +880,7 @@ export function PharmacySearchForm({
             <p
               className={cn(
                 "mt-2 max-w-[34rem] text-slate-600",
-                compact ? "text-[0.92rem] leading-6" : "text-[0.96rem] leading-7",
+                compact ? "text-[0.88rem] leading-6" : "text-[0.93rem] leading-6",
               )}
             >
               Nearby pharmacies come from a live search. Stock is never
@@ -757,7 +889,7 @@ export function PharmacySearchForm({
             </p>
           </div>
 
-          <div className="rounded-full border border-white/80 bg-white/82 px-3.5 py-2 text-[0.72rem] uppercase tracking-[0.18em] text-slate-500 shadow-[0_1px_1px_rgba(15,23,42,0.04)]">
+          <div className="rounded-full border border-white/80 bg-white/82 px-3 py-1.5 text-[0.68rem] uppercase tracking-[0.18em] text-slate-500 shadow-[0_1px_1px_rgba(15,23,42,0.04)]">
             Step {getStepIndex(activeStep) + 1} of {guidedSteps.length}
           </div>
         </div>
@@ -768,7 +900,7 @@ export function PharmacySearchForm({
         />
 
         <form
-          className="mt-4"
+          className="mt-3.5"
           onSubmit={async (event) => {
             event.preventDefault();
             setIsResolvingSearch(true);
@@ -904,13 +1036,14 @@ export function PharmacySearchForm({
           }}
         >
           <div
+            ref={stepCardRef}
             className={cn(
-              "rounded-[1.45rem] border border-slate-200/90 bg-white/92 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)]",
+              "rounded-[1.38rem] border border-slate-200/90 bg-white/92 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.05)]",
               compact && "rounded-[1.25rem] p-3.5",
             )}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
+              <div className="max-w-[34rem]">
                 <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
                   {activeStep === "medication" && "Start here"}
                   {activeStep === "strength" && "Choose the exact presentation"}
@@ -932,6 +1065,16 @@ export function PharmacySearchForm({
                   {activeStep === "review" &&
                     "Review the search, then adjust the secondary controls if you need to."}
                 </h3>
+                <p className="mt-1.5 max-w-[32rem] text-[0.86rem] leading-6 text-slate-600">
+                  {activeStep === "medication" &&
+                    "Start calm and choose the medication first. We’ll keep everything else out of the way until the core match is set."}
+                  {activeStep === "strength" &&
+                    "Only the remaining meaningful strength options stay visible here, so the next decision is obvious."}
+                  {activeStep === "location" &&
+                    "Set the nearby search area, then we’ll expose the final live-search controls without reopening the full form."}
+                  {activeStep === "review" &&
+                    "Secondary controls stay compact here. The nearby list remains live, and the stock boundary stays explicit."}
+                </p>
               </div>
 
               {activeStep !== "medication" ? (
@@ -951,270 +1094,251 @@ export function PharmacySearchForm({
               ) : null}
             </div>
 
-            <div className="mt-4 border-t border-slate-200/80 pt-4">
-              <div className={stepViewportClassName}>
-                <AnimatePresence custom={transitionDirection} initial={false} mode="wait">
-                  <motion.div
-                    key={activeStep}
-                    custom={transitionDirection}
-                    variants={stepMotion}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    transition={stepTransition}
-                    className="absolute inset-0"
-                  >
-                    {activeStep === "medication" ? (
-                      <div className="flex h-full flex-col justify-between gap-5">
-                        <div className="space-y-4">
-                          <MedicationCombobox
-                            className="max-w-none"
-                            label="Medication"
-                            placeholder="Search medication"
-                            value={medication}
-                            selectedOptionId={medicationOption?.id || null}
-                            helperText={
-                              medicationSupportText ||
-                              "Search by brand, generic, or a precise presentation."
-                            }
-                            onValueChange={handleMedicationInputChange}
-                            onSelect={handleMedicationSelection}
-                            emptyMessage="No medication matches yet. Try a brand, generic, or strength."
-                            error={medicationError}
-                            inputRef={medicationInputRef}
-                          />
-
-                          <div className="rounded-[1.05rem] border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-[0.84rem] leading-6 text-slate-600">
-                            Medication search stays immediate. Nearby pharmacies,
-                            radius, and other secondary choices stay hidden until
-                            the core path is complete.
-                          </div>
-                        </div>
-
-                        {showSamples && !compact ? (
-                          <div className="rounded-[1.15rem] border border-slate-200/80 bg-white/70 px-4 py-3.5">
-                            <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
-                              Quick starts
-                            </div>
-                            <div className="mt-3 flex flex-wrap gap-2.5">
-                              {featuredSearches.map((search) => (
-                                <button
-                                  key={search.id}
-                                  type="button"
-                                  disabled={Boolean(isApplyingSampleId)}
-                                  className="inline-flex min-h-9 items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 transition hover:border-[#156d95]/24 hover:text-[#156d95] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10 disabled:cursor-wait disabled:opacity-70"
-                                  onClick={() => void handleFeaturedSearch(search)}
-                                >
-                                  {isApplyingSampleId === search.id
-                                    ? "Loading…"
-                                    : search.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
-
-                    {activeStep === "strength" ? (
-                      <div className="flex h-full flex-col gap-4">
-                        {stepContextPills}
-                        <div className="space-y-3">
-                          <p className="max-w-2xl text-[0.92rem] leading-6 text-slate-600">
-                            We only stop here when the selected medication still
-                            covers multiple usable presentations. Pick the one
-                            you want the nearby search to carry forward.
-                          </p>
-                          <div className="grid gap-2.5 sm:grid-cols-2">
-                            {medicationOption?.strengths.map((strength, index) => {
-                              const isSelected = strength.value === selectedStrength;
-
-                              return (
-                                <button
-                                  key={strength.id}
-                                  ref={(node) => {
-                                    strengthButtonRefs.current[index] = node;
-                                  }}
-                                  type="button"
-                                  className={cn(
-                                    "flex min-h-[3.5rem] items-center justify-between rounded-[1.1rem] border px-4 py-3 text-left transition-[border-color,background-color,transform,box-shadow] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
-                                    isSelected
-                                      ? "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d]"
-                                      : "border-slate-200 bg-white text-slate-700 hover:border-[#156d95]/18",
-                                  )}
-                                  onClick={() => handleStrengthSelection(strength.value)}
-                                >
-                                  <span className="text-sm font-semibold">
-                                    {strength.label}
-                                  </span>
-                                  {isSelected ? (
-                                    <Check className="h-4 w-4" />
-                                  ) : null}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {strengthError ? (
-                            <p className="search-field-error">{strengthError}</p>
-                          ) : null}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {activeStep === "location" ? (
-                      <div className="flex h-full flex-col justify-between gap-5">
-                        <div className="space-y-4">
-                          {stepContextPills}
-                          <LocationCombobox
-                            className="max-w-none"
-                            label="Location"
-                            placeholder="City, ZIP, or address"
-                            value={location}
-                            selectedPlaceId={locationSelection?.placeId || null}
-                            sessionToken={locationSessionToken}
-                            onValueChange={handleLocationInputChange}
-                            onSelect={(option) => {
-                              setLocationSelection(
-                                createLocationSelection(
-                                  option.description,
-                                  option.placeId,
-                                ),
-                              );
-                              setLocation(option.description);
-                              setLocationError(null);
-                            }}
-                            error={locationError}
-                            helperText="Pick a live suggestion or keep the typed text for direct resolution at search time."
-                            inputRef={locationInputRef}
-                            submitOnSelect={false}
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="max-w-[33rem] text-[0.84rem] leading-6 text-slate-500">
-                            This is the last required input before radius, sort,
-                            open-now filtering, and the live nearby search CTA
-                            appear.
-                          </p>
-                          <button
-                            type="button"
-                            className="action-button-primary min-h-[3.15rem] px-5 text-sm"
-                            onClick={handleLocationContinue}
-                          >
-                            Continue
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {activeStep === "review" ? (
-                      <div className="flex h-full flex-col justify-between gap-5">
-                        <div className="space-y-4">
-                          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                            <SummaryButton
-                              label="Medication"
-                              value={summaryMedication}
-                              icon={<Pill className="h-4 w-4" />}
-                              onClick={() => goToStep("medication", "medication")}
-                            />
-                            {summaryStrength ? (
-                              <SummaryButton
-                                label="Strength"
-                                value={summaryStrength}
-                                icon={<Settings2 className="h-4 w-4" />}
-                                onClick={() => goToStep("strength", "strength")}
-                              />
-                            ) : null}
-                            <SummaryButton
-                              label="Location"
-                              value={summaryLocation}
-                              icon={<MapPin className="h-4 w-4" />}
-                              onClick={() => goToStep("location", "location")}
-                            />
-                          </div>
-
-                          <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1fr)]">
-                            <label className="search-field-stack">
-                              <span className="search-field-label">Radius</span>
-                              <select
-                                className="search-select-control"
-                                value={radiusMiles}
-                                onChange={(event) =>
-                                  setRadiusMiles(Number(event.target.value))
-                                }
-                              >
-                                <option value={2}>2 miles</option>
-                                <option value={5}>5 miles</option>
-                                <option value={10}>10 miles</option>
-                                <option value={25}>25 miles</option>
-                              </select>
-                            </label>
-
-                            <label className="search-field-stack">
-                              <span className="search-field-label">Sort</span>
-                              <select
-                                className="search-select-control"
-                                value={sortBy}
-                                onChange={(event) =>
-                                  setSortBy(
-                                    event.target.value as
-                                      | "best_match"
-                                      | "distance"
-                                      | "rating",
-                                  )
-                                }
-                              >
-                                <option value="best_match">
-                                  Best overall match
-                                </option>
-                                <option value="distance">Closest first</option>
-                                <option value="rating">Highest rating</option>
-                              </select>
-                            </label>
-
-                            <label className="search-field-stack sm:col-span-2 xl:col-span-1">
-                              <span className="search-field-label">Availability</span>
-                              <span className="search-toggle-control cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
-                                  checked={onlyOpenNow}
-                                  onChange={(event) =>
-                                    setOnlyOpenNow(event.target.checked)
-                                  }
-                                />
-                                <span className="min-w-0">Open now only</span>
-                              </span>
-                            </label>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                          <p className="max-w-[34rem] text-[0.84rem] leading-6 text-slate-500">
-                            Radius, sort, and open-now filters only shape the
-                            nearby list. Inventory still needs a direct call
-                            before pickup or transfer.
-                          </p>
-                          <button
-                            ref={submitButtonRef}
-                            type="submit"
-                            disabled={isPending || isResolvingSearch}
-                            className="action-button-primary min-h-[3.2rem] whitespace-nowrap px-5 text-sm disabled:cursor-wait disabled:opacity-70"
-                          >
-                            {isPending || isResolvingSearch
-                              ? "Loading…"
-                              : submitLabel}
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </motion.div>
-                </AnimatePresence>
+            {selectionSummaryItems.length ? (
+              <div className="mt-3 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                {selectionSummaryItems.map((item) => (
+                  <SelectionSummaryChip
+                    key={item.key}
+                    label={item.label}
+                    value={item.value}
+                    placeholder={item.placeholder}
+                    icon={item.icon}
+                    state={item.state}
+                    onClick={item.onClick}
+                  />
+                ))}
               </div>
+            ) : null}
+
+            <div className="mt-4 border-t border-slate-200/80 pt-4">
+              <AnimatePresence custom={transitionDirection} initial={false} mode="wait">
+                <motion.div
+                  key={activeStep}
+                  custom={transitionDirection}
+                  variants={stepMotion}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={stepTransition}
+                  className="space-y-4"
+                >
+                  {activeStep === "medication" ? (
+                    <div className="space-y-4">
+                      <MedicationCombobox
+                        className="max-w-none"
+                        label="Medication"
+                        placeholder="Search medication"
+                        value={medication}
+                        selectedOptionId={medicationOption?.id || null}
+                        helperText={
+                          medicationSupportText ||
+                          "Search by brand, generic, or a precise presentation."
+                        }
+                        onValueChange={handleMedicationInputChange}
+                        onSelect={handleMedicationSelection}
+                        emptyMessage="No medication matches yet. Try a brand, generic, or strength."
+                        error={medicationError}
+                        inputRef={medicationInputRef}
+                        inputClassName={
+                          !medication.trim()
+                            ? "border-[#156d95]/24 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_1px_1px_rgba(15,23,42,0.03),0_12px_24px_rgba(21,109,149,0.08)]"
+                            : undefined
+                        }
+                      />
+
+                      <div className="rounded-[1rem] border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-[0.82rem] leading-6 text-slate-600">
+                        Medication search stays immediate. Nearby pharmacies,
+                        radius, and other secondary choices stay hidden until the
+                        core path is complete.
+                      </div>
+
+                      {showSamples && !compact ? (
+                        <div className="rounded-[1.08rem] border border-slate-200/80 bg-white/72 px-4 py-3.5">
+                          <div className="text-[0.66rem] uppercase tracking-[0.18em] text-slate-400">
+                            Quick starts
+                          </div>
+                          <div className="mt-2.5 flex flex-wrap gap-2.5">
+                            {featuredSearches.map((search) => (
+                              <button
+                                key={search.id}
+                                type="button"
+                                disabled={Boolean(isApplyingSampleId)}
+                                className="inline-flex min-h-8.5 items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 transition hover:border-[#156d95]/24 hover:text-[#156d95] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10 disabled:cursor-wait disabled:opacity-70"
+                                onClick={() => void handleFeaturedSearch(search)}
+                              >
+                                {isApplyingSampleId === search.id
+                                  ? "Loading..."
+                                  : search.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {activeStep === "strength" ? (
+                    <div className="space-y-3.5">
+                      <p className="max-w-2xl text-[0.88rem] leading-6 text-slate-600">
+                        We only stop here when the selected medication still
+                        covers multiple usable presentations. Pick the exact
+                        strength you want the nearby search to carry forward.
+                      </p>
+                      <div className="grid gap-2.5 sm:grid-cols-2">
+                        {medicationOption?.strengths.map((strength, index) => {
+                          const isSelected = strength.value === selectedStrength;
+
+                          return (
+                            <button
+                              key={strength.id}
+                              ref={(node) => {
+                                strengthButtonRefs.current[index] = node;
+                              }}
+                              type="button"
+                              className={cn(
+                                "flex min-h-[3.2rem] items-center justify-between rounded-[1rem] border px-4 py-2.5 text-left transition-[border-color,background-color,transform,box-shadow] duration-150 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#156d95]/10",
+                                isSelected
+                                  ? "border-[#156d95]/24 bg-[#156d95]/8 text-[#0f5d7d]"
+                                  : "border-slate-200 bg-white text-slate-700 hover:border-[#156d95]/18",
+                              )}
+                              onClick={() => handleStrengthSelection(strength.value)}
+                            >
+                              <span className="text-sm font-semibold">
+                                {strength.label}
+                              </span>
+                              {isSelected ? <Check className="h-4 w-4" /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {strengthError ? (
+                        <p className="search-field-error">{strengthError}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {activeStep === "location" ? (
+                    <div className="space-y-3.5">
+                      <LocationCombobox
+                        className="max-w-none"
+                        label="Location"
+                        placeholder="City, ZIP, or address"
+                        value={location}
+                        selectedPlaceId={locationSelection?.placeId || null}
+                        sessionToken={locationSessionToken}
+                        onValueChange={handleLocationInputChange}
+                        onSelect={(option) => {
+                          setLocationSelection(
+                            createLocationSelection(
+                              option.description,
+                              option.placeId,
+                            ),
+                          );
+                          setLocation(option.description);
+                          setLocationError(null);
+                        }}
+                        error={locationError}
+                        helperText="Pick a live suggestion or keep the typed text for direct resolution at search time."
+                        inputRef={locationInputRef}
+                        submitOnSelect={false}
+                      />
+
+                      <div className="flex flex-col gap-3 rounded-[1rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="max-w-[34rem] text-[0.82rem] leading-6 text-slate-600">
+                          Nearby pharmacies come from live search. Stock is not
+                          guaranteed. Call to confirm before pickup or transfer.
+                        </p>
+                        <button
+                          type="button"
+                          className="action-button-primary min-h-[3.05rem] px-5 text-sm"
+                          onClick={handleLocationContinue}
+                        >
+                          Continue
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeStep === "review" ? (
+                    <div className="space-y-4">
+                      <div className="grid gap-x-3.5 gap-y-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1fr)]">
+                        <label className="search-field-stack">
+                          <span className="search-field-label">Radius</span>
+                          <select
+                            className="search-select-control"
+                            value={radiusMiles}
+                            onChange={(event) =>
+                              setRadiusMiles(Number(event.target.value))
+                            }
+                          >
+                            <option value={2}>2 miles</option>
+                            <option value={5}>5 miles</option>
+                            <option value={10}>10 miles</option>
+                            <option value={25}>25 miles</option>
+                          </select>
+                        </label>
+
+                        <label className="search-field-stack">
+                          <span className="search-field-label">Sort</span>
+                          <select
+                            className="search-select-control"
+                            value={sortBy}
+                            onChange={(event) =>
+                              setSortBy(
+                                event.target.value as
+                                  | "best_match"
+                                  | "distance"
+                                  | "rating",
+                              )
+                            }
+                          >
+                            <option value="best_match">Best overall match</option>
+                            <option value="distance">Closest first</option>
+                            <option value="rating">Highest rating</option>
+                          </select>
+                        </label>
+
+                        <label className="search-field-stack sm:col-span-2 xl:col-span-1">
+                          <span className="search-field-label">Availability</span>
+                          <span className="search-toggle-control cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-slate-300 text-[#156d95] focus:ring-[#156d95]"
+                              checked={onlyOpenNow}
+                              onChange={(event) =>
+                                setOnlyOpenNow(event.target.checked)
+                              }
+                            />
+                            <span className="min-w-0">Open now only</span>
+                          </span>
+                        </label>
+                      </div>
+
+                      <div className="flex flex-col gap-3 rounded-[1rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="max-w-[34rem] text-[0.82rem] leading-6 text-slate-600">
+                          Radius, sort, and open-now filters only shape the
+                          nearby list. Inventory still needs a direct call before
+                          pickup or transfer.
+                        </p>
+                        <button
+                          ref={submitButtonRef}
+                          type="submit"
+                          disabled={isPending || isResolvingSearch}
+                          className="action-button-primary min-h-[3.15rem] whitespace-nowrap px-5 text-sm disabled:cursor-wait disabled:opacity-70"
+                        >
+                          {isPending || isResolvingSearch
+                            ? "Loading..."
+                            : submitLabel}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
 
-          <div className="mt-4 rounded-[1.2rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3 text-[0.82rem] leading-6 text-slate-600">
+          <div className="mt-3.5 rounded-[1.08rem] border border-slate-200/85 bg-slate-50/78 px-4 py-3 text-[0.8rem] leading-6 text-slate-600">
             Nearby pharmacies come from a live search. Stock is not guaranteed.
             Call to confirm before pickup or transfer.
           </div>

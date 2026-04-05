@@ -197,17 +197,17 @@ function MedicationLookupCard({
   matchId: string;
 }) {
   return (
-    <div className="surface-panel h-full rounded-[1.55rem] p-4 sm:p-5">
+    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
       <span className="eyebrow-label">Next step</span>
-      <h3 className="mt-3 text-[1.16rem] tracking-tight text-slate-950">
+      <h3 className="mt-2.5 text-[1.06rem] tracking-tight text-slate-950">
         Need the broader medication evidence view?
       </h3>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
+      <p className="mt-2 text-[0.92rem] leading-6 text-slate-600">
         Open Medication Lookup when the next question is about shortage
         planning, formulation spread, or manufacturer coverage instead of one
         nearby call list.
       </p>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         {["Dose coverage", "Manufacturer status", "Recall context"].map(
           (item) => (
             <span key={item} className="flat-chip text-[0.82rem]">
@@ -216,7 +216,7 @@ function MedicationLookupCard({
           ),
         )}
       </div>
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-3.5 flex flex-wrap gap-3">
         <NextLink
           href={buildMedicationLookupHref(query, location, matchId)}
           className="action-button-dark text-sm"
@@ -224,6 +224,38 @@ function MedicationLookupCard({
           Open Medication Lookup
         </NextLink>
       </div>
+    </div>
+  );
+}
+
+function TrustBoundaryCard({
+  pharmacyData,
+  crowdReady,
+}: {
+  pharmacyData: PharmacySearchResponse;
+  crowdReady: boolean;
+}) {
+  return (
+    <div className="surface-panel rounded-[1.45rem] p-4 sm:p-5">
+      <span className="eyebrow-label">Trust boundary</span>
+      <div className="mt-2.5 flex items-center gap-2 font-medium text-slate-900">
+        <MapPin className="h-4 w-4 text-[#156d95]" />
+        {pharmacyData.disclaimer}
+      </div>
+      <p className="mt-2 text-[0.9rem] leading-6 text-slate-600">
+        {pharmacyData.guidance.demo_boundary} Community reports stay layered on
+        top of the live nearby list rather than acting as proof of verified
+        shelf inventory.
+        {pharmacyData.medication_profile.demo_only
+          ? " This medication profile is simulated for the demo and intentionally separated from the main medication reference flow."
+          : ""}
+      </p>
+      {!crowdReady ? (
+        <div className="mt-2.5 flex items-center gap-2 text-sm text-slate-500">
+          <LoaderCircle className="h-4 w-4 animate-spin" />
+          Loading crowd signal...
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -688,7 +720,7 @@ export function PatientResultsClient({
                   </div>
                 </div>
 
-                <div className="space-y-4 xl:sticky xl:top-[calc(var(--navbar-height)+1.5rem)]">
+                <div className="xl:self-start">
                   {drugError ? (
                     <MedicationContextError message={drugError} />
                   ) : featuredMatch ? (
@@ -710,7 +742,7 @@ export function PatientResultsClient({
               </div>
 
               {featuredMatch && !drugError ? (
-                <div className="grid gap-5 xl:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)] xl:items-start">
+                <div className="space-y-5">
                   <div className="surface-panel rounded-[1.85rem] p-4 sm:p-5">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -732,7 +764,7 @@ export function PatientResultsClient({
                     </div>
                   </div>
 
-                  <div className="space-y-5 xl:sticky xl:top-[calc(var(--navbar-height)+1.5rem)]">
+                  <div className="grid gap-4 lg:grid-cols-2">
                     <MedicationLookupCard
                       query={query}
                       location={location}
@@ -740,51 +772,18 @@ export function PatientResultsClient({
                     />
 
                     {pharmacyData ? (
-                      <div className="rounded-[1.35rem] border border-slate-200/90 bg-white/92 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-                        <div className="flex items-center gap-2 font-medium text-slate-900">
-                          <MapPin className="h-4 w-4 text-[#156d95]" />
-                          {pharmacyData.disclaimer}
-                        </div>
-                        <p className="mt-2 text-[0.92rem] leading-6">
-                          {pharmacyData.guidance.demo_boundary} Community
-                          reports stay layered on top of the live nearby list
-                          rather than acting as proof of verified shelf
-                          inventory.
-                          {pharmacyData.medication_profile.demo_only
-                            ? " This medication profile is simulated for the demo and intentionally separated from the main medication reference flow."
-                            : ""}
-                        </p>
-                        {!crowdReady ? (
-                          <div className="mt-2.5 flex items-center gap-2 text-slate-500">
-                            <LoaderCircle className="h-4 w-4 animate-spin" />
-                            Loading crowd signal...
-                          </div>
-                        ) : null}
-                      </div>
+                      <TrustBoundaryCard
+                        pharmacyData={pharmacyData}
+                        crowdReady={crowdReady}
+                      />
                     ) : null}
                   </div>
                 </div>
               ) : pharmacyData ? (
-                <div className="rounded-[1.35rem] border border-slate-200/90 bg-white/92 px-4 py-4 text-sm leading-6 text-slate-600 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
-                  <div className="flex items-center gap-2 font-medium text-slate-900">
-                    <MapPin className="h-4 w-4 text-[#156d95]" />
-                    {pharmacyData.disclaimer}
-                  </div>
-                  <p className="mt-2 text-[0.92rem] leading-6">
-                    {pharmacyData.guidance.demo_boundary} Community reports
-                    stay layered on top of the live nearby list rather than
-                    acting as proof of verified shelf inventory.
-                    {pharmacyData.medication_profile.demo_only
-                      ? " This medication profile is simulated for the demo and intentionally separated from the main medication reference flow."
-                      : ""}
-                  </p>
-                  {!crowdReady ? (
-                    <div className="mt-2.5 flex items-center gap-2 text-slate-500">
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                      Loading crowd signal...
-                    </div>
-                  ) : null}
-                </div>
+                <TrustBoundaryCard
+                  pharmacyData={pharmacyData}
+                  crowdReady={crowdReady}
+                />
               ) : null}
 
               {visibleExtras.length ? (

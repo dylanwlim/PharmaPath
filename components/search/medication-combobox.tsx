@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, LoaderCircle } from "lucide-react";
 import {
   useEffect,
@@ -59,6 +60,7 @@ export function MedicationCombobox({
   inputClassName,
   panelClassName,
 }: MedicationComboboxProps) {
+  const reduceMotion = useReducedMotion();
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
   const helperId = `${inputId}-helper`;
@@ -70,9 +72,12 @@ export function MedicationCombobox({
   const [options, setOptions] = useState<MedicationSearchOption[]>([]);
   const [highlightedIndexState, setHighlightedIndexState] = useState(0);
   const normalizedValue = normalizeMedicationSearchQuery(value);
-  const needsMoreCharacters = normalizedValue.length > 0 && normalizedValue.length < 2;
-  const isSearchable = !needsMoreCharacters;
-  const effectiveLoadState: LoadState = !isOpen || !isSearchable ? "idle" : loadState;
+  const hasTypedQuery = normalizedValue.length > 0;
+  const needsMoreCharacters =
+    hasTypedQuery && normalizedValue.length < 2;
+  const isSearchable = normalizedValue.length >= 2;
+  const effectiveLoadState: LoadState =
+    !isOpen || !isSearchable ? "idle" : loadState;
   const visibleOptions = useMemo(
     () => (isOpen && isSearchable ? options : []),
     [isOpen, isSearchable, options],
@@ -87,12 +92,14 @@ export function MedicationCombobox({
       return 0;
     }
 
-    const selectedIndex = visibleOptions.findIndex((option) => option.id === selectedOptionId);
+    const selectedIndex = visibleOptions.findIndex(
+      (option) => option.id === selectedOptionId,
+    );
     if (selectedIndex >= 0) {
       return selectedIndex;
     }
 
-      return Math.min(highlightedIndexState, visibleOptions.length - 1);
+    return Math.min(highlightedIndexState, visibleOptions.length - 1);
   }, [highlightedIndexState, selectedOptionId, visibleOptions]);
 
   useEffect(() => {
@@ -256,7 +263,6 @@ export function MedicationCombobox({
           onClick={() => setIsOpen(true)}
           onFocus={() => {
             void prewarmMedicationSearch();
-            setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
         />
@@ -270,109 +276,116 @@ export function MedicationCombobox({
           />
         </div>
 
-        {isOpen ? (
-          <div
-            className={cn(
-              panelMode === "floating"
-                ? "search-floating-panel"
-                : "search-inline-panel mt-2",
-              panelMode === "floating" &&
-                getComboboxPanelPositionClasses(placement),
-              panelClassName,
-            )}
-          >
-            <div
-              id={listboxId}
-              role="listbox"
-              className="search-floating-scroll space-y-1"
-              style={{ maxHeight: panelMode === "floating" ? maxHeight : 296 }}
-            >
-              {effectiveLoadState === "error" ? (
-                <div className="rounded-[1rem] border border-dashed border-rose-200 bg-rose-50/85 px-4 py-4 text-sm leading-6 text-rose-700">
-                  {loadError || "Unable to load medication matches right now."}
-                </div>
-              ) : needsMoreCharacters ? (
-                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
-                  Type at least 2 characters to load medication matches.
-                </div>
-              ) : effectiveLoadState === "loading" && !visibleOptions.length ? (
-                <div
-                  aria-live="polite"
-                  className="space-y-2 rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 p-3"
-                >
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <LoaderCircle className="h-4 w-4 animate-spin" />
-                    Matching medications…
-                  </div>
-                  {[0, 1, 2].map((row) => (
-                    <div
-                      key={row}
-                      className="rounded-[0.9rem] border border-slate-200/80 bg-white/90 px-3 py-3"
-                    >
-                      <div className="h-3.5 w-3/4 animate-pulse rounded-full bg-slate-200/80" />
-                      <div className="mt-2 h-3 w-full animate-pulse rounded-full bg-slate-100" />
-                    </div>
-                  ))}
-                </div>
-              ) : visibleOptions.length ? (
-                <>
-                  {effectiveLoadState === "loading" ? (
-                    <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/80 px-3.5 py-2.5 text-[0.74rem] leading-5 text-slate-500">
-                      Showing cached matches while newer results load.
-                    </div>
-                  ) : null}
-                  {visibleOptions.map((option, index) => {
-                    const isSelected = option.id === selectedOptionId;
-                    const isHighlighted = index === highlightedIndex;
-
-                    return (
-                      <button
-                        key={option.id}
-                        id={`${listboxId}-${option.id}`}
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        className={cn(
-                          "flex w-full items-start justify-between gap-3 rounded-[0.9rem] border px-3 py-2.5 text-left transition-colors duration-150",
-                          isHighlighted
-                            ? "border-[#156d95]/18 bg-[#156d95]/8"
-                            : "border-transparent hover:bg-slate-100/80",
-                          isSelected && !isHighlighted && "bg-slate-100/90",
-                        )}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onMouseEnter={() => setHighlightedIndexState(index)}
-                        onClick={() => {
-                          onSelect(option);
-                          setIsOpen(false);
-                        }}
-                      >
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-start gap-2">
-                            <span className="min-w-0 flex-1 break-words text-sm font-medium leading-5 text-slate-900">
-                              {option.label}
-                            </span>
-                            {option.badge ? (
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                {option.badge}
-                              </span>
-                            ) : null}
-                          </div>
-                          <p className="mt-1 break-words text-[0.72rem] leading-5 text-slate-500">
-                            {option.description}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </>
-              ) : (
-                <div className="rounded-[0.95rem] border border-dashed border-slate-200 bg-slate-50/85 px-4 py-3.5 text-sm leading-6 text-slate-500">
-                  {emptyMessage}
-                </div>
+        <AnimatePresence initial={false}>
+          {isOpen ? (
+            <motion.div
+              initial={reduceMotion ? false : { opacity: 0, y: -4, scale: 0.985 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.985 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0.12 }
+                  : { duration: 0.16, ease: [0.22, 1, 0.36, 1] }
+              }
+              className={cn(
+                panelMode === "floating"
+                  ? "search-floating-panel"
+                  : "search-inline-panel mt-1.5",
+                panelMode === "floating" &&
+                  getComboboxPanelPositionClasses(placement),
+                panelClassName,
               )}
-            </div>
-          </div>
-        ) : null}
+            >
+              <div
+                id={listboxId}
+                role="listbox"
+                className="search-floating-scroll space-y-1"
+                style={{ maxHeight: panelMode === "floating" ? maxHeight : 296 }}
+              >
+                {effectiveLoadState === "error" ? (
+                  <div className="rounded-[0.9rem] border border-dashed border-rose-200 bg-rose-50/85 px-3.5 py-3 text-sm leading-6 text-rose-700">
+                    {loadError || "Unable to load medication matches right now."}
+                  </div>
+                ) : !hasTypedQuery ? (
+                  <div className="rounded-[0.9rem] border border-slate-200/80 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-600">
+                    Start typing a brand, generic, or strength to load medication matches.
+                  </div>
+                ) : needsMoreCharacters ? (
+                  <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                    Type at least 2 characters to load medication matches.
+                  </div>
+                ) : effectiveLoadState === "loading" && !visibleOptions.length ? (
+                  <div
+                    aria-live="polite"
+                    className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      Matching medications...
+                    </span>
+                  </div>
+                ) : visibleOptions.length ? (
+                  <>
+                    {effectiveLoadState === "loading" ? (
+                      <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2 text-[0.73rem] leading-5 text-slate-500">
+                        Showing cached matches while newer results load.
+                      </div>
+                    ) : null}
+                    {visibleOptions.map((option, index) => {
+                      const isSelected = option.id === selectedOptionId;
+                      const isHighlighted = index === highlightedIndex;
+
+                      return (
+                        <button
+                          key={option.id}
+                          id={`${listboxId}-${option.id}`}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          className={cn(
+                            "flex w-full items-start justify-between gap-3 rounded-[0.88rem] border px-3 py-2.5 text-left transition-[background-color,border-color,transform] duration-150",
+                            isHighlighted
+                              ? "border-[#156d95]/22 bg-[#156d95]/9"
+                              : "border-transparent hover:border-slate-200/85 hover:bg-slate-50/90",
+                            isSelected &&
+                              !isHighlighted &&
+                              "border-slate-200/85 bg-slate-100/90",
+                          )}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onMouseEnter={() => setHighlightedIndexState(index)}
+                          onClick={() => {
+                            onSelect(option);
+                            setIsOpen(false);
+                          }}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-start gap-2">
+                              <span className="min-w-0 flex-1 break-words text-sm font-medium leading-5 text-slate-900">
+                                {option.label}
+                              </span>
+                              {option.badge ? (
+                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                  {option.badge}
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="mt-1 break-words text-[0.72rem] leading-5 text-slate-500">
+                              {option.description}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="rounded-[0.9rem] border border-dashed border-slate-200 bg-slate-50/82 px-3.5 py-3 text-sm leading-6 text-slate-500">
+                    {emptyMessage}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
       <div className="search-field-helper-slot">
         {helperText ? (
