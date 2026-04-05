@@ -216,3 +216,43 @@ test("webhook message url builder supports create and edit endpoints", async () 
     "https://discord.com/api/webhooks/123/token/messages/456",
   );
 });
+
+test("discord retry delay prefers rate limit headers and falls back safely", async () => {
+  const { getDiscordRetryDelayMs } = await syncModulePromise;
+
+  const headerDrivenDelay = getDiscordRetryDelayMs(
+    {
+      get(name) {
+        if (name === "retry-after") {
+          return "2";
+        }
+
+        return null;
+      },
+    },
+    { retry_after: 50 },
+    0,
+  );
+  const bodyDrivenDelay = getDiscordRetryDelayMs(
+    {
+      get() {
+        return null;
+      },
+    },
+    { retry_after: 1.5 },
+    0,
+  );
+  const fallbackDelay = getDiscordRetryDelayMs(
+    {
+      get() {
+        return null;
+      },
+    },
+    {},
+    2,
+  );
+
+  assert.equal(headerDrivenDelay, 2250);
+  assert.equal(bodyDrivenDelay, 1750);
+  assert.equal(fallbackDelay, 4000);
+});

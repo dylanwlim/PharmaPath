@@ -31,6 +31,7 @@ jobs:
       DISCORD_ISSUES_WEBHOOK_URL: ${{ secrets.DISCORD_ISSUES_WEBHOOK_URL }}
       DISCORD_ISSUE_SYNC_STATE_BRANCH: discord-issue-sync-state
       DISCORD_ISSUE_SYNC_STATE_PATH: .github/discord-issue-sync/issues.json
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
       GITHUB_TOKEN: ${{ github.token }}
       HAS_DISCORD_ISSUES_WEBHOOK: ${{ secrets.DISCORD_ISSUES_WEBHOOK_URL != '' }}
 
@@ -41,11 +42,11 @@ jobs:
 
       - name: Checkout
         if: env.HAS_DISCORD_ISSUES_WEBHOOK == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
         if: env.HAS_DISCORD_ISSUES_WEBHOOK == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
 

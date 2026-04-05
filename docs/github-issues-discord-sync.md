@@ -80,6 +80,7 @@ The resync job will:
 - Runs are serialized with a workflow concurrency group to reduce duplicate posts during bursty issue activity.
 - Missing mapping entries are handled without crashing:
   an open issue gets a new Discord message, and a closed/deleted issue is logged and skipped.
+- Discord 429 rate limits are retried with the server-provided delay plus a small buffer so large full resyncs do not fail on normal webhook throttling.
 - Discord 404s on edit/delete are treated as recoverable:
   the workflow recreates missing open-issue messages, trims stale continuation messages, and drops stale closed-issue mappings.
 

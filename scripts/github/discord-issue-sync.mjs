@@ -6,6 +6,7 @@ const DEFAULT_STATE_BRANCH = "discord-issue-sync-state";
 const DEFAULT_STATE_PATH = ".github/discord-issue-sync/issues.json";
 const STATE_VERSION = 1;
 const DISCORD_EMBED_DESCRIPTION_LIMIT = 4096;
+const DISCORD_MAX_RETRY_ATTEMPTS = 6;
 const ISSUE_ACTIONS_TO_UPSERT = new Set([
   "assigned",
   "edited",
@@ -318,6 +319,42 @@ function parseResponseBody(text) {
   }
 }
 
+function sleep(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function parseHeaderDelayMilliseconds(value) {
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+
+  const parsed = Number.parseFloat(String(value));
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 0;
+  }
+
+  return Math.ceil(parsed * 1000);
+}
+
+export function getDiscordRetryDelayMs(headers, data, attempt) {
+  const retryAfterHeaderDelay = parseHeaderDelayMilliseconds(headers?.get?.("retry-after"));
+  const resetAfterHeaderDelay = parseHeaderDelayMilliseconds(headers?.get?.("x-ratelimit-reset-after"));
+  let bodyDelay = 0;
+
+  if (typeof data?.retry_after === "number" && Number.isFinite(data.retry_after) && data.retry_after > 0) {
+    bodyDelay = data.retry_after > 100 ? Math.ceil(data.retry_after) : Math.ceil(data.retry_after * 1000);
+  }
+
+  const derivedDelay = retryAfterHeaderDelay || resetAfterHeaderDelay || bodyDelay;
+
+  if (derivedDelay > 0) {
+    return Math.min(derivedDelay + 250, 60000);
+  }
+
+  return Math.min(1000 * 2 ** attempt, 30000);
+}
+
 function createGitHubClient({ apiBaseUrl, repositoryFullName, token }) {
   const [owner, repo] = String(repositoryFullName || "").split("/");
 
@@ -436,52 +473,76 @@ export function buildWebhookMessageUrl(webhookUrl, { messageId = "", wait = fals
   return url.toString();
 }
 
-async function discordRequest(webhookUrl, { allow404 = false, body, messageId = "", method = "POST", wait = false } = {}) {
-  const response = await fetch(buildWebhookMessageUrl(webhookUrl, { messageId, wait }), {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const text = await response.text();
-  const data = parseResponseBody(text);
+async function discordRequest(
+  webhookUrl,
+  { allow404 = false, body, logger = createLogger(), maxRetryAttempts = DISCORD_MAX_RETRY_ATTEMPTS, messageId = "", method = "POST", wait = false } = {},
+) {
+  for (let attempt = 0; attempt <= maxRetryAttempts; attempt += 1) {
+    const response = await fetch(buildWebhookMessageUrl(webhookUrl, { messageId, wait }), {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const text = await response.text();
+    const data = parseResponseBody(text);
 
-  if (allow404 && response.status === 404) {
-    return null;
+    if (allow404 && response.status === 404) {
+      return null;
+    }
+
+    if (response.status === 429 && attempt < maxRetryAttempts) {
+      const retryDelayMs = getDiscordRetryDelayMs(response.headers, data, attempt);
+
+      logger.warn("Discord webhook rate limited; retrying request", {
+        attempt: attempt + 1,
+        maxRetryAttempts,
+        method,
+        messageId,
+        retryDelayMs,
+      });
+      await sleep(retryDelayMs);
+      continue;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `Discord webhook ${method} failed with ${response.status}${text ? `: ${summarizeErrorResponse(data, text)}` : ""}`,
+      );
+    }
+
+    return data || {};
   }
 
-  if (!response.ok) {
-    throw new Error(
-      `Discord webhook ${method} failed with ${response.status}${text ? `: ${summarizeErrorResponse(data, text)}` : ""}`,
-    );
-  }
-
-  return data || {};
+  throw new Error(`Discord webhook ${method} exhausted retry attempts unexpectedly.`);
 }
 
-async function createDiscordMessage(webhookUrl, payload) {
+async function createDiscordMessage(webhookUrl, payload, logger) {
   return discordRequest(webhookUrl, {
     method: "POST",
     body: payload,
+    logger,
     wait: true,
   });
 }
 
-async function updateDiscordMessage(webhookUrl, messageId, payload) {
+async function updateDiscordMessage(webhookUrl, messageId, payload, logger) {
   return discordRequest(webhookUrl, {
     method: "PATCH",
     messageId,
     body: payload,
     allow404: true,
+    logger,
   });
 }
 
-async function deleteDiscordMessage(webhookUrl, messageId) {
+async function deleteDiscordMessage(webhookUrl, messageId, logger) {
   return discordRequest(webhookUrl, {
     method: "DELETE",
     messageId,
     allow404: true,
+    logger,
   });
 }
 
@@ -729,9 +790,9 @@ async function upsertIssueMessage({ issue, logger, stateEntry, webhookUrl }) {
     issue,
     logger,
     stateEntry,
-    createMessage: (payload) => createDiscordMessage(webhookUrl, payload),
-    updateMessage: (messageId, payload) => updateDiscordMessage(webhookUrl, messageId, payload),
-    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId),
+    createMessage: (payload) => createDiscordMessage(webhookUrl, payload, logger),
+    updateMessage: (messageId, payload) => updateDiscordMessage(webhookUrl, messageId, payload, logger),
+    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId, logger),
   });
 }
 
@@ -740,7 +801,7 @@ async function removeIssueMessage({ issueNumber, logger, stateEntry, webhookUrl 
     issueNumber,
     logger,
     stateEntry,
-    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId),
+    deleteMessage: (messageId) => deleteDiscordMessage(webhookUrl, messageId, logger),
   });
 }
 
