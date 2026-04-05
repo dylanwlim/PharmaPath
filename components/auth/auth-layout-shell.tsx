@@ -26,7 +26,7 @@ const valuePoints = [
 
 export function AuthLayoutShell({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="relative flex min-h-screen overflow-hidden bg-white">
       <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#e8f4fa] via-[#f5f7fb] to-[#eef8f5] lg:flex lg:w-1/2">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -left-20 top-1/4 h-96 w-96 rounded-full bg-[#156d95]/12 blur-3xl animate-gradient" />
@@ -34,6 +34,8 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
             className="absolute -right-20 bottom-1/4 h-96 w-96 rounded-full bg-[#23a386]/10 blur-3xl animate-gradient"
             style={{ animationDelay: "-7s" }}
           />
+          <div className="absolute inset-y-0 right-0 w-28 bg-gradient-to-r from-transparent via-white/45 to-white lg:w-36 xl:w-44" />
+          <div className="absolute inset-y-0 right-0 w-20 bg-white/55 blur-2xl xl:w-24" />
         </div>
 
         <div className="relative z-10 flex w-full flex-col p-12 xl:p-14">
@@ -80,12 +82,13 @@ export function AuthLayoutShell({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      <main className="flex flex-1 flex-col">
+      <main className="relative flex flex-1 flex-col bg-white lg:bg-[linear-gradient(90deg,rgba(243,248,250,0.78)_0%,rgba(255,255,255,0.95)_16%,rgba(255,255,255,1)_34%)]">
+        <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-20 bg-gradient-to-r from-white/35 via-white/78 to-white lg:block xl:w-24" />
         <div className="p-6 pb-0 lg:hidden">
           <Logo />
         </div>
 
-        <div className="flex flex-1 items-center justify-center p-6 lg:p-12">
+        <div className="relative z-10 flex flex-1 items-center justify-center p-6 lg:p-12">
           <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>
