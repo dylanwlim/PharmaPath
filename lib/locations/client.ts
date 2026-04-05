@@ -56,9 +56,46 @@ const DIRECT_LOCATION_SEARCH_FALLBACK_CODES = new Set([
   "place_details_failed",
   "geocoding_failed",
 ]);
+const LOCATION_CACHE_TTL_MS = 5 * 60 * 1000;
+const suggestionCache = new Map<
+  string,
+  { storedAt: number; results: LocationSuggestion[] }
+>();
+const suggestionInFlight = new Map<string, Promise<{ results: LocationSuggestion[] }>>();
+const resolvedLocationCache = new Map<
+  string,
+  { storedAt: number; location: ResolvedLocation }
+>();
+const resolvedLocationInFlight = new Map<string, Promise<ResolvedLocation>>();
 
 function sanitizeText(value = "") {
   return String(value).trim();
+}
+
+function readCachedValue<T extends { storedAt: number }>(
+  cache: Map<string, T>,
+  key: string,
+) {
+  const entry = cache.get(key);
+
+  if (!entry) {
+    return null;
+  }
+
+  if (Date.now() - entry.storedAt > LOCATION_CACHE_TTL_MS) {
+    cache.delete(key);
+    return null;
+  }
+
+  return entry;
+}
+
+function buildSuggestionCacheKey(query: string, limit: number) {
+  return `${query.toLowerCase()}::${limit}`;
+}
+
+function buildResolvedLocationCacheKey(query: string, placeId: string) {
+  return `${query.toLowerCase()}::${placeId.toLowerCase()}`;
 }
 
 function getErrorCode(payload: unknown) {
@@ -134,6 +171,20 @@ export async function searchLocationSuggestions(
     };
   }
 
+  const cacheKey = buildSuggestionCacheKey(normalizedQuery, limit);
+  const cachedSuggestions = readCachedValue(suggestionCache, cacheKey);
+
+  if (cachedSuggestions) {
+    return {
+      results: cachedSuggestions.results,
+    };
+  }
+
+  const inFlightSuggestions = suggestionInFlight.get(cacheKey);
+  if (inFlightSuggestions) {
+    return inFlightSuggestions;
+  }
+
   const params = new URLSearchParams({
     q: normalizedQuery,
     limit: String(limit),
@@ -143,31 +194,43 @@ export async function searchLocationSuggestions(
     params.set("sessionToken", sessionToken);
   }
 
-  const response = await fetch(`/api/locations/autocomplete?${params.toString()}`, {
+  const request = fetch(`/api/locations/autocomplete?${params.toString()}`, {
     headers: {
       Accept: "application/json",
     },
     signal,
-  });
+  })
+    .then(async (response) => {
+      const payload = (await response.json().catch(() => null)) as LocationSuggestionResponse | null;
 
-  const payload = (await response.json().catch(() => null)) as LocationSuggestionResponse | null;
+      if (!response.ok) {
+        throw createLocationRequestError(payload, "Unable to load location suggestions right now.");
+      }
 
-  if (!response.ok) {
-    throw createLocationRequestError(payload, "Unable to load location suggestions right now.");
-  }
+      const results = (payload?.results || [])
+        .filter((item) => item.place_id)
+        .map((item) => ({
+          placeId: item.place_id as string,
+          description: item.description,
+          primaryText: item.primary_text,
+          secondaryText: item.secondary_text,
+          types: item.types,
+          typeLabel: item.type_label,
+        }));
 
-  return {
-    results: (payload?.results || [])
-      .filter((item) => item.place_id)
-      .map((item) => ({
-        placeId: item.place_id as string,
-        description: item.description,
-        primaryText: item.primary_text,
-        secondaryText: item.secondary_text,
-        types: item.types,
-        typeLabel: item.type_label,
-      })),
-  };
+      suggestionCache.set(cacheKey, {
+        storedAt: Date.now(),
+        results,
+      });
+
+      return { results };
+    })
+    .finally(() => {
+      suggestionInFlight.delete(cacheKey);
+    });
+
+  suggestionInFlight.set(cacheKey, request);
+  return request;
 }
 
 export async function resolveLocationQuery(
@@ -189,7 +252,19 @@ export async function resolveLocationQuery(
     throw new Error("Enter a city, ZIP, address, pharmacy, or landmark.");
   }
 
-  const response = await fetch("/api/locations/resolve", {
+  const cacheKey = buildResolvedLocationCacheKey(normalizedQuery, normalizedPlaceId);
+  const cachedLocation = readCachedValue(resolvedLocationCache, cacheKey);
+
+  if (cachedLocation) {
+    return cachedLocation.location;
+  }
+
+  const inFlightLocation = resolvedLocationInFlight.get(cacheKey);
+  if (inFlightLocation) {
+    return inFlightLocation;
+  }
+
+  const request = fetch("/api/locations/resolve", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -201,15 +276,27 @@ export async function resolveLocationQuery(
       sessionToken: sessionToken || undefined,
     }),
     signal,
-  });
+  })
+    .then(async (response) => {
+      const payload = (await response.json().catch(() => null)) as LocationResolveResponse | null;
 
-  const payload = (await response.json().catch(() => null)) as LocationResolveResponse | null;
+      if (!response.ok || !payload?.location) {
+        throw createLocationRequestError(payload, "Unable to resolve that location right now.");
+      }
 
-  if (!response.ok || !payload?.location) {
-    throw createLocationRequestError(payload, "Unable to resolve that location right now.");
-  }
+      resolvedLocationCache.set(cacheKey, {
+        storedAt: Date.now(),
+        location: payload.location,
+      });
 
-  return payload.location;
+      return payload.location;
+    })
+    .finally(() => {
+      resolvedLocationInFlight.delete(cacheKey);
+    });
+
+  resolvedLocationInFlight.set(cacheKey, request);
+  return request;
 }
 
 export function canFallbackToDirectLocationSearch(error: unknown) {

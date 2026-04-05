@@ -28,8 +28,14 @@ import {
   mapProfileDoc,
 } from "@/lib/profile/profile-service";
 import type { UserProfileRecord } from "@/lib/profile/profile-types";
+import privacyHelpers from "@/lib/security/privacy";
 
 const MAX_NOTE_LENGTH = 240;
+const PRIVATE_REPORT_HISTORY_COLLECTION = "reportHistory";
+const {
+  sanitizePrivateCrowdReportNote,
+  sanitizePublicContributorAlias,
+} = privacyHelpers;
 
 type RawCrowdReport = Record<string, unknown>;
 
@@ -50,9 +56,6 @@ function mapCrowdReport(id: string, value: RawCrowdReport): CrowdReportRecord {
     note: String(value.note || ""),
     createdAt: toDate(value.createdAt),
     updatedAt: toDate(value.updatedAt),
-    userId: String(value.userId || ""),
-    reporterDisplayName: String(value.reporterDisplayName || ""),
-    publicAliasSnapshot: String(value.publicAliasSnapshot || ""),
     reporterContributionCount: Number(value.reporterContributionCount || 0),
     reporterTrustWeight:
       value.reporterTrustWeight === undefined || value.reporterTrustWeight === null
@@ -94,9 +97,13 @@ export async function listCrowdReportsForUser(userId: string) {
     return [];
   }
 
-  const snapshot = await getDocs(
-    query(collection(db, "crowdReports"), where("userId", "==", userId)),
-  );
+  const profileRef = doc(db, "profiles", userId);
+  const privateSnapshot = await getDocs(collection(profileRef, PRIVATE_REPORT_HISTORY_COLLECTION));
+  const snapshot = privateSnapshot.empty
+    ? await getDocs(
+        query(collection(db, "crowdReports"), where("userId", "==", userId)),
+      )
+    : privateSnapshot;
 
   return snapshot.docs
     .map((entry) => mapCrowdReport(entry.id, entry.data()))
@@ -138,7 +145,9 @@ export async function submitCrowdReport(input: {
     pharmacyName,
     pharmacyAddress,
   });
-  const note = (input.note || "").trim().slice(0, MAX_NOTE_LENGTH);
+  const note = sanitizePrivateCrowdReportNote(input.note || "", {
+    limit: MAX_NOTE_LENGTH,
+  });
 
   if (!medicationKey || !pharmacyName || !pharmacyAddress) {
     throw new Error("Medication and pharmacy details are required.");
@@ -148,6 +157,10 @@ export async function submitCrowdReport(input: {
 
   const profileRef = doc(db, "profiles", input.actor.uid);
   const reportRef = doc(collection(db, "crowdReports"));
+  const privateReportRef = doc(
+    collection(profileRef, PRIVATE_REPORT_HISTORY_COLLECTION),
+    reportRef.id,
+  );
 
   await runTransaction(db, async (transaction) => {
     const profileSnapshot = await transaction.get(profileRef);
@@ -161,8 +174,10 @@ export async function submitCrowdReport(input: {
       currentProfile.displayName?.trim() ||
       input.actor.displayName?.trim() ||
       "PharmaPath Contributor";
-    const contributorAlias =
-      currentProfile.contributorAlias?.trim() || displayName;
+    const contributorAlias = sanitizePublicContributorAlias(
+      currentProfile.contributorAlias?.trim() || displayName,
+      displayName,
+    );
 
     transaction.set(reportRef, {
       signalKey,
@@ -176,10 +191,24 @@ export async function submitCrowdReport(input: {
       strengthDescriptor: extractStrengthDescriptor(medicationQuery),
       formulationDescriptor: extractFormulationDescriptor(medicationQuery),
       reportType: input.reportType,
+      reporterContributionCount: currentContributionCount,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    transaction.set(privateReportRef, {
+      signalKey,
+      medicationKey,
+      pharmacyKey,
+      pharmacyName,
+      pharmacyAddress,
+      pharmacyPlaceId: input.pharmacyPlaceId || null,
+      googleMapsUrl: input.googleMapsUrl || null,
+      medicationQuery,
+      strengthDescriptor: extractStrengthDescriptor(medicationQuery),
+      formulationDescriptor: extractFormulationDescriptor(medicationQuery),
+      reportType: input.reportType,
       note,
-      userId: input.actor.uid,
-      reporterDisplayName: displayName,
-      publicAliasSnapshot: currentProfile.publicContributorAlias ? contributorAlias : "Private contributor",
       reporterContributionCount: currentContributionCount,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),

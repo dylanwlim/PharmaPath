@@ -2,6 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { clearGoogleApiBackoff } = require("../lib/server/google-api-config");
 
 function createJsonResponse(payload, status = 200) {
   return {
@@ -34,6 +35,7 @@ function wait(ms) {
 }
 
 test("searchNearbyPharmacies coalesces identical burst traffic and caps phone-detail fanout", async () => {
+  clearGoogleApiBackoff();
   const { searchNearbyPharmacies } = loadPharmacySearch();
   const counts = new Map();
   const inFlight = new Map();
@@ -122,6 +124,7 @@ test("searchNearbyPharmacies coalesces identical burst traffic and caps phone-de
 });
 
 test("resolveLocationInput falls back to the freeform query when a supplied place ID cannot be resolved", async () => {
+  clearGoogleApiBackoff();
   const { resolveLocationInput } = loadPharmacySearch();
   const requestPaths = [];
 
@@ -136,10 +139,10 @@ test("resolveLocationInput falls back to the freeform query when a supplied plac
     ) {
       return createJsonResponse(
         {
-          status: "OVER_QUERY_LIMIT",
-          error_message: "Rate limited",
+          status: "UNKNOWN_ERROR",
+          error_message: "Temporary failure",
         },
-        200,
+        500,
       );
     }
 
@@ -207,4 +210,54 @@ test("resolveLocationInput falls back to the freeform query when a supplied plac
     "/maps/api/place/autocomplete/json",
     "/maps/api/geocode/json",
   ]);
+});
+
+test("google quota backoff prevents repeated upstream retries during cooldown", async () => {
+  clearGoogleApiBackoff();
+  const { searchNearbyPharmacies } = loadPharmacySearch();
+  let upstreamCalls = 0;
+
+  try {
+    await withMockedFetch(async () => {
+      upstreamCalls += 1;
+      return createJsonResponse({
+        status: "OVER_QUERY_LIMIT",
+        error_message: "Quota exceeded",
+      });
+    }, async () => {
+      await assert.rejects(
+        searchNearbyPharmacies({
+          medication: "Amoxicillin 500 mg",
+          medicationProfileKey: "acute_antibiotic",
+          center: {
+            lat: 40.6782,
+            lng: -73.9442,
+          },
+          radiusMiles: 5,
+          onlyOpenNow: false,
+          apiKey: "test-google-key",
+          sortBy: "best_match",
+        }),
+      );
+
+      await assert.rejects(
+        searchNearbyPharmacies({
+          medication: "Amoxicillin 500 mg",
+          medicationProfileKey: "acute_antibiotic",
+          center: {
+            lat: 40.6782,
+            lng: -73.9442,
+          },
+          radiusMiles: 5,
+          onlyOpenNow: false,
+          apiKey: "test-google-key",
+          sortBy: "best_match",
+        }),
+      );
+    });
+  } finally {
+    clearGoogleApiBackoff();
+  }
+
+  assert.equal(upstreamCalls, 1);
 });

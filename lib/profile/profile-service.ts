@@ -18,6 +18,9 @@ import {
   deriveNameParts,
 } from "@/lib/profile/profile-defaults";
 import type { RecentSearchEntry, UserProfileRecord } from "@/lib/profile/profile-types";
+import privacyHelpers from "@/lib/security/privacy";
+
+const { sanitizePublicContributorAlias } = privacyHelpers;
 
 const ALLOWED_SEARCH_RADII = [2, 5, 10, 25] as const;
 
@@ -71,7 +74,10 @@ function normalizeProfileRecord(
   const state = cleanString(merged.state);
   const zipCode = cleanString(merged.zipCode);
   const contributionCount = cleanContributionCount(merged.contributionCount);
-  const contributorAlias = cleanString(merged.contributorAlias, displayName) || displayName;
+  const contributorAlias = sanitizePublicContributorAlias(
+    cleanString(merged.contributorAlias, displayName) || displayName,
+    displayName,
+  );
 
   return {
     uid: user.uid,
@@ -138,7 +144,10 @@ export function mapProfileDoc(id: string, value: Record<string, unknown>): UserP
     defaultLocationLabel: String(value.defaultLocationLabel || "").trim(),
     preferredSearchRadius: cleanSearchRadius(value.preferredSearchRadius),
     publicContributorAlias: Boolean(value.publicContributorAlias),
-    contributorAlias: String(value.contributorAlias || displayName).trim(),
+    contributorAlias: sanitizePublicContributorAlias(
+      String(value.contributorAlias || displayName).trim(),
+      displayName,
+    ),
     notifyCrowdUpdates:
       value.notifyCrowdUpdates === undefined ? true : Boolean(value.notifyCrowdUpdates),
     notifyShortageChanges:

@@ -61,9 +61,6 @@ export type CrowdReportRecord = {
   note: string;
   createdAt: Date | null;
   updatedAt: Date | null;
-  userId: string;
-  reporterDisplayName: string;
-  publicAliasSnapshot: string;
   reporterContributionCount: number;
   reporterTrustWeight?: number | null;
 };
